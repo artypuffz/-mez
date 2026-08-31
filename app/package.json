@@ -31,7 +31,8 @@
     "web": "expo start --web",
     "test": "vitest run",
     "validate:events": "tsx scripts/validateEvents.ts",
-    "simulate:events": "tsx scripts/simulateEvents.ts"
+    "simulate:events": "tsx scripts/simulateEvents.ts",
+    "simulate:npcs": "tsx scripts/simulateNpcs.ts"
   },
   "private": true
 }

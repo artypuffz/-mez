@@ -48,7 +48,7 @@ describe('advanceResidencyWeekWithEvents', () => {
     const { weekRng, eventsRng } = rngs('queue-check', 1);
     const result = advanceResidencyWeekWithEvents(state, weekRng, eventsRng, repo, noQuietConfig);
     expect(result.state.weeklyEventQueue.length).toBeGreaterThan(0);
-    expect(result.state.weeklyEventQueue).toEqual(result.queuedEventIds);
+    expect(result.state.weeklyEventQueue.map((q) => q.eventId)).toEqual(result.queuedEventIds);
   });
 
   it('never drops an overdue scheduled event even past the weekly cap', () => {
@@ -91,7 +91,7 @@ describe('advanceResidencyWeekWithEvents', () => {
 
 describe('resolveEventChoice', () => {
   function queuedState(): GameState {
-    return { ...residencyState('choice'), weeklyEventQueue: [poolEvent.id] };
+    return { ...residencyState('choice'), weeklyEventQueue: [{ instanceId: poolEvent.id, eventId: poolEvent.id, boundNpcIds: {} }] };
   }
 
   it('applies immediate effects and returns only visible resource deltas', () => {
@@ -104,7 +104,7 @@ describe('resolveEventChoice', () => {
   it('removes the event from weeklyEventQueue and logs it to eventHistory', () => {
     const state = queuedState();
     const result = resolveEventChoice(state, poolEvent, 'choice_a', createScopedRng('choice', 'test'));
-    expect(result.state.weeklyEventQueue).not.toContain(poolEvent.id);
+    expect(result.state.weeklyEventQueue.some((q) => q.eventId === poolEvent.id)).toBe(false);
     expect(result.state.eventHistory).toHaveLength(1);
     expect(result.state.eventHistory[0]).toMatchObject({ eventId: 'pool_a', choiceId: 'choice_a', category: 'GENERAL' });
   });
@@ -121,7 +121,10 @@ describe('resolveEventChoice', () => {
         { id: 'go', text: 'Go', followUpEvent: { chainId: 'x', checkpoint: 'stage2', delayWeeks: 5 } },
       ],
     };
-    const state: GameState = { ...residencyState('followup'), weeklyEventQueue: [chainEvent.id] };
+    const state: GameState = {
+      ...residencyState('followup'),
+      weeklyEventQueue: [{ instanceId: chainEvent.id, eventId: chainEvent.id, boundNpcIds: {} }],
+    };
     const result = resolveEventChoice(state, chainEvent, 'go', createScopedRng('x', 'y'));
     expect(result.state.pendingEvents).toHaveLength(1);
     expect(result.state.pendingEvents[0]).toMatchObject({ chainId: 'x', checkpoint: 'stage2', triggerWeek: state.career.residencyWeek + 5 });
@@ -132,7 +135,10 @@ describe('resolveEventChoice', () => {
       id: 'delayed_a', title: 'T', description: 'D', category: 'GENERAL', triggerMode: 'pool',
       choices: [{ id: 'go', text: 'Go', delayedEffects: [{ delayWeeks: 3, effects: { stress: { min: 4, max: 4 } } }] }],
     };
-    const state: GameState = { ...residencyState('delayed'), weeklyEventQueue: [delayedEvent.id] };
+    const state: GameState = {
+      ...residencyState('delayed'),
+      weeklyEventQueue: [{ instanceId: delayedEvent.id, eventId: delayedEvent.id, boundNpcIds: {} }],
+    };
     const result = resolveEventChoice(state, delayedEvent, 'go', createScopedRng('x', 'y'));
     expect(result.state.pendingEffects).toHaveLength(1);
     expect(result.state.pendingEffects[0].effects.stress).toBe(4);
@@ -144,10 +150,17 @@ describe('resolveEventChoice', () => {
       id: 'tag_a', title: 'T', description: 'D', category: 'GENERAL', triggerMode: 'pool',
       choices: [{ id: 'go', text: 'Go', behaviorTags: ['junior:supportive'], relationshipEffects: [{ npc: 'baris', trust: 10 }] }],
     };
-    const state: GameState = { ...residencyState('tags'), weeklyEventQueue: [tagEvent.id] };
+    const state: GameState = {
+      ...residencyState('tags'),
+      weeklyEventQueue: [{ instanceId: tagEvent.id, eventId: tagEvent.id, boundNpcIds: {} }],
+    };
+    // Barış now exists as a real, procedurally-seeded NpcState with a
+    // small non-zero starting trust (§19) — assert the +10 delta rather
+    // than an assumed-zero baseline.
+    const trustBefore = state.relationships.baris?.trust ?? 0;
     const result = resolveEventChoice(state, tagEvent, 'go', createScopedRng('x', 'y'));
     expect(result.state.behaviorStats['junior:supportive']).toBe(1);
-    expect(result.state.relationships.baris.trust).toBe(10);
+    expect(result.state.relationships.baris.trust).toBe(trustBefore + 10);
     expect(result.visibleEffects).toEqual({});
   });
 });

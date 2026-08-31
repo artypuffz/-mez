@@ -28,7 +28,7 @@ describe('descriptionVariants on real content (chain_baris_03_gerilim)', () => {
   it('switches to the high-grudge variant once grudge crosses its threshold', () => {
     const state: GameState = {
       ...baseState(),
-      relationships: { baris: { trust: 0, friendship: 0, grudge: 30, mobbingTendency: 0, helpfulness: 0, ego: 0, burnoutNpc: 0 } },
+      relationships: { baris: { trust: 0, friendship: 0, grudge: 30 } },
     };
     const ctx = buildRequirementContext(state);
     const text = resolveText(event.description, event.descriptionVariants, ctx);
@@ -39,7 +39,7 @@ describe('descriptionVariants on real content (chain_baris_03_gerilim)', () => {
   it('resolves deterministically for the same relationship state', () => {
     const state: GameState = {
       ...baseState(),
-      relationships: { baris: { trust: 0, friendship: 0, grudge: 30, mobbingTendency: 0, helpfulness: 0, ego: 0, burnoutNpc: 0 } },
+      relationships: { baris: { trust: 0, friendship: 0, grudge: 30 } },
     };
     const ctx = buildRequirementContext(state);
     const a = resolveText(event.description, event.descriptionVariants, ctx);

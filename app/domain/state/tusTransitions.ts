@@ -1,6 +1,7 @@
 import type { GameState } from "./types";
 import type { TusPrepProfileId } from "./types";
 import type { SeededRng } from "../rng/seededRng";
+import { createScopedRng } from "../rng/seededRng";
 import { getTusPrepProfile } from "../config/tusPrepProfiles";
 import { TUS_EXAM_EVENT_DEFINITIONS } from "../config/tusExamEvents";
 import { DEFAULT_TUS_SCORE_CONFIG } from "../config/tusScoreConfig";
@@ -8,6 +9,7 @@ import { pickTusExamEvents } from "../tus/pickTusExamEvents";
 import { computeTusScore } from "../tus/computeTusScore";
 import type { ResidencyProgram } from "../config/residencyPrograms";
 import { deriveResidencyStartDate } from "../residency/calendar";
+import { generateInitialClinic } from "../npc/generation";
 
 // prep -> exam: picks and freezes this playthrough's exam-day event
 // subset+order, so a resumed session sees exactly what it saw before.
@@ -66,7 +68,14 @@ export function proceedToPreference(state: GameState): GameState {
   return { ...state, career: { ...state.career, phase: "preference" } };
 }
 
+// Procedural clinic generation is deterministic for (rngSeed, programId)
+// — the same save re-picking the same program always produces the same
+// roster (§4), scoped independently of every other rng draw in the game.
 export function selectResidencyProgram(state: GameState, program: ResidencyProgram): GameState {
+  const npcRng = createScopedRng(state.meta.rngSeed, `npc:initial:${program.id}`);
+  const { npcs, relationships } = generateInitialClinic(program, npcRng);
+  const npcsById = Object.fromEntries(npcs.map((npc) => [npc.id, npc]));
+
   return {
     ...state,
     character: { ...state.character, currentCity: program.cityId },
@@ -82,5 +91,7 @@ export function selectResidencyProgram(state: GameState, program: ResidencyProgr
       seniorityStage: "comez",
     },
     tus: { ...state.tus, selectedProgramId: program.id },
+    npcs: npcsById,
+    relationships,
   };
 }

@@ -166,7 +166,7 @@ export function createGameStore(
     async resolveActiveEventChoice(eventId, choiceId) {
       const { gameState, isResolvingEvent } = get();
       if (!gameState || isResolvingEvent) return;
-      if (!gameState.weeklyEventQueue.includes(eventId)) return;
+      if (!gameState.weeklyEventQueue.some((q) => q.eventId === eventId)) return;
 
       set({ isResolvingEvent: true });
       try {

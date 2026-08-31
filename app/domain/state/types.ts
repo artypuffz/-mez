@@ -53,16 +53,86 @@ export type CareerPhase =
 
 export type SeniorityStage = "none" | "comez" | "orta" | "kidemli";
 
-// Shape matches the hidden NPC relationship fields described in
-// docs/event-schema.md §6 (behaviorTags / relationship requirements).
+// Purely dyadic (player <-> this NPC) — never the NPC's own personality
+// (that's NpcState.personality below). Phase 5 mixed the two into one
+// object; Phase 6 splits them apart per the design decision in the
+// Phase 6 report.
+//
+//   trust      -100..100  the NPC's professional confidence in the player
+//   friendship -100..100  personal closeness, independent of professional trust
+//   grudge        0..100  accumulated residue of past negative interactions —
+//                         "negative grudge" has no sensible meaning, so
+//                         unlike trust/friendship this is one-directional
 export interface RelationshipState {
   trust: number;
   friendship: number;
   grudge: number;
-  mobbingTendency: number;
+}
+
+// The relationship clamp standard (Phase 6 tech debt closure) — every
+// place that mutates a RelationshipState field (effect application,
+// procedural generation, passive decay) clamps through these same ranges,
+// so the bound is defined exactly once rather than re-guessed per call site.
+export const RELATIONSHIP_FIELD_RANGES: Record<keyof RelationshipState, [number, number]> = {
+  trust: [-100, 100],
+  friendship: [-100, 100],
+  grudge: [0, 100],
+};
+
+export function clampRelationshipField(field: keyof RelationshipState, value: number): number {
+  const [min, max] = RELATIONSHIP_FIELD_RANGES[field];
+  return Math.min(max, Math.max(min, value));
+}
+
+export type NpcId = string;
+
+export type NpcRole =
+  | "department_head"
+  | "faculty"
+  | "specialist"
+  | "senior_resident"
+  | "peer_resident"
+  | "junior_resident"
+  | "nurse"
+  | "secretary";
+
+export type NpcCareerStage = "resident" | "specialist" | "faculty" | "department_head" | "left";
+
+// The NPC's own traits — stable, not tied to any one player interaction.
+// Never shown to the player as numbers (see the İlişkiler tab, which
+// derives a label from RelationshipState instead).
+export interface NpcPersonality {
   helpfulness: number;
   ego: number;
-  burnoutNpc: number;
+  hierarchyOrientation: number;
+  conflictTendency: number;
+  burnout: number;
+}
+
+export interface NpcState {
+  id: NpcId;
+  identity: { name: string; gender?: Gender };
+  role: NpcRole;
+  branchId: BranchId;
+  hospitalId: HospitalId;
+  career: {
+    stage: NpcCareerStage;
+    seniorityLevel?: number;
+    joinedWeek: number;
+    leftWeek?: number;
+  };
+  personality: NpcPersonality;
+  active: boolean;
+  // Set only for authored characters generated from a fixed template
+  // (e.g. "baris") — lets content require a specific narrative NPC exist
+  // without the engine ever special-casing a name (see domain/npc/templates.ts).
+  templateId?: string;
+}
+
+export interface NpcTransition {
+  npcId: NpcId;
+  type: "became_specialist" | "became_faculty" | "became_department_head" | "left" | "arrived";
+  week: number;
 }
 
 // A followUpEvent waiting to resolve at a chainId+checkpoint (see
@@ -110,7 +180,20 @@ export interface PendingEffectEntry {
   effects: ResolvedResourceDelta;
 }
 
-export const CURRENT_SAVE_VERSION = 4;
+// A single queued-for-this-week event, with any NPC selectors already
+// resolved and frozen (§16 of Phase 6) — a refresh mid-week must show the
+// exact same NPC(s), never re-roll a selector like npcSelector:
+// {randomActiveByRole:"junior_resident"}.
+export interface QueuedEventInstance {
+  instanceId: string;
+  eventId: string;
+  // selector key (e.g. "primary") -> resolved NpcId. Empty for events
+  // with no npcSelectors (the vast majority, including all authored
+  // fixed-id content like chain-baris.json).
+  boundNpcIds: Record<string, NpcId>;
+}
+
+export const CURRENT_SAVE_VERSION = 5;
 
 export interface GameState {
   meta: {
@@ -158,7 +241,9 @@ export interface GameState {
     money: number;
   };
 
-  relationships: Record<string, RelationshipState>;
+  relationships: Record<NpcId, RelationshipState>;
+
+  npcs: Record<NpcId, NpcState>;
 
   flags: Record<string, boolean | number | string>;
 
@@ -177,11 +262,11 @@ export interface GameState {
 
   pendingEffects: PendingEffectEntry[];
 
-  // Event ids generated for the CURRENT week, awaiting player resolution,
-  // in display order. Must be empty before advanceWeek is allowed to run
+  // Events generated for the CURRENT week, awaiting player resolution, in
+  // display order. Must be empty before advanceWeek is allowed to run
   // again — see the store's guard. Persisted (not ephemeral) so an app
-  // close mid-event doesn't lose or reroll it.
-  weeklyEventQueue: string[];
+  // close mid-event doesn't lose it, reroll it, or re-bind its NPCs.
+  weeklyEventQueue: QueuedEventInstance[];
 
   status: "active" | "gameover" | "specialist";
 }

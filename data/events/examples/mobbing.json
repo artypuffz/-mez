@@ -39,7 +39,7 @@
         "relationshipEffects": [
           {
             "npc": "kidemli_generic",
-            "ego": 3
+            "trust": 2
           }
         ]
       },

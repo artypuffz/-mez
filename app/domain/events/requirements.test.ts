@@ -61,7 +61,7 @@ describe('evaluateRequirements', () => {
     const base = createInitialGameState({ name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' });
     const c = buildRequirementContext({
       ...base,
-      relationships: { baris: { trust: 15, friendship: 0, grudge: 0, mobbingTendency: 0, helpfulness: 0, ego: 0, burnoutNpc: 0 } },
+      relationships: { baris: { trust: 15, friendship: 0, grudge: 0 } },
     });
     expect(evaluateRequirements({ relationship: { npc: 'baris', trust: { gte: 10 } } }, c)).toBe(true);
     expect(evaluateRequirements({ relationship: { npc: 'baris', trust: { gte: 20 } } }, c)).toBe(false);

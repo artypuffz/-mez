@@ -25,20 +25,23 @@ const StatConditionSchema = ComparisonOperatorsSchema.extend({ stat: z.string().
 const FlagConditionSchema = ComparisonOperatorsSchema.extend({ flag: z.string().min(1) }).strict();
 const BranchInConditionSchema = z.object({ branchIn: z.array(z.string().min(1)).min(1) }).strict();
 
+// Every NPC target below (relationship condition/effect, npcTransition)
+// takes exactly one of npc (a fixed authored id) or boundNpc (a key into
+// the event's own npcSelectors, resolved at queue time — §16/§24).
 const RelationshipConditionSchema = z
   .object({
     relationship: z
       .object({
-        npc: z.string().min(1),
+        npc: z.string().min(1).optional(),
+        boundNpc: z.string().min(1).optional(),
         trust: ComparisonOperatorsSchema.optional(),
         friendship: ComparisonOperatorsSchema.optional(),
         grudge: ComparisonOperatorsSchema.optional(),
-        mobbingTendency: ComparisonOperatorsSchema.optional(),
-        helpfulness: ComparisonOperatorsSchema.optional(),
-        ego: ComparisonOperatorsSchema.optional(),
-        burnoutNpc: ComparisonOperatorsSchema.optional(),
       })
-      .strict(),
+      .strict()
+      .refine((r) => (r.npc ? 1 : 0) + (r.boundNpc ? 1 : 0) === 1, {
+        message: "exactly one of npc/boundNpc must be set",
+      }),
   })
   .strict();
 
@@ -82,19 +85,46 @@ const EffectMapSchema = z
 
 // Same principle for relationship fields — .strict() catches "invalid
 // relationship field" (a typo'd field name fails validation instead of
-// silently doing nothing at runtime).
+// silently doing nothing at runtime). Narrowed in Phase 6 to
+// trust/friendship/grudge only — NPC personality never mixes in here.
 const RelationshipEffectSchema = z
   .object({
-    npc: z.string().min(1),
+    npc: z.string().min(1).optional(),
+    boundNpc: z.string().min(1).optional(),
     trust: z.number().optional(),
     friendship: z.number().optional(),
     grudge: z.number().optional(),
-    mobbingTendency: z.number().optional(),
-    helpfulness: z.number().optional(),
-    ego: z.number().optional(),
-    burnoutNpc: z.number().optional(),
   })
-  .strict();
+  .strict()
+  .refine((e) => (e.npc ? 1 : 0) + (e.boundNpc ? 1 : 0) === 1, {
+    message: "exactly one of npc/boundNpc must be set",
+  });
+
+const NPC_TRANSITION_TYPES = ["became_specialist", "became_faculty", "became_department_head", "left"] as const;
+
+const NpcTransitionEffectSchema = z
+  .object({
+    npc: z.string().min(1).optional(),
+    boundNpc: z.string().min(1).optional(),
+    type: z.enum(NPC_TRANSITION_TYPES),
+  })
+  .strict()
+  .refine((e) => (e.npc ? 1 : 0) + (e.boundNpc ? 1 : 0) === 1, {
+    message: "exactly one of npc/boundNpc must be set",
+  });
+
+const NPC_ROLES = [
+  "department_head", "faculty", "specialist", "senior_resident",
+  "peer_resident", "junior_resident", "nurse", "secretary",
+] as const;
+
+const NpcSelectorSchema = z.union([
+  z.object({ byId: z.string().min(1) }).strict(),
+  z.object({ randomActiveByRole: z.enum(NPC_ROLES) }).strict(),
+  z.object({ highestTrustByRole: z.enum(NPC_ROLES) }).strict(),
+  z.object({ highestGrudgeByRole: z.enum(NPC_ROLES) }).strict(),
+  z.object({ lowestTrustByRole: z.enum(NPC_ROLES) }).strict(),
+]);
 
 const FollowUpRefSchema = z
   .object({
@@ -129,6 +159,7 @@ const ChoiceDefinitionSchema = z
     behaviorTags: z.array(z.string().regex(BEHAVIOR_TAG_PATTERN, "malformed behaviorTag")).optional(),
     statistics: z.object({ increment: z.record(z.string(), z.number()).optional() }).strict().optional(),
     followUpEvent: FollowUpRefSchema.optional(),
+    npcTransitions: z.array(NpcTransitionEffectSchema).optional(),
   })
   .strict();
 
@@ -154,6 +185,9 @@ const EventDefinitionSchema = z
     priority: z.number().optional(),
     isFallback: z.boolean().optional(),
     choices: z.array(ChoiceDefinitionSchema).min(1, "event has no choices"),
+    once: z.boolean().optional(),
+    npcSelectors: z.record(z.string(), NpcSelectorSchema).optional(),
+    requiredNpcTemplate: z.string().min(1).optional(),
   })
   .strict()
   .refine((e) => e.triggerMode !== "scheduled" || (!!e.chainId && !!e.chainCheckpoint), {
@@ -268,6 +302,29 @@ export function validateEventContent(rawEvents: unknown[], externallySetFlags: s
   for (const flag of referencedFlags) {
     if (!setFlags.has(flag)) {
       issues.push({ severity: "warning", message: `flag "${flag}" is checked in a requirement but never set anywhere — likely unreachable content` });
+    }
+  }
+
+  // A `boundNpc: "x"` reference that isn't a key in this event's own
+  // npcSelectors is a content typo — it would silently resolve to no NPC
+  // (skipped by the effect applier) rather than crash, so this is the
+  // only place that would ever catch it.
+  for (const e of events) {
+    const selectorKeys = new Set(Object.keys(e.npcSelectors ?? {}));
+    for (const c of e.choices) {
+      const boundRefs = [
+        ...(c.relationshipEffects ?? []).map((r) => r.boundNpc),
+        ...(c.npcTransitions ?? []).map((t) => t.boundNpc),
+      ].filter((v): v is string => !!v);
+      for (const ref of boundRefs) {
+        if (!selectorKeys.has(ref)) {
+          issues.push({
+            severity: "error",
+            eventId: e.id,
+            message: `choice "${c.id}" references boundNpc "${ref}" which is not a key in this event's npcSelectors`,
+          });
+        }
+      }
     }
   }
 

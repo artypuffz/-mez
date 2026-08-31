@@ -212,8 +212,7 @@
         "relationshipEffects": [
           {
             "npc": "hoca_generic",
-            "trust": 2,
-            "ego": -2
+            "trust": 1
           }
         ]
       },

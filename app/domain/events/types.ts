@@ -1,7 +1,11 @@
-// Mirrors docs/event-schema.md v0.2. Where this phase extends beyond what
+// Mirrors docs/event-schema.md v0.3. Where this phase extends beyond what
 // that doc shows (the full eq/neq/gt/gte/lt/lte/in/notIn operator set,
 // rather than just the eq/gte/lte the doc's examples happened to use),
 // it's a superset, not a contradiction — see the Phase 5 report.
+
+import type { NpcTargetRef } from "./npcTargets";
+import type { NpcSelector } from "../npc/selector";
+import type { NpcTransition } from "../state/types";
 
 export type EventCategory =
   | "GENERAL"
@@ -46,19 +50,14 @@ export interface BranchInCondition {
   branchIn: string[];
 }
 
-export type RelationshipField =
-  | "trust"
-  | "friendship"
-  | "grudge"
-  | "mobbingTendency"
-  | "helpfulness"
-  | "ego"
-  | "burnoutNpc";
+// Narrowed in Phase 6 — NPC personality now lives entirely in
+// NpcState.personality, never mixed into the dyadic relationship record.
+export type RelationshipField = "trust" | "friendship" | "grudge";
 
 export type RelationshipConditionFields = Partial<Record<RelationshipField, ComparisonOperators>>;
 
 export interface RelationshipCondition {
-  relationship: { npc: string } & RelationshipConditionFields;
+  relationship: NpcTargetRef & RelationshipConditionFields;
 }
 
 export type LeafCondition = StatCondition | FlagCondition | BranchInCondition | RelationshipCondition;
@@ -85,7 +84,7 @@ export interface EffectMap {
   money?: NumericOrRange;
 }
 
-export type RelationshipEffect = { npc: string } & Partial<Record<RelationshipField, number>>;
+export type RelationshipEffect = NpcTargetRef & Partial<Record<RelationshipField, number>>;
 
 export interface FollowUpRef {
   chainId: string;
@@ -98,6 +97,15 @@ export interface DelayedEffectEntry {
   effects: EffectMap;
 }
 
+// An authored, immediate NPC lifecycle change — distinct from the generic
+// monthly lifecycle tick (domain/npc/lifecycle.ts). This is how
+// chain-baris.json narrates Barış becoming a specialist at his chain's
+// resolution: the engine applies whatever `type` the content authors,
+// with zero special-casing of which npc/boundNpc it targets (§12, §31).
+export type NpcTransitionEffect = NpcTargetRef & {
+  type: NpcTransition["type"];
+};
+
 export interface ChoiceDefinition {
   id: string;
   text: string;
@@ -109,6 +117,7 @@ export interface ChoiceDefinition {
   behaviorTags?: string[];
   statistics?: { increment?: Record<string, number> };
   followUpEvent?: FollowUpRef;
+  npcTransitions?: NpcTransitionEffect[];
 }
 
 export interface EventDefinition {
@@ -127,4 +136,18 @@ export interface EventDefinition {
   priority?: number;
   isFallback?: boolean;
   choices: ChoiceDefinition[];
+  // True one-shot content (§21): once this event id appears anywhere in
+  // eventHistory, it's never eligible again — pool or scheduled/chain.
+  // Distinct from cooldownWeeks, which just gates re-triggering for a
+  // while and always remains eligible again eventually.
+  once?: boolean;
+  // Procedural NPC binding (§15/§16): resolved exactly once, when this
+  // event is added to weeklyEventQueue, into QueuedEventInstance.boundNpcIds.
+  // Key is an arbitrary selector name content refers to via `boundNpc`
+  // (e.g. "primary") in relationshipEffects/relationship conditions.
+  npcSelectors?: Record<string, NpcSelector>;
+  // Gates eligibility on a specific authored NpcTemplate existing in the
+  // roster (e.g. "baris") — how authored content requires a template
+  // character without the engine special-casing a name (§17/§18).
+  requiredNpcTemplate?: string;
 }

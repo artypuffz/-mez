@@ -64,6 +64,7 @@ export function createInitialGameState(
       money: DEFAULT_RESOURCES.money + (modifiers.money ?? 0),
     },
     relationships: {},
+    npcs: {},
     flags: { ...backgroundDef.flags },
     pendingEvents: [],
     activeChains: {},

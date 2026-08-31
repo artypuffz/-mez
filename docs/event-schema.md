@@ -1,4 +1,4 @@
-# ÇÖMEZ — Event Schema & DSL Referansı (v0.2)
+# ÇÖMEZ — Event Schema & DSL Referansı (v0.3)
 
 Bu doküman, event motoru (Faz 5) implementasyonunda kullanılacak resmi
 şemadır. `docs/event-design-bible.md` bu şemanın *neden* bu şekilde
@@ -7,10 +7,20 @@ olduğunu (tasarım gerekçesi, örnekler) anlatır; burası sade referans.
 ## Değişiklik Geçmişi
 
 - **v0.1** → mimari dokümanın ilk taslağındaki şema.
-- **v0.2** (bu doküman) → Event Design Bible turu + ek 7 tasarım kararı
-  sonrası: `triggerMode`, `choice.requirements`, text variant desteği,
-  esnek (rigid olmayan) zincir çözümleme, genelleştirilmiş `behaviorTags`
-  sayaç mekanizması, `requirements`'a `any` (OR) desteği.
+- **v0.2** → Event Design Bible turu + ek 7 tasarım kararı sonrası:
+  `triggerMode`, `choice.requirements`, text variant desteği, esnek (rigid
+  olmayan) zincir çözümleme, genelleştirilmiş `behaviorTags` sayaç
+  mekanizması, `requirements`'a `any` (OR) desteği.
+- **v0.3** (bu doküman, Faz 6) → NPC üretimi/lifecycle/relationship
+  modeli kesinleşmesi sonrası: `RelationshipField` `trust`/`friendship`/
+  `grudge`'a daraldı (NPC kişiliği artık `NpcState.personality`'de, asla
+  relationship kaydına karışmıyor — bkz. §8); NPC hedefleme `npc` (sabit
+  id) **veya** `boundNpc` (event'in kendi `npcSelectors`'ından çözülen
+  anahtar) olabiliyor (§9); `event.once` gerçek tek-seferlik mekanizması
+  eklendi, `cooldownWeeks`'ten ayrı bir kavram (§10); `event.
+  requiredNpcTemplate` authored karakter şablonlarını (örn. "baris")
+  isim özel-case'lemeden gate'liyor (§11); `choice.npcTransitions`
+  authored, anlık NPC lifecycle geçişleri için (§12).
 
 ---
 
@@ -36,6 +46,9 @@ interface EventDef {
   priority?: number;                   // YENİ (v0.2) — aday çakışmasında öncelik (yüksek kazanır)
   isFallback?: boolean;                // YENİ (v0.2) — hiçbir aday eşleşmezse son çare
   choices: ChoiceDef[];
+  once?: boolean;                      // YENİ (v0.3) — bkz. §10
+  npcSelectors?: Record<string, NpcSelector>; // YENİ (v0.3) — bkz. §9.2
+  requiredNpcTemplate?: string;        // YENİ (v0.3) — bkz. §11
 }
 ```
 
@@ -53,6 +66,7 @@ interface ChoiceDef {
   behaviorTags?: string[];             // YENİ (v0.2) — bkz. §5
   statistics?: { increment?: Record<string, number> }; // serbest sayaçlar (nadiren gerekir; genelde behaviorTags tercih edilir)
   followUpEvent?: FollowUpRef;         // GÜNCELLENDİ (v0.2) — bkz. §4
+  npcTransitions?: NpcTransitionEffect[]; // YENİ (v0.3) — bkz. §12
 }
 ```
 
@@ -136,8 +150,22 @@ type LeafCondition =
   | { stat: string; eq?: any; gte?: number; lte?: number }
   | { flag: string; eq: boolean | number | string }
   | { branchIn: string[] }
-  | { relationship: { npc: string; trust?: RangeCond; grudge?: RangeCond; ego?: RangeCond; /* ... */ } };
+  | { relationship: NpcTargetRef & { trust?: RangeCond; friendship?: RangeCond; grudge?: RangeCond } };
+
+// NpcTargetRef — GÜNCELLENDİ (v0.3): npc VE relationshipEffect'in ikisi de
+// artık ya sabit bir id (`npc`) ya da event'in kendi npcSelectors'ından
+// çözülen bir anahtar (`boundNpc`) kabul eder; tam olarak biri set edilmeli.
+// bkz. §9.
+type NpcTargetRef = { npc: string } | { boundNpc: string };
 ```
+
+> **v0.3 kırılma notu:** `RelationshipField` v0.2'de `trust | friendship |
+> grudge | mobbingTendency | helpfulness | ego | burnoutNpc` idi. Faz 6,
+> NPC'nin kendi kişiliğini (`helpfulness`/`ego`/`hierarchyOrientation`/
+> `conflictTendency`/`burnout`) tamamen `NpcState.personality`'ye taşıdı —
+> relationship kaydı artık **yalnızca** `trust | friendship | grudge`
+> taşır, hiçbir zaman NPC'nin kendi trait'leriyle karışmaz. `mobbingTendency`
+> ve `burnoutNpc` hiç kullanılmıyordu, kaldırıldı.
 
 `any`/`all` iç içe geçebilir (`all` içinde `any`, vs.) — bu, esnek zincir
 çözümlemesinin (flag OR relationship-threshold) temelini oluşturur.
@@ -206,9 +234,130 @@ flag'e değil, bu sayaçların **oranına** bakar (örn.
 az iki katıysa "döngüyü kırdın"). Kesin eşik Faz 9'da denge testleriyle
 netleştirilecek; mekanizma şimdiden veri topluyor.
 
-## 7. Migration Notu
+## 8. NPC Kimliği vs. İlişki (YENİ, v0.3)
 
-Henüz hiçbir save formatı veya çalışan engine implementasyonu yok (Faz 1
-öncesi). Bu nedenle **migration gerekmiyor** — v0.2 şeması sıfırdan
-uygulanacak ilk versiyon olacak. `data/events/examples/` altındaki mevcut
-örnekler bu doküman yazılırken v0.2'ye uygun şekilde güncellendi.
+Faz 5'te bir NPC yalnızca bir relationship kaydıydı (`relationships[npcId]`)
+— kimliği/rolü/kişiliği yoktu, sadece "trust/grudge/vs. taşıyan bir obje".
+Faz 6, her NPC'yi gerçek bir `NpcState` (kimlik, rol, kariyer aşaması,
+kişilik, aktif/ayrılmış durumu) olarak üretiyor; `relationships[npcId]`
+artık yalnızca **oyuncu ↔ o NPC arası dyadic durumu** taşıyor
+(`trust`/`friendship`/`grudge`). Bu ayrım motorun/DSL'in her yerinde
+korunuyor — bir requirement veya effect asla ikisini aynı obje sanmıyor.
+
+NPC roster'ı `domain/npc/generation.ts`'teki `generateInitialClinic` ile
+seed+program başına deterministik üretilir (aynı seed + aynı program →
+aynı roster). Authored karakterler (örn. Barış) `domain/npc/templates.ts`
+üzerinden roster'a enjekte edilir; **id'leri kendi templateId'leriyle
+aynıdır** (`"baris"`), böylece mevcut content (`{"npc": "baris"}`) hiçbir
+değişiklik gerektirmeden gerçek bir `NpcState`'e karşılık gelir — motor
+hiçbir yerde isimle özel-case yapmaz.
+
+## 9. NPC Hedefleme: Sabit id vs. `npcSelectors` (YENİ, v0.3)
+
+Authored content (Barış Hattı gibi) her zaman olduğu gibi sabit bir id
+kullanır: `{"npc": "baris"}`. Ama prosedürel event'ler (örn. "kıdemli
+asistanın artık bir çömezi var" tekrar eden içeriği) hangi NPC'yi
+hedefleyeceğini yazım anında bilemez — bunun için event, kendi
+`npcSelectors` haritasını tanımlar ve içerik `boundNpc` ile o anahtara
+referans verir.
+
+### 9.1 Bağlama zamanı ve donma kuralı
+
+Bir event'in `npcSelectors`'ı, event **o haftanın kuyruğuna eklendiği an**
+(havuzdan çekildiğinde veya bir checkpoint çözüldüğünde) tam olarak bir kez
+çözülür ve sonuç `QueuedEventInstance.boundNpcIds`'e yazılır. Bu bağlama
+**asla yeniden çalışmaz** — bir refresh/reload sadece kaydedilmiş
+`boundNpcIds`'i okur, seçiciyi tekrar çalıştırmaz. Bu, Faz 5'in "queue
+refresh sonrası sabit kalmalı" garantisinin NPC hedeflemesine genişletilmiş
+hali.
+
+### 9.2 `NpcSelector` çeşitleri
+
+```ts
+type NpcSelector =
+  | { byId: string }
+  | { randomActiveByRole: NpcRole }
+  | { highestTrustByRole: NpcRole }
+  | { highestGrudgeByRole: NpcRole }
+  | { lowestTrustByRole: NpcRole };
+```
+
+Hiçbir aday role uymuyorsa (örn. `junior_resident` yoksa) o anahtar
+`boundNpcIds`'e hiç yazılmaz — o anahtarı referans veren bir effect/
+requirement sessizce no-op olur (crash olmaz).
+
+```json
+{
+  "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+  "choices": [
+    {
+      "id": "nobetini_degistir",
+      "relationshipEffects": [{ "boundNpc": "primary", "trust": 12 }]
+    }
+  ]
+}
+```
+
+## 10. `once` — Gerçek Tek-Seferlik Mekanizması (YENİ, v0.3)
+
+Faz 5'te tek-seferlik event'ler `cooldownWeeks: 999` ile taklit
+ediliyordu — pratikte hiç tekrarlanmıyordu ama kavramsal olarak
+"tekrar açılabilir cooldown"dan ayrı değildi. `once: true`, `eventHistory`
+içinde bu event id'si **bir kez bile** geçtiyse o event'i bir daha asla
+uygun (eligible) saymaz — havuz event'i olsun, scheduled/checkpoint aday
+olsun fark etmez. `cooldownWeeks` ve `once` birbirinden bağımsız alanlar:
+`cooldownWeeks` her zaman eninde sonunda yeniden açılır, `once` asla
+açılmaz.
+
+## 11. `requiredNpcTemplate` — Authored Karakter Var mı? (YENİ, v0.3)
+
+Bir event'in (Barış'a özel bir mobbing event'i gibi) yalnızca ilgili
+authored karakter roster'da hâlâ aktifken uygun olması gerekebilir.
+`requiredNpcTemplate: "baris"`, o `templateId`'ye sahip aktif bir
+`NpcState` roster'da yoksa (hiç üretilmediyse veya ayrıldıysa) event'i
+elenmiş sayar — motor content'i isimle özel-case'lemeden.
+
+## 12. `choice.npcTransitions` — Authored, Anlık NPC Geçişleri (YENİ, v0.3)
+
+Genel aylık lifecycle tick'inden (bkz. Event Design Bible §NPC Lifecycle)
+bağımsız olarak, authored bir zincirin kendi anlatısı bir NPC'nin kariyer
+aşamasını hemen değiştirebilir — örn. Barış Hattı stage4'te "Barış uzman
+oldu" metni zaten bunu iddia ediyor, dolayısıyla o seçimin çözülmesiyle
+Barış'ın gerçek `NpcState.career.stage`'i de `specialist`'e döner:
+
+```json
+{
+  "id": "teklifi_kabul",
+  "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }]
+}
+```
+
+`type`: `became_specialist | became_faculty | became_department_head | left`.
+Genel (procedural) lifecycle tick'i templated NPC'lere hiç dokunmaz —
+Barış gibi authored karakterlerin kariyer geçişleri yalnızca bu mekanizma
+veya doğrudan içerik üzerinden olur.
+
+## 13. Migration Notu
+
+`data/events/examples/` altındaki mevcut örnekler v0.3'e uygun şekilde
+güncellendi: relationship effect/condition'lardan kaldırılan
+`ego`/`mobbingTendency`/`helpfulness`/`burnoutNpc` alanları temizlendi
+(yalnızca 4 gerçek kullanım vardı, hepsi küçük `trust` delta'larıyla
+değiştirildi); `career-npc-mirror.json`'daki `mirror_02/03/04` ve
+`chain-baris.json`'daki stage5 "yeni çömez" seçimleri artık
+`comez_generic` sabit id'si yerine `npcSelectors: {"primary":
+{"randomActiveByRole": "junior_resident"}}` + `boundNpc: "primary"`
+kullanıyor; `chain-baris.json` stage4'ün her seçimine Barış'ı
+`specialist`'e geçiren bir `npcTransitions` effect'i eklendi.
+
+Save formatı tarafında bu, `CURRENT_SAVE_VERSION`'ı v4 → v5'e taşıdı
+(`domain/state/migrations.ts`'teki migration `4`): relationship kayıtları
+yukarıdaki daralmış şekle indirgeniyor; `weeklyEventQueue`'daki string
+event id'leri `QueuedEventInstance {instanceId, eventId, boundNpcIds: {}}`
+objelerine sarılıyor; ve zaten asistanlık aşamasındaki bir save için roster
+`selectResidencyProgram`'ın kullandığı aynı deterministik
+`npc:initial:${programId}` rng scope'uyla **geriye dönük üretiliyor** (boş
+bırakılmıyor) — mevcut `baris` gibi gerçek roster id'lerine ait
+relationship kayıtları varsa bu üretimin üzerine yazılıp korunuyor, henüz
+asistanlığa başlamamış bir save için roster boş kalıyor (karakter
+`selectResidencyProgram`'a normal akışla ulaştığında üretilecek).

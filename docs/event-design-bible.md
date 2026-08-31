@@ -6,8 +6,13 @@ zinciri üzerinden ton, seçim sertliği, kategori dengesi ve şemanın yeterlil
 doğrulanıyor. Örnek JSON'lar `data/events/examples/` altında, motora
 gireceklerinde `data/events/` altına taşınacak şekilde yazıldı.
 
-**Şema referansı artık ayrı dokümanda:** `docs/event-schema.md` (v0.2).
-Bu doküman *neden* sorularına, `event-schema.md` *nasıl* sorusuna cevap verir.
+**Şema referansı artık ayrı dokümanda:** `docs/event-schema.md` (güncel:
+v0.3, Faz 6). Bu doküman *neden* sorularına, `event-schema.md` *nasıl*
+sorusuna cevap verir. Faz 6, NPC üretimi/lifecycle/relationship modelini
+kesinleştirdi (`docs/event-schema.md`'nin v0.3 değişiklik geçmişine bakın)
+— aşağıdaki ton/tasarım kararları ve örnekler hâlâ geçerli, yalnızca
+relationship alan listesi (`trust`/`friendship`/`grudge`) ve NPC hedefleme
+mekanizması (`npc` sabit id / `boundNpc` seçici anahtarı) değişti.
 
 ## v0.2 Değişiklik Özeti
 

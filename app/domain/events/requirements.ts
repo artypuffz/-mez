@@ -4,6 +4,7 @@ import type {
   ComparisonOperators,
   RequirementNode,
 } from "./types";
+import { resolveNpcTargetId } from "./npcTargets";
 
 // The DSL's view of GameState — a deliberately controlled surface rather
 // than the raw GameState, so the queryable set stays stable even if
@@ -26,9 +27,34 @@ export interface RequirementContext {
   statistics: Record<string, number>;
   behaviorStats: Record<string, number>;
   relationships: Record<string, RelationshipState>;
+  // Resolved keys of the CURRENT QueuedEventInstance's boundNpcIds (empty
+  // before an event is bound, e.g. during pool/checkpoint eligibility
+  // scanning — see the ordering note in domain/npc/selector.ts).
+  boundNpcIds: Record<string, string>;
+  // Active NpcState.templateId values present in the roster — backs
+  // EventDefinition.requiredNpcTemplate without the DSL ever needing to
+  // know what an NpcState looks like.
+  activeNpcTemplateIds: Set<string>;
+  // §9/§29 — lets a requirement read an NPC's CURRENT role/career stage
+  // (e.g. {stat: "npcs.baris.career.stage", eq: "specialist"}) via the
+  // existing generic "stat" dot-path leaf, rather than a whole new
+  // requirement-node kind. Only meaningful for a fixed, known id
+  // (authored content like "baris") — a procedurally-bound npc's id
+  // isn't known at content-authoring time.
+  npcs: Record<string, { role: string; career: { stage: string }; active: boolean }>;
 }
 
-export function buildRequirementContext(state: GameState): RequirementContext {
+export function buildRequirementContext(
+  state: GameState,
+  boundNpcIds: Record<string, string> = {}
+): RequirementContext {
+  const activeNpcTemplateIds = new Set<string>();
+  const npcs: RequirementContext["npcs"] = {};
+  for (const npc of Object.values(state.npcs)) {
+    if (npc.active && npc.templateId) activeNpcTemplateIds.add(npc.templateId);
+    npcs[npc.id] = { role: npc.role, career: { stage: npc.career.stage }, active: npc.active };
+  }
+
   return {
     career: {
       phase: state.career.phase,
@@ -45,6 +71,9 @@ export function buildRequirementContext(state: GameState): RequirementContext {
     statistics: state.statistics,
     behaviorStats: state.behaviorStats,
     relationships: state.relationships,
+    boundNpcIds,
+    activeNpcTemplateIds,
+    npcs,
   };
 }
 
@@ -76,8 +105,10 @@ function evaluateRelationship(
   node: Extract<RequirementNode, { relationship: unknown }>,
   ctx: RequirementContext
 ): boolean {
-  const { npc, ...fields } = node.relationship;
-  const rel = ctx.relationships[npc];
+  const { npc, boundNpc, ...fields } = node.relationship;
+  const npcId = resolveNpcTargetId({ npc, boundNpc }, ctx.boundNpcIds);
+  if (!npcId) return false;
+  const rel = ctx.relationships[npcId];
   if (!rel) return false;
   return (Object.keys(fields) as (keyof typeof fields)[]).every((field) => {
     const cond = fields[field];

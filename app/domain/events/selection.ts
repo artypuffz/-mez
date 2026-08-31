@@ -58,7 +58,8 @@ export function selectPoolEvents(
   cooldowns: Record<string, number>,
   budget: number,
   rng: SeededRng,
-  config: PoolSelectionConfig = DEFAULT_POOL_SELECTION_CONFIG
+  config: PoolSelectionConfig = DEFAULT_POOL_SELECTION_CONFIG,
+  eventHistory: { eventId: string }[] = []
 ): PoolSelectionResult {
   const pool = repository.getPoolEvents();
   const cooldownRejectedIds: string[] = [];
@@ -70,7 +71,7 @@ export function selectPoolEvents(
       cooldownRejectedIds.push(event.id);
       continue;
     }
-    if (!isEventEligible(event, ctx)) {
+    if (!isEventEligible(event, ctx, eventHistory)) {
       requirementsRejectedIds.push(event.id);
       continue;
     }

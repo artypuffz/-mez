@@ -11,12 +11,15 @@ interface Props {
   gameState: GameState;
   disabled: boolean;
   onChoose: (choiceId: string) => void;
+  // The active QueuedEventInstance's already-resolved NPC bindings (§16)
+  // — never re-selected here, just read.
+  boundNpcIds?: Record<string, string>;
 }
 
 // Only visible resource effects are ever shown here — hidden
 // relationship/flag/behaviorTag changes never appear in the UI (§26/27).
-export default function EventCard({ event, gameState, disabled, onChoose }: Props) {
-  const ctx = buildRequirementContext(gameState);
+export default function EventCard({ event, gameState, disabled, onChoose, boundNpcIds = {} }: Props) {
+  const ctx = buildRequirementContext(gameState, boundNpcIds);
   const title = resolveText(event.title, event.titleVariants, ctx);
   const description = resolveText(event.description, event.descriptionVariants, ctx);
   const choices = getVisibleChoices(event, ctx);

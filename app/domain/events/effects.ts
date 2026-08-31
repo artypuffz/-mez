@@ -1,6 +1,7 @@
 import type { SeededRng } from "../rng/seededRng";
-import type { RelationshipState, ResolvedResourceDelta } from "../state/types";
-import type { EffectMap, NumericOrRange, RelationshipEffect, RelationshipField } from "./types";
+import { clampRelationshipField, type NpcState, type NpcTransition, type RelationshipState, type ResolvedResourceDelta } from "../state/types";
+import type { EffectMap, NpcTransitionEffect, NumericOrRange, RelationshipEffect, RelationshipField } from "./types";
+import { resolveNpcTargetId } from "./npcTargets";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -48,52 +49,85 @@ const DEFAULT_RELATIONSHIP_STATE: RelationshipState = {
   trust: 0,
   friendship: 0,
   grudge: 0,
-  mobbingTendency: 0,
-  helpfulness: 0,
-  ego: 0,
-  burnoutNpc: 0,
 };
 
-const RELATIONSHIP_FIELDS: RelationshipField[] = [
-  "trust",
-  "friendship",
-  "grudge",
-  "mobbingTendency",
-  "helpfulness",
-  "ego",
-  "burnoutNpc",
-];
-
-// Not specified by the schema — clamped to [-100, 100] as a documented
-// engine default: permissive enough to keep every existing example's
-// deltas meaningful (ego can go negative, ranges reach the 30s), but
-// bounded so nothing runs away unboundedly.
-const RELATIONSHIP_MIN = -100;
-const RELATIONSHIP_MAX = 100;
+const RELATIONSHIP_FIELDS: RelationshipField[] = ["trust", "friendship", "grudge"];
 
 // Auto-creates a relationship record on first contact — this is the ONE
 // place that's allowed to happen (an effect is an explicit authored
 // interaction with that NPC). Requirement evaluation (requirements.ts)
 // never does this — a missing NPC there just fails the condition.
+//
+// boundNpcIds resolves `{boundNpc: "primary"}` targets (§24) — a target
+// that can't be resolved (unbound key, or `npc`/`boundNpc` both missing)
+// is skipped entirely rather than silently writing to relationships[undefined].
 export function applyRelationshipEffects(
   relationships: Record<string, RelationshipState>,
-  effects: RelationshipEffect[] | undefined
+  effects: RelationshipEffect[] | undefined,
+  boundNpcIds: Record<string, string> = {}
 ): Record<string, RelationshipState> {
   if (!effects || effects.length === 0) return relationships;
   const next = { ...relationships };
   for (const effect of effects) {
-    const { npc, ...deltas } = effect;
-    const current = next[npc] ?? DEFAULT_RELATIONSHIP_STATE;
+    const { npc, boundNpc, ...deltas } = effect;
+    const npcId = resolveNpcTargetId({ npc, boundNpc }, boundNpcIds);
+    if (!npcId) continue;
+    const current = next[npcId] ?? DEFAULT_RELATIONSHIP_STATE;
     const updated = { ...current };
     for (const field of RELATIONSHIP_FIELDS) {
       const delta = deltas[field];
       if (delta !== undefined) {
-        updated[field] = clamp(current[field] + delta, RELATIONSHIP_MIN, RELATIONSHIP_MAX);
+        updated[field] = clampRelationshipField(field, current[field] + delta);
       }
     }
-    next[npc] = updated;
+    next[npcId] = updated;
   }
   return next;
+}
+
+const NPC_TRANSITION_TARGET: Record<NpcTransition["type"], Partial<Pick<NpcState, "role" | "active">> & { stage: NpcState["career"]["stage"] }> = {
+  became_specialist: { role: "specialist", stage: "specialist" },
+  became_faculty: { role: "faculty", stage: "faculty" },
+  became_department_head: { role: "department_head", stage: "department_head" },
+  left: { active: false, stage: "left" },
+  // "arrived" is only ever produced by lifecycle replenishment, never by
+  // an authored choice effect — spawnNpc already creates the NpcState.
+  arrived: { stage: "resident" },
+};
+
+// Authored, immediate NPC transitions (§12/§31) — e.g. chain-baris.json's
+// resolution making Barış a specialist. Distinct from the generic monthly
+// lifecycle tick; applies right when the choice resolves, same as any
+// other effect.
+export function applyNpcTransitionEffects(
+  npcs: Record<string, NpcState>,
+  effects: NpcTransitionEffect[] | undefined,
+  boundNpcIds: Record<string, string>,
+  currentWeek: number
+): { npcs: Record<string, NpcState>; transitions: NpcTransition[] } {
+  if (!effects || effects.length === 0) return { npcs, transitions: [] };
+  const next = { ...npcs };
+  const transitions: NpcTransition[] = [];
+  for (const effect of effects) {
+    const { type, ...targetRef } = effect;
+    const npcId = resolveNpcTargetId(targetRef, boundNpcIds);
+    if (!npcId) continue;
+    const current = next[npcId];
+    if (!current) continue;
+    const target = NPC_TRANSITION_TARGET[type];
+    next[npcId] = {
+      ...current,
+      role: target.role ?? current.role,
+      active: target.active ?? current.active,
+      career: {
+        ...current.career,
+        stage: target.stage,
+        leftWeek: type === "left" ? currentWeek : current.career.leftWeek,
+      },
+    };
+    transitions.push({ npcId, type, week: currentWeek });
+  }
+  return { npcs: next, transitions };
 }
 
 export function applyFlags(

@@ -1,6 +1,7 @@
 import type { GameState, ResolvedResourceDelta } from "../state/types";
 import { applyResourceDelta } from "./effects";
 import { buildRequirementContext, countLeaves, evaluateRequirements, type RequirementContext } from "./requirements";
+import { hasAlreadyOccurred } from "./choices";
 import type { EventRepository } from "./repository";
 import type { EventDefinition } from "./types";
 
@@ -45,7 +46,8 @@ function pickBestMatch(matching: EventDefinition[]): EventDefinition {
 //     crash.
 export function resolveCheckpointCandidate(
   candidates: EventDefinition[],
-  ctx: RequirementContext
+  ctx: RequirementContext,
+  eventHistory: { eventId: string }[] = []
 ): CheckpointResolution | null {
   const fallbacks = candidates.filter((c) => c.isFallback);
   if (fallbacks.length > 1) {
@@ -55,13 +57,16 @@ export function resolveCheckpointCandidate(
     );
   }
 
-  const normal = candidates.filter((c) => !c.isFallback);
+  // §21 — `once` applies to scheduled/chain candidates exactly like pool
+  // events: an already-occurred once:true candidate drops out of the
+  // race entirely, same as if its requirements had failed.
+  const normal = candidates.filter((c) => !c.isFallback && !(c.once && hasAlreadyOccurred(c.id, eventHistory)));
   const matching = normal.filter((c) => evaluateRequirements(c.requirements, ctx));
   if (matching.length > 0) {
     return { event: pickBestMatch(matching), usedFallback: false };
   }
 
-  if (fallbacks.length === 1) {
+  if (fallbacks.length === 1 && !(fallbacks[0].once && hasAlreadyOccurred(fallbacks[0].id, eventHistory))) {
     return { event: fallbacks[0], usedFallback: true };
   }
 
@@ -104,7 +109,7 @@ export function resolveDuePendingEvents(
 
   for (const pending of due) {
     const candidates = repository.getCheckpointCandidates(pending.chainId, pending.checkpoint);
-    const result = resolveCheckpointCandidate(candidates, ctx);
+    const result = resolveCheckpointCandidate(candidates, ctx, state.eventHistory);
 
     traces.push({
       chainId: pending.chainId,

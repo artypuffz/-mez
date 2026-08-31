@@ -37,12 +37,13 @@ describe('migrateSaveData', () => {
     };
 
     const migrated = migrateSaveData(v1Save);
-    expect(migrated.meta.saveVersion).toBe(4);
+    expect(migrated.meta.saveVersion).toBe(5);
     expect(migrated.tus).toEqual({ step: 'prep', examEventIds: [], examLog: [] });
     expect(migrated.career.residencyStartedAt).toBeUndefined();
     expect(migrated.eventCooldowns).toEqual({});
     expect(migrated.pendingEffects).toEqual([]);
     expect(migrated.weeklyEventQueue).toEqual([]);
+    expect(migrated.npcs).toEqual({});
     expect(migrated.character.name).toBe('Ada');
   });
 
@@ -80,10 +81,69 @@ describe('migrateSaveData', () => {
       eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
     };
     const migrated = migrateSaveData(v3Save);
-    expect(migrated.meta.saveVersion).toBe(4);
+    expect(migrated.meta.saveVersion).toBe(5);
     expect(migrated.eventCooldowns).toEqual({});
     expect(migrated.pendingEffects).toEqual([]);
     expect(migrated.weeklyEventQueue).toEqual([]);
+    expect(migrated.npcs).toEqual({});
     expect(migrated.resources.stress).toBe(40);
+  });
+
+  it('migrates a v4 (Phase 5) save to v5: narrows relationships, adds npcs, converts the string queue to instances', () => {
+    const v4Save = {
+      meta: { saveVersion: 4, rngSeed: 'seed', createdAt: '2026-03-15T00:00:00.000Z' },
+      character: { name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' },
+      career: {
+        phase: 'residency', branch: 'ic_hastaliklari', residencyStartedAt: '2026-09-01',
+        residencyWeek: 5, residencyYear: 1, seniorityStage: 'comez',
+      },
+      tus: { step: 'result', examEventIds: [], examLog: [] },
+      resources: { stress: 40, fatigue: 30, burnout: 0, money: 12000 },
+      relationships: {
+        baris: { trust: 5, friendship: 2, grudge: 1, mobbingTendency: 0, helpfulness: 3, ego: -1, burnoutNpc: 0 },
+      },
+      flags: {}, pendingEvents: [], activeChains: {},
+      eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
+      eventCooldowns: { some_event: 3 },
+      pendingEffects: [],
+      weeklyEventQueue: ['some_queued_event'],
+    };
+    const migrated = migrateSaveData(v4Save);
+    expect(migrated.meta.saveVersion).toBe(5);
+    expect(migrated.relationships.baris).toEqual({ trust: 5, friendship: 2, grudge: 1 });
+    expect(migrated.npcs).toEqual({});
+    expect(migrated.weeklyEventQueue).toEqual([
+      { instanceId: 'some_queued_event', eventId: 'some_queued_event', boundNpcIds: {} },
+    ]);
+    expect(migrated.eventCooldowns).toEqual({ some_event: 3 });
+  });
+
+  it('backfills a full NPC roster for a v4 save already mid-residency with a selected program', () => {
+    const v4Save = {
+      meta: { saveVersion: 4, rngSeed: 'backfill-seed', createdAt: '2026-03-15T00:00:00.000Z' },
+      character: { name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' },
+      career: {
+        phase: 'residency', branch: 'ic_hastaliklari', residencyStartedAt: '2026-09-01',
+        residencyWeek: 5, residencyYear: 1, seniorityStage: 'comez',
+      },
+      tus: { step: 'result', examEventIds: [], examLog: [], selectedProgramId: 'baskent_ic' },
+      resources: { stress: 40, fatigue: 30, burnout: 0, money: 12000 },
+      relationships: { baris: { trust: 20, friendship: 5, grudge: 0 } },
+      flags: {}, pendingEvents: [], activeChains: {},
+      eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
+      eventCooldowns: {}, pendingEffects: [], weeklyEventQueue: [],
+    };
+    const migrated = migrateSaveData(v4Save);
+    expect(Object.keys(migrated.npcs).length).toBeGreaterThan(0);
+    expect(migrated.npcs.baris).toBeDefined();
+    expect(migrated.npcs.baris.templateId).toBe('baris');
+    // The player's already-built relationship with baris survives the
+    // backfill instead of being overwritten by a fresh generated value.
+    expect(migrated.relationships.baris).toEqual({ trust: 20, friendship: 5, grudge: 0 });
+    // Some other, non-templated NPC also got backfilled with its own
+    // freshly generated relationship record.
+    const otherNpcId = Object.keys(migrated.npcs).find((id) => id !== 'baris');
+    expect(otherNpcId).toBeDefined();
+    expect(migrated.relationships[otherNpcId!]).toBeDefined();
   });
 });

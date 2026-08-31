@@ -59,8 +59,12 @@ function fastForwardUntilQueued(state: GameState, seed: string): GameState {
 function resolveQueuedEvent(state: GameState, eventId: string, choiceId: string, seed: string): GameState {
   const event = repo.getEventById(eventId);
   if (!event) throw new Error(`Fixture error: event ${eventId} not found in the real repository`);
-  const queued: GameState = { ...state, weeklyEventQueue: [eventId] };
+  const queued: GameState = { ...state, weeklyEventQueue: [{ instanceId: eventId, eventId, boundNpcIds: {} }] };
   return resolveEventChoice(queued, event, choiceId, createScopedRng(seed, `resolve:${eventId}`)).state;
+}
+
+function queueIds(state: GameState): string[] {
+  return state.weeklyEventQueue.map((q) => q.eventId);
 }
 
 describe('Barış Hattı — Path A (dostluk)', () => {
@@ -73,20 +77,20 @@ describe('Barış Hattı — Path A (dostluk)', () => {
     expect(state.pendingEvents).toHaveLength(1);
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_02_dostluk']);
+    expect(queueIds(state)).toEqual(['chain_baris_02_dostluk']);
     state = resolveQueuedEvent(state, 'chain_baris_02_dostluk', 'karsiliksiz_yardim', seed);
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_03_dostluk']);
+    expect(queueIds(state)).toEqual(['chain_baris_03_dostluk']);
     state = resolveQueuedEvent(state, 'chain_baris_03_dostluk', 'tesekkur_et', seed);
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_04_dostluk']);
+    expect(queueIds(state)).toEqual(['chain_baris_04_dostluk']);
     state = resolveQueuedEvent(state, 'chain_baris_04_dostluk', 'teklifi_kabul', seed);
     expect(state.career.seniorityStage).toBeDefined(); // Barış "uzman oldu" narrative beat — power balance shift is content, not a state field here
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_05_dostluk']);
+    expect(queueIds(state)).toEqual(['chain_baris_05_dostluk']);
     state = resolveQueuedEvent(state, 'chain_baris_05_dostluk', 'evraklari_kendin_hallet', seed);
 
     expect(state.flags.chain_baris_cycle_outcome).toBe('broke_the_cycle');
@@ -109,21 +113,26 @@ describe('Barış Hattı — Path B (gerilim)', () => {
     expect(state.relationships.baris.grudge).toBe(10);
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_02_gerilim']);
+    expect(queueIds(state)).toEqual(['chain_baris_02_gerilim']);
+    // Some weeks elapsed in the fast-forward above, so passive monthly
+    // decay (§20) may already have nudged grudge down from the exact 10
+    // set right after stage1 — capture the live baseline right before
+    // this choice rather than assuming it's still exactly 10.
+    const grudgeBeforeGrubaYanit = state.relationships.baris.grudge;
     state = resolveQueuedEvent(state, 'chain_baris_02_gerilim', 'gruba_yanit', seed);
-    expect(state.relationships.baris.grudge).toBe(18);
+    expect(state.relationships.baris.grudge).toBe(grudgeBeforeGrubaYanit + 8);
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_03_gerilim']);
+    expect(queueIds(state)).toEqual(['chain_baris_03_gerilim']);
     state = resolveQueuedEvent(state, 'chain_baris_03_gerilim', 'yuzeysel_yuzlestir', seed);
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_04_gerilim']);
+    expect(queueIds(state)).toEqual(['chain_baris_04_gerilim']);
     state = resolveQueuedEvent(state, 'chain_baris_04_gerilim', 'itiraz_et', seed);
     expect(state.flags.chain_baris_itiraz_etti).toBe(true);
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_05_gerilim']);
+    expect(queueIds(state)).toEqual(['chain_baris_05_gerilim']);
     state = resolveQueuedEvent(state, 'chain_baris_05_gerilim', 'ayni_seyi_yap', seed);
 
     expect(state.flags.chain_baris_cycle_outcome).toBe('repeated_the_cycle');
@@ -144,7 +153,7 @@ describe('Barış Hattı — Path C (recovery / dynamic branching)', () => {
     expect(state.flags.chain_baris_path).toBe('gerilim');
 
     state = fastForwardUntilQueued(state, seed);
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_02_gerilim']);
+    expect(queueIds(state)).toEqual(['chain_baris_02_gerilim']);
     state = resolveQueuedEvent(state, 'chain_baris_02_gerilim', 'sessiz_kal', seed);
 
     // Interim recovery: something off-chain rebuilt trust with Barış
@@ -162,6 +171,6 @@ describe('Barış Hattı — Path C (recovery / dynamic branching)', () => {
     // stage3_gerilim (fallback) would otherwise have won via the origin flag.
     // The dostluk candidate wins here BECAUSE trust recovered — proving
     // resolution is state-driven, not locked to the stage1 flag (§17).
-    expect(state.weeklyEventQueue).toEqual(['chain_baris_03_dostluk']);
+    expect(queueIds(state)).toEqual(['chain_baris_03_dostluk']);
   });
 });

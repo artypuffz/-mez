@@ -81,7 +81,7 @@ describe('resolveCheckpointCandidate', () => {
     // Origin flag says "gerilim", but interim relationship recovery pushed trust up.
     const state = stateWith({
       flags: { path: 'gerilim' },
-      relationships: { baris: { trust: 15, friendship: 0, grudge: 0, mobbingTendency: 0, helpfulness: 0, ego: 0, burnoutNpc: 0 } },
+      relationships: { baris: { trust: 15, friendship: 0, grudge: 0 } },
     });
     const ctx = buildRequirementContext(state);
     const result = resolveCheckpointCandidate([dostluk, gerilim], ctx);

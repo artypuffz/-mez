@@ -6,7 +6,7 @@
     "category": "RARE",
     "triggerMode": "pool",
     "weight": 1,
-    "cooldownWeeks": 999,
+    "once": true,
     "requirements": {
       "all": [
         {

@@ -1,12 +1,18 @@
-import type { GameState, ResolvedResourceDelta } from "../state/types";
+import type { GameState, NpcTransition, QueuedEventInstance, ResolvedResourceDelta } from "../state/types";
 import type { SeededRng } from "../rng/seededRng";
+import { createScopedRng } from "../rng/seededRng";
 import { advanceResidencyWeek, type WeekAdvanceResult } from "../residency/advanceResidencyWeek";
+import { getResidencyProgram } from "../config/residencyPrograms";
+import { tickNpcLifecycle } from "../npc/lifecycle";
+import { tickRelationshipDecay } from "../npc/relationshipDecay";
+import { resolveNpcSelectors } from "../npc/selector";
 import { buildRequirementContext } from "./requirements";
 import { getVisibleChoices } from "./choices";
 import { resolveText } from "./variants";
 import {
   applyBehaviorTags,
   applyFlags,
+  applyNpcTransitionEffects,
   applyRelationshipEffects,
   applyResourceDelta,
   applyStatistics,
@@ -29,13 +35,32 @@ export interface WeeklyEventResolution {
   state: GameState;
   queuedEventIds: string[];
   trace: WeekEventsTrace;
+  // Generic monthly lifecycle transitions from this tick (empty on a week
+  // that isn't a month boundary) — a trigger/context the event engine can
+  // query later (Phase 8), not consumed by any event content this phase
+  // (§12). The Barış Hattı's own authored transition is separate — see
+  // resolveEventChoice's npcTransitions below.
+  npcTransitions: NpcTransition[];
+}
+
+function bindQueuedInstance(
+  event: EventDefinition,
+  currentWeek: number,
+  npcs: GameState["npcs"],
+  relationships: GameState["relationships"],
+  rng: SeededRng
+): QueuedEventInstance {
+  const boundNpcIds = resolveNpcSelectors(event.npcSelectors, npcs, relationships, rng);
+  return { instanceId: `${currentWeek}:${event.id}`, eventId: event.id, boundNpcIds };
 }
 
 // Composes on top of Phase 4's advanceResidencyWeek WITHOUT modifying it —
 // that function's own tests and behavior stay exactly as they were.
-// Order (per the Phase 5 spec): baseline tick + calendar/seniority
-// (Phase 4, untouched) -> due pending effects -> due scheduled/checkpoint
-// events -> pool events -> queued into weeklyEventQueue. Event CHOICE
+// Order (per the Phase 5 spec, extended in Phase 6): baseline tick +
+// calendar/seniority (Phase 4, untouched) -> monthly NPC lifecycle +
+// relationship decay (only on a monthChanged transition, §11/§20) -> due
+// pending effects -> due scheduled/checkpoint events -> pool events ->
+// NPC-selector binding -> queued into weeklyEventQueue. Event CHOICE
 // effects are never applied here — only resolveEventChoice (below) does
 // that, once the player actually picks something.
 export function advanceResidencyWeekWithEvents(
@@ -48,7 +73,28 @@ export function advanceResidencyWeekWithEvents(
   const weekAdvance = advanceResidencyWeek(state, weekRng);
   const currentWeek = weekAdvance.state.career.residencyWeek;
 
-  const { state: afterEffects } = applyDuePendingEffects(weekAdvance.state, currentWeek);
+  let workingState = weekAdvance.state;
+  let npcTransitions: NpcTransition[] = [];
+
+  if (weekAdvance.transitions.monthChanged) {
+    const programId = workingState.tus.selectedProgramId;
+    if (!programId) {
+      throw new Error("Residency state is missing selectedProgramId during a monthChanged NPC lifecycle tick");
+    }
+    const program = getResidencyProgram(programId);
+    const lifecycleRng = createScopedRng(state.meta.rngSeed, `npc:lifecycle:${currentWeek}`);
+    const lifecycle = tickNpcLifecycle(workingState.npcs, workingState.relationships, program, currentWeek, lifecycleRng, {
+      ensureJuniorForSeniorPlayer: workingState.career.seniorityStage === "kidemli",
+    });
+    npcTransitions = lifecycle.transitions;
+    workingState = {
+      ...workingState,
+      npcs: lifecycle.npcs,
+      relationships: tickRelationshipDecay(lifecycle.relationships),
+    };
+  }
+
+  const { state: afterEffects } = applyDuePendingEffects(workingState, currentWeek);
   const { state: afterScheduled, resolvedEvents, traces: scheduledTrace } = resolveDuePendingEvents(
     afterEffects,
     currentWeek,
@@ -67,7 +113,8 @@ export function advanceResidencyWeekWithEvents(
     afterScheduled.eventCooldowns,
     poolBudget,
     eventsRng,
-    poolConfig
+    poolConfig,
+    afterScheduled.eventHistory
   );
 
   const eventCooldowns = poolEvents.reduce(
@@ -75,25 +122,33 @@ export function advanceResidencyWeekWithEvents(
     afterScheduled.eventCooldowns
   );
 
-  const queuedEventIds = [...resolvedEvents.map((e) => e.id), ...poolEvents.map((e) => e.id)];
+  // NPC-selector binding happens exactly once, right here, before the
+  // instance ever enters weeklyEventQueue — a refresh only ever re-reads
+  // the persisted QueuedEventInstance, it never re-runs this (§16).
+  const weeklyEventQueue: QueuedEventInstance[] = [
+    ...resolvedEvents.map((event) => bindQueuedInstance(event, currentWeek, afterScheduled.npcs, afterScheduled.relationships, eventsRng)),
+    ...poolEvents.map((event) => bindQueuedInstance(event, currentWeek, afterScheduled.npcs, afterScheduled.relationships, eventsRng)),
+  ];
 
   const finalState: GameState = {
     ...afterScheduled,
     eventCooldowns,
-    weeklyEventQueue: queuedEventIds,
+    weeklyEventQueue,
   };
 
   return {
     weekAdvance,
     state: finalState,
-    queuedEventIds,
+    queuedEventIds: weeklyEventQueue.map((q) => q.eventId),
     trace: { scheduled: scheduledTrace, pool: poolTrace },
+    npcTransitions,
   };
 }
 
 export interface ResolveEventChoiceResult {
   state: GameState;
   visibleEffects: ResolvedResourceDelta;
+  npcTransitions: NpcTransition[];
 }
 
 function findVisibleChoice(event: EventDefinition, choiceId: string, ctx: ReturnType<typeof buildRequirementContext>): ChoiceDefinition {
@@ -114,21 +169,24 @@ export function resolveEventChoice(
   choiceId: string,
   rng: SeededRng
 ): ResolveEventChoiceResult {
-  if (!state.weeklyEventQueue.includes(event.id)) {
+  const queuedInstance = state.weeklyEventQueue.find((q) => q.eventId === event.id);
+  if (!queuedInstance) {
     // Defense in depth against double-resolution (§21): even if this got
     // called twice for the same event — a UI bug, a race on a fast
     // double-tap — the second call has nothing to act on, rather than
     // silently re-applying effects.
     throw new Error(`Event "${event.id}" is not in the current weeklyEventQueue — already resolved or never queued`);
   }
+  const boundNpcIds = queuedInstance.boundNpcIds;
 
-  const ctx = buildRequirementContext(state);
+  const ctx = buildRequirementContext(state, boundNpcIds);
   const choice = findVisibleChoice(event, choiceId, ctx);
   const currentWeek = state.career.residencyWeek;
 
   const immediateDelta = resolveEffectMap(choice.immediateEffects, rng);
   const resources = applyResourceDelta(state.resources, immediateDelta);
-  const relationships = applyRelationshipEffects(state.relationships, choice.relationshipEffects);
+  const relationships = applyRelationshipEffects(state.relationships, choice.relationshipEffects, boundNpcIds);
+  const { npcs, transitions: npcTransitions } = applyNpcTransitionEffects(state.npcs, choice.npcTransitions, boundNpcIds, currentWeek);
   const flags = applyFlags(state.flags, choice.flags);
   const statistics = applyStatistics(state.statistics, choice.statistics);
   const behaviorStats = applyBehaviorTags(state.behaviorStats, choice.behaviorTags);
@@ -170,13 +228,14 @@ export function resolveEventChoice(
     },
   ];
 
-  const weeklyEventQueue = state.weeklyEventQueue.filter((id) => id !== event.id);
+  const weeklyEventQueue = state.weeklyEventQueue.filter((q) => q.eventId !== event.id);
 
   return {
     state: {
       ...state,
       resources,
       relationships,
+      npcs,
       flags,
       statistics,
       behaviorStats,
@@ -186,6 +245,7 @@ export function resolveEventChoice(
       weeklyEventQueue,
     },
     visibleEffects: immediateDelta,
+    npcTransitions,
   };
 }
 

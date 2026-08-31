@@ -91,13 +91,14 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
           }
         }
 
-        for (const id of [...state.weeklyEventQueue]) {
+        for (const instance of [...state.weeklyEventQueue]) {
+          const id = instance.eventId;
           const event = repo.getEventById(id);
           if (!event) {
             crashes.push(`seed=${seed} week=${week}: queued event "${id}" not found in repository`);
             continue;
           }
-          const visible = getVisibleChoices(event, buildRequirementContext(state));
+          const visible = getVisibleChoices(event, buildRequirementContext(state, instance.boundNpcIds));
           if (visible.length === 0) {
             crashes.push(`seed=${seed} week=${week}: event "${id}" had zero visible choices at resolution time`);
             continue;

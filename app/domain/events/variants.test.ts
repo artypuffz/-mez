@@ -7,7 +7,7 @@ function ctxWithRelationship(trust: number, grudge: number) {
   const base = createInitialGameState({ name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' });
   return buildRequirementContext({
     ...base,
-    relationships: { baris: { trust, grudge, friendship: 0, mobbingTendency: 0, helpfulness: 0, ego: 0, burnoutNpc: 0 } },
+    relationships: { baris: { trust, grudge, friendship: 0 } },
   });
 }
 

@@ -45,25 +45,35 @@ describe('applyRelationshipEffects', () => {
 
   it('accumulates deltas onto an existing record', () => {
     const result = applyRelationshipEffects(
-      { baris: { trust: 5, friendship: 0, grudge: 2, mobbingTendency: 0, helpfulness: 0, ego: 0, burnoutNpc: 0 } },
+      { baris: { trust: 5, friendship: 0, grudge: 2 } },
       [{ npc: 'baris', trust: 10, grudge: -1 }]
     );
     expect(result.baris.trust).toBe(15);
     expect(result.baris.grudge).toBe(1);
   });
 
-  it('clamps relationship fields to [-100, 100]', () => {
+  it('clamps trust/friendship to [-100, 100] and grudge to [0, 100]', () => {
     const result = applyRelationshipEffects(
-      { baris: { trust: 95, friendship: 0, grudge: 0, mobbingTendency: 0, helpfulness: 0, ego: -95, burnoutNpc: 0 } },
-      [{ npc: 'baris', trust: 20, ego: -20 }]
+      { baris: { trust: 95, friendship: 0, grudge: 5 } },
+      [{ npc: 'baris', trust: 20, grudge: -20 }]
     );
     expect(result.baris.trust).toBe(100);
-    expect(result.baris.ego).toBe(-100);
+    expect(result.baris.grudge).toBe(0);
   });
 
   it('is a no-op with no effects', () => {
-    const relationships = { baris: { trust: 5, friendship: 0, grudge: 0, mobbingTendency: 0, helpfulness: 0, ego: 0, burnoutNpc: 0 } };
+    const relationships = { baris: { trust: 5, friendship: 0, grudge: 0 } };
     expect(applyRelationshipEffects(relationships, undefined)).toBe(relationships);
+  });
+
+  it('skips an effect whose boundNpc key has no resolved binding', () => {
+    const result = applyRelationshipEffects({}, [{ boundNpc: 'primary', trust: 10 }], {});
+    expect(result).toEqual({});
+  });
+
+  it('resolves a boundNpc target against the passed boundNpcIds map', () => {
+    const result = applyRelationshipEffects({}, [{ boundNpc: 'primary', trust: 10 }], { primary: 'npc_1' });
+    expect(result.npc_1).toMatchObject({ trust: 10 });
   });
 });
 

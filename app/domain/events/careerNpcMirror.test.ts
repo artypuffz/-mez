@@ -40,7 +40,10 @@ describe('career-npc-mirror.json — real engine integration', () => {
 
   it('mirror_01 (as çömez), choosing kabul_et, sets the flag that later unlocks mirror_02\'s hidden choice', () => {
     const event = repo.getEventById('mirror_01_comez_nobet_istegi')!;
-    const state: GameState = { ...residencyState('mirror-flow', 'comez'), weeklyEventQueue: [event.id] };
+    const state: GameState = {
+      ...residencyState('mirror-flow', 'comez'),
+      weeklyEventQueue: [{ instanceId: event.id, eventId: event.id, boundNpcIds: {} }],
+    };
     const result = resolveEventChoice(state, event, 'kabul_et', createScopedRng('mirror-flow', 'r'));
     expect(result.state.flags.chain_mobbing_deneyimi_var).toBe(true);
 
@@ -55,7 +58,10 @@ describe('career-npc-mirror.json — real engine integration', () => {
 
   it('resolving mirror_02 choices writes behaviorTags into behaviorStats correctly', () => {
     const event = repo.getEventById('mirror_02_kidemli_yeni_comez')!;
-    const state: GameState = { ...residencyState('mirror-tags', 'kidemli'), weeklyEventQueue: [event.id] };
+    const state: GameState = {
+      ...residencyState('mirror-tags', 'kidemli'),
+      weeklyEventQueue: [{ instanceId: event.id, eventId: event.id, boundNpcIds: {} }],
+    };
 
     const supportive = resolveEventChoice(state, event, 'nobetini_degistir', createScopedRng('mirror-tags', 'a'));
     expect(supportive.state.behaviorStats['junior:supportive']).toBe(1);

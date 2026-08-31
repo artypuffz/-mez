@@ -53,8 +53,8 @@ export default function HomeScreen() {
     );
   }
 
-  const activeEventId = gameState.weeklyEventQueue[0];
-  const activeEvent = activeEventId ? getEventRepository().getEventById(activeEventId) : undefined;
+  const activeInstance = gameState.weeklyEventQueue[0];
+  const activeEvent = activeInstance ? getEventRepository().getEventById(activeInstance.eventId) : undefined;
   const effectLines = lastChoiceEffects ? formatVisibleEffects(lastChoiceEffects) : [];
 
   return (
@@ -87,6 +87,7 @@ export default function HomeScreen() {
           event={activeEvent}
           gameState={gameState}
           disabled={isResolvingEvent}
+          boundNpcIds={activeInstance?.boundNpcIds}
           onChoose={(choiceId) => resolveActiveEventChoice(activeEvent.id, choiceId)}
         />
       ) : (

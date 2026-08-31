@@ -6,42 +6,118 @@
     "category": "GENERAL",
     "triggerMode": "pool",
     "weight": 10,
-    "cooldownWeeks": 999,
+    "once": true,
     "chainId": "baris",
     "chainCheckpoint": "stage1",
-    "requirements": { "all": [{ "stat": "career.week", "gte": 6 }, { "stat": "career.week", "lte": 16 }] },
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "gte": 6
+        },
+        {
+          "stat": "career.week",
+          "lte": 16
+        }
+      ]
+    },
     "choices": [
       {
         "id": "sessizce_kabul",
         "text": "Sessizce kabul et.",
-        "immediateEffects": { "fatigue": 5, "stress": 2 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 5, "ego": 5 }],
-        "flags": { "set": { "chain_baris_path": "dostluk" } },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage2", "delayWeeks": 14 }
+        "immediateEffects": {
+          "fatigue": 5,
+          "stress": 2
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 5
+          }
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_path": "dostluk"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage2",
+          "delayWeeks": 14
+        }
       },
       {
         "id": "nazik_sinir",
         "text": "Nazikçe sınır koy: 'Bu benim işim değil ama yardımcı olurum.'",
-        "immediateEffects": { "fatigue": 3, "stress": 1 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 8, "ego": -2 }],
-        "flags": { "set": { "chain_baris_path": "dostluk" } },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage2", "delayWeeks": 14 }
+        "immediateEffects": {
+          "fatigue": 3,
+          "stress": 1
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 8
+          }
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_path": "dostluk"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage2",
+          "delayWeeks": 14
+        }
       },
       {
         "id": "reddet",
         "text": "'Bu senin işin' de.",
-        "immediateEffects": { "stress": 4 },
-        "relationshipEffects": [{ "npc": "baris", "grudge": 10, "trust": -5 }],
-        "flags": { "set": { "chain_baris_path": "gerilim" } },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage2", "delayWeeks": 14 }
+        "immediateEffects": {
+          "stress": 4
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "grudge": 10,
+            "trust": -5
+          }
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_path": "gerilim"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage2",
+          "delayWeeks": 14
+        }
       },
       {
         "id": "kidemliye_sikayet",
         "text": "Bölüm kıdemlisine şikayet et.",
-        "immediateEffects": { "stress": 6 },
-        "relationshipEffects": [{ "npc": "baris", "grudge": 20, "trust": -10 }],
-        "flags": { "set": { "chain_baris_path": "gerilim", "chain_baris_yonetime_gitti": true } },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage2", "delayWeeks": 14 }
+        "immediateEffects": {
+          "stress": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "grudge": 20,
+            "trust": -10
+          }
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_path": "gerilim",
+            "chain_baris_yonetime_gitti": true
+          }
+        },
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage2",
+          "delayWeeks": 14
+        }
       }
     ]
   },
@@ -56,25 +132,60 @@
     "priority": 10,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "trust": { "gte": 10 } } },
-        { "flag": "chain_baris_path", "eq": "dostluk" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "trust": {
+              "gte": 10
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "dostluk"
+        }
       ]
     },
     "choices": [
       {
         "id": "takasi_kabul",
         "text": "Takası kabul et.",
-        "immediateEffects": { "fatigue": 4 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 10 }],
-        "behaviorTags": ["npc:baris:cooperative"],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage3", "delayWeeks": 20 }
+        "immediateEffects": {
+          "fatigue": 4
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 10
+          }
+        ],
+        "behaviorTags": [
+          "npc:baris:cooperative"
+        ],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage3",
+          "delayWeeks": 20
+        }
       },
       {
         "id": "karsiliksiz_yardim",
         "text": "'Takasa gerek yok, değiştiririm' de.",
-        "immediateEffects": { "fatigue": 5, "stress": -2 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 15 }],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage3", "delayWeeks": 20 }
+        "immediateEffects": {
+          "fatigue": 5,
+          "stress": -2
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 15
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage3",
+          "delayWeeks": 20
+        }
       }
     ]
   },
@@ -90,24 +201,56 @@
     "isFallback": true,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "grudge": { "gte": 8 } } },
-        { "flag": "chain_baris_path", "eq": "gerilim" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "grudge": {
+              "gte": 8
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "gerilim"
+        }
       ]
     },
     "choices": [
       {
         "id": "gruba_yanit",
         "text": "Gruba doğrudan yanıt yaz.",
-        "immediateEffects": { "stress": 6 },
-        "relationshipEffects": [{ "npc": "baris", "grudge": 8 }],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage3", "delayWeeks": 20 }
+        "immediateEffects": {
+          "stress": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "grudge": 8
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage3",
+          "delayWeeks": 20
+        }
       },
       {
         "id": "sessiz_kal",
         "text": "Sessiz kal, notunu düş.",
-        "immediateEffects": { "stress": 8, "burnout": 2 },
-        "flags": { "set": { "chain_baris_sessiz_kaldi": true } },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage3", "delayWeeks": 20 }
+        "immediateEffects": {
+          "stress": 8,
+          "burnout": 2
+        },
+        "flags": {
+          "set": {
+            "chain_baris_sessiz_kaldi": true
+          }
+        },
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage3",
+          "delayWeeks": 20
+        }
       }
     ]
   },
@@ -122,24 +265,58 @@
     "priority": 10,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "trust": { "gte": 20 } } },
-        { "flag": "chain_baris_path", "eq": "dostluk" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "trust": {
+              "gte": 20
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "dostluk"
+        }
       ]
     },
     "choices": [
       {
         "id": "tesekkur_et",
         "text": "Sabah içtenlikle teşekkür et.",
-        "immediateEffects": { "stress": -8, "fatigue": -5 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 12 }],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage4", "delayWeeks": 25 }
+        "immediateEffects": {
+          "stress": -8,
+          "fatigue": -5
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 12
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage4",
+          "delayWeeks": 25
+        }
       },
       {
         "id": "utangac_kal",
         "text": "Utanarak sadece başını salla.",
-        "immediateEffects": { "stress": -5, "fatigue": -3 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 6 }],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage4", "delayWeeks": 25 }
+        "immediateEffects": {
+          "stress": -5,
+          "fatigue": -3
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 6
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage4",
+          "delayWeeks": 25
+        }
       }
     ]
   },
@@ -149,7 +326,14 @@
     "description": "Nöbetin felaket gidiyor. Barış'ı aradın, telefonu açık görünüyor ama cevap vermiyor. Sabah 'telefonum sessizdeymiş' dedi.",
     "descriptionVariants": [
       {
-        "requirements": { "relationship": { "npc": "baris", "grudge": { "gte": 25 } } },
+        "requirements": {
+          "relationship": {
+            "npc": "baris",
+            "grudge": {
+              "gte": 25
+            }
+          }
+        },
         "text": "Nöbetin felaket gidiyor. Barış'ı aradın, telefonu açık görünüyor ama cevap vermiyor. Sabah hiçbir şey söylemedi, telefonuna bile bakmadı."
       }
     ],
@@ -161,24 +345,57 @@
     "isFallback": true,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "grudge": { "gte": 12 } } },
-        { "flag": "chain_baris_path", "eq": "gerilim" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "grudge": {
+              "gte": 12
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "gerilim"
+        }
       ]
     },
     "choices": [
       {
         "id": "yuzeysel_yuzlestir",
         "text": "Sabah sakince yüzleştir.",
-        "immediateEffects": { "stress": 8 },
-        "relationshipEffects": [{ "npc": "baris", "grudge": 5, "trust": -3 }],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage4", "delayWeeks": 25 }
+        "immediateEffects": {
+          "stress": 8
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "grudge": 5,
+            "trust": -3
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage4",
+          "delayWeeks": 25
+        }
       },
       {
         "id": "belgele",
         "text": "Hiçbir şey söyleme, olanı tarihli olarak not al.",
-        "immediateEffects": { "stress": 10, "burnout": 4 },
-        "flags": { "set": { "chain_baris_belgeledi": true } },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage4", "delayWeeks": 25 }
+        "immediateEffects": {
+          "stress": 10,
+          "burnout": 4
+        },
+        "flags": {
+          "set": {
+            "chain_baris_belgeledi": true
+          }
+        },
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage4",
+          "delayWeeks": 25
+        }
       }
     ]
   },
@@ -193,24 +410,59 @@
     "priority": 10,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "trust": { "gte": 25 } } },
-        { "flag": "chain_baris_path", "eq": "dostluk" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "trust": {
+              "gte": 25
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "dostluk"
+        }
       ]
     },
     "choices": [
       {
         "id": "teklifi_kabul",
         "text": "Teklifi kabul et.",
-        "immediateEffects": { "stress": 3, "fatigue": 4 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 10 }],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage5", "delayWeeks": 25 }
+        "immediateEffects": {
+          "stress": 3,
+          "fatigue": 4
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 10
+          }
+        ],
+        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage5",
+          "delayWeeks": 25
+        }
       },
       {
         "id": "kibarca_reddet",
         "text": "Şu an yükün ağır olduğu için kibarca reddet.",
-        "immediateEffects": { "stress": -2 },
-        "relationshipEffects": [{ "npc": "baris", "trust": 3 }],
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage5", "delayWeeks": 25 }
+        "immediateEffects": {
+          "stress": -2
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "trust": 3
+          }
+        ],
+        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage5",
+          "delayWeeks": 25
+        }
       }
     ]
   },
@@ -226,24 +478,59 @@
     "isFallback": true,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "grudge": { "gte": 15 } } },
-        { "flag": "chain_baris_path", "eq": "gerilim" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "grudge": {
+              "gte": 15
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "gerilim"
+        }
       ]
     },
     "choices": [
       {
         "id": "itiraz_et",
         "text": "Bölüm başkanına itiraz et.",
-        "immediateEffects": { "stress": 8 },
-        "relationshipEffects": [{ "npc": "baris", "grudge": 6 }],
-        "flags": { "set": { "chain_baris_itiraz_etti": true } },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage5", "delayWeeks": 25 }
+        "immediateEffects": {
+          "stress": 8
+        },
+        "relationshipEffects": [
+          {
+            "npc": "baris",
+            "grudge": 6
+          }
+        ],
+        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "flags": {
+          "set": {
+            "chain_baris_itiraz_etti": true
+          }
+        },
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage5",
+          "delayWeeks": 25
+        }
       },
       {
         "id": "sessizce_tut",
         "text": "Sessizce tüm nöbetleri tut.",
-        "immediateEffects": { "fatigue": 15, "stress": 10, "burnout": 5 },
-        "followUpEvent": { "chainId": "baris", "checkpoint": "stage5", "delayWeeks": 25 }
+        "immediateEffects": {
+          "fatigue": 15,
+          "stress": 10,
+          "burnout": 5
+        },
+        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "followUpEvent": {
+          "chainId": "baris",
+          "checkpoint": "stage5",
+          "delayWeeks": 25
+        }
       }
     ]
   },
@@ -258,26 +545,65 @@
     "priority": 10,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "trust": { "gte": 30 } } },
-        { "flag": "chain_baris_path", "eq": "dostluk" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "trust": {
+              "gte": 30
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "dostluk"
+        }
       ]
     },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
     "choices": [
       {
         "id": "evraklari_kendin_hallet",
         "text": "Evrakları kendin hallet, çömeze devretme.",
-        "immediateEffects": { "fatigue": 5, "stress": -3 },
-        "relationshipEffects": [{ "npc": "comez_generic", "trust": 8 }],
-        "behaviorTags": ["junior:supportive", "junior:protected"],
-        "flags": { "set": { "chain_baris_cycle_outcome": "broke_the_cycle" } }
+        "immediateEffects": {
+          "fatigue": 5,
+          "stress": -3
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": 8
+          }
+        ],
+        "behaviorTags": [
+          "junior:supportive",
+          "junior:protected"
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_cycle_outcome": "broke_the_cycle"
+          }
+        }
       },
       {
         "id": "ayni_seyi_yap",
         "text": "'Yeni başlayanlar önce evrak işini öğrenmeli' de.",
-        "immediateEffects": { "stress": -1 },
-        "relationshipEffects": [{ "npc": "comez_generic", "grudge": 6 }],
-        "behaviorTags": ["junior:exploitative"],
-        "flags": { "set": { "chain_baris_cycle_outcome": "repeated_the_cycle" } }
+        "immediateEffects": {
+          "stress": -1
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "grudge": 6
+          }
+        ],
+        "behaviorTags": [
+          "junior:exploitative"
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_cycle_outcome": "repeated_the_cycle"
+          }
+        }
       }
     ]
   },
@@ -293,26 +619,65 @@
     "isFallback": true,
     "requirements": {
       "any": [
-        { "relationship": { "npc": "baris", "grudge": { "gte": 20 } } },
-        { "flag": "chain_baris_path", "eq": "gerilim" }
+        {
+          "relationship": {
+            "npc": "baris",
+            "grudge": {
+              "gte": 20
+            }
+          }
+        },
+        {
+          "flag": "chain_baris_path",
+          "eq": "gerilim"
+        }
       ]
     },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
     "choices": [
       {
         "id": "farkli_davran",
         "text": "Evrakları kendin hallet, çömeze devretme.",
-        "immediateEffects": { "fatigue": 5, "stress": -3 },
-        "relationshipEffects": [{ "npc": "comez_generic", "trust": 8 }],
-        "behaviorTags": ["junior:supportive", "junior:protected"],
-        "flags": { "set": { "chain_baris_cycle_outcome": "broke_the_cycle" } }
+        "immediateEffects": {
+          "fatigue": 5,
+          "stress": -3
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": 8
+          }
+        ],
+        "behaviorTags": [
+          "junior:supportive",
+          "junior:protected"
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_cycle_outcome": "broke_the_cycle"
+          }
+        }
       },
       {
         "id": "ayni_seyi_yap",
         "text": "'Yeni başlayanlar önce evrak işini öğrenmeli' de.",
-        "immediateEffects": { "stress": -1 },
-        "relationshipEffects": [{ "npc": "comez_generic", "grudge": 10 }],
-        "behaviorTags": ["junior:exploitative"],
-        "flags": { "set": { "chain_baris_cycle_outcome": "repeated_the_cycle" } }
+        "immediateEffects": {
+          "stress": -1
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "grudge": 10
+          }
+        ],
+        "behaviorTags": [
+          "junior:exploitative"
+        ],
+        "flags": {
+          "set": {
+            "chain_baris_cycle_outcome": "repeated_the_cycle"
+          }
+        }
       }
     ]
   }
