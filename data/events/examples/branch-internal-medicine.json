@@ -1,0 +1,58 @@
+[
+  {
+    "id": "im_001_polyklinik_yigilmasi",
+    "title": "POLİKLİNİK",
+    "description": "Bugün polikliniğin randevu sayısı 80. Sen tek başınasın çünkü kıdemli 'bir işim çıktı' dedi. Bekleme salonunda insanlar senin adını yanlış telaffuz ederek çağırıyor.",
+    "category": "BRANCH",
+    "weight": 12,
+    "cooldownWeeks": 8,
+    "requirements": { "all": [{ "branchIn": ["internal-medicine"] }] },
+    "choices": [
+      {
+        "id": "hepsine_bak",
+        "text": "Hepsine tek tek bak, geç kalsa da olsun.",
+        "immediateEffects": { "fatigue": 14, "stress": 10 },
+        "relationshipEffects": [{ "npc": "hasta_generic", "trust": 5 }]
+      },
+      {
+        "id": "hizli_gec",
+        "text": "Süreleri kısaltıp hepsini yetiştirmeye çalış.",
+        "immediateEffects": { "fatigue": 10, "stress": 12 }
+      },
+      {
+        "id": "kidemliyi_ara",
+        "text": "Kıdemliyi arayıp gelmesini iste.",
+        "immediateEffects": { "stress": 6 },
+        "relationshipEffects": [{ "npc": "kidemli_generic_im", "trust": -4 }]
+      }
+    ]
+  },
+  {
+    "id": "im_002_konsultasyon_savasi",
+    "title": "KONSÜLTASYON",
+    "description": "Cerrahi servisten bir hasta için konsültasyon istendi. Sen gidip değerlendirdin, hastanın asıl sorunu senin dalınla ilgili değil. Cerrahi asistanı 'siz bakın artık' diyor, sen 'bu sizin hastanız' diyorsun. Bu diyalog telefon üzerinden üçüncü kez yaşanıyor.",
+    "category": "BRANCH",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "branchIn": ["internal-medicine"] }, { "stat": "career.week", "gte": 8 }] },
+    "choices": [
+      {
+        "id": "hastayi_devral",
+        "text": "Tartışmayı bitirmek için hastayı fiilen devral.",
+        "immediateEffects": { "fatigue": 8, "stress": 6 },
+        "relationshipEffects": [{ "npc": "cerrahi_asistan_generic", "trust": 6 }]
+      },
+      {
+        "id": "hocaya_birak",
+        "text": "Kararı kendi hocana bırak.",
+        "immediateEffects": { "stress": 4 }
+      },
+      {
+        "id": "yazili_not_dus",
+        "text": "Dosyaya net bir konsültasyon notu düş, sorumluluğu netleştir.",
+        "immediateEffects": { "stress": 3, "fatigue": 2 },
+        "flags": { "set": { "im_temiz_dokumantasyon": true } }
+      }
+    ]
+  }
+]

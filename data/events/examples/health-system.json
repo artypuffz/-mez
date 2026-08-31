@@ -1,0 +1,51 @@
+[
+  {
+    "id": "hs_001_malpraktis_gundemi",
+    "title": "BU HAFTA",
+    "description": "Yeni bir malpraktis tartışması sağlık gündeminde. Klinikte herkes gergin. Kıdemlin riskli hastaların sorumluluğunu almak istemiyor. Bu hafta iş yükün arttı.",
+    "category": "HEALTH_SYSTEM",
+    "weight": 6,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 6 }] },
+    "choices": [
+      {
+        "id": "dokumantasyona_agirlik",
+        "text": "Dokümantasyona daha çok zaman ayır.",
+        "immediateEffects": { "stress": 8, "fatigue": 4 },
+        "flags": { "set": { "hs_temkinli_dokumantasyon": true } }
+      },
+      {
+        "id": "her_zamanki_gibi",
+        "text": "Her zamanki gibi devam et.",
+        "immediateEffects": { "stress": 5 }
+      }
+    ]
+  },
+  {
+    "id": "hs_002_nobet_ucret_tartismasi",
+    "title": "MAAŞ BORDROSU",
+    "description": "Bu ayki nöbet ücretlerinin hesaplanma şekli değişmiş. Kimse ne değiştiğini tam açıklayamıyor, muhasebe 'yönetmelik gereği' diyor. Bordronda geçen aya göre daha az rakam var.",
+    "category": "HEALTH_SYSTEM",
+    "weight": 6,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 14 }] },
+    "choices": [
+      {
+        "id": "muhasebeyi_ara",
+        "text": "Muhasebeyi arayıp açıklama iste.",
+        "immediateEffects": { "stress": 5 }
+      },
+      {
+        "id": "sessizce_kabul",
+        "text": "Sessizce kabul et, dava konusu değil.",
+        "immediateEffects": { "stress": 7, "burnout": 2 }
+      },
+      {
+        "id": "toplu_dilekce",
+        "text": "Diğer asistanlarla toplu bir dilekçe hazırla.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 6 }]
+      }
+    ]
+  }
+]

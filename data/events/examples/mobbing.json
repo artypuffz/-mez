@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mob_001_whatsapp_hedef",
+    "title": "GRUP MESAJI",
+    "description": "Klinik WhatsApp grubunda kıdemli, ismini vermeden 'bazı arkadaşlar dosya düzenine dikkat etmiyor' diye bir mesaj attı. Herkes senin dosyalarını gördü. Sen de gördün. 14 kişi mesajı 'gördü' olarak işaretledi, kimse yazmadı.",
+    "category": "MOBBING",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 5 }] },
+    "choices": [
+      {
+        "id": "ozel_mesaj_at",
+        "text": "Kıdemliye özelden 'bunu mu kastettin' diye sor.",
+        "immediateEffects": { "stress": 6 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -2, "grudge": 2 }]
+      },
+      {
+        "id": "gruba_cevap",
+        "text": "Gruba 'anlaşıldı, düzelteceğim' yaz.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "ego": 3 }]
+      },
+      {
+        "id": "gormezden_gel",
+        "text": "Hiçbir şey yazma, dosyaları sessizce düzelt.",
+        "immediateEffects": { "stress": 8 }
+      }
+    ]
+  },
+  {
+    "id": "mob_002_izin_iptali",
+    "title": "İZİN İPTALİ",
+    "description": "Onaylanmış iznin, nöbet listesi son anda değiştiği için iptal edildi. Sebep olarak 'personel yetersizliği' yazıyor. Geçen ay aynı gerekçeyle senin dışındaki üç kişinin izni iptal edilmemişti.",
+    "category": "MOBBING",
+    "weight": 7,
+    "cooldownWeeks": 14,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 12 }] },
+    "choices": [
+      {
+        "id": "itiraz_et",
+        "text": "Bölüm başkanına yazılı itiraz et.",
+        "immediateEffects": { "stress": 5 },
+        "flags": { "set": { "mob_itiraz_yazili": true } }
+      },
+      {
+        "id": "kabul_et",
+        "text": "İtiraz etmeden kabul et.",
+        "immediateEffects": { "stress": 10, "burnout": 3 }
+      },
+      {
+        "id": "meslektaslardan_destek",
+        "text": "Aynı durumdaki diğer asistanlarla birlikte konuş.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 5 }]
+      }
+    ]
+  }
+]

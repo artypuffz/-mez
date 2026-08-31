@@ -1,0 +1,65 @@
+[
+  {
+    "id": "soc_001_dugun_cakismasi",
+    "title": "DÜĞÜN",
+    "description": "En yakın arkadaşının düğünü nöbet gününe denk geldi. Davetiye altı ay önce geldi, nöbet listesi üç gün önce açıklandı. Aradaki matematiği kimse açıklayamıyor.",
+    "category": "SOCIAL",
+    "weight": 7,
+    "cooldownWeeks": 26,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 8 }] },
+    "choices": [
+      {
+        "id": "degisim_dene",
+        "text": "Nöbet değiştirmeye çalış.",
+        "immediateEffects": { "stress": 5 }
+      },
+      {
+        "id": "dugune_gitme",
+        "text": "Düğüne gitme.",
+        "immediateEffects": { "stress": 8 },
+        "relationshipEffects": [{ "npc": "arkadas_generic", "trust": -10 }]
+      },
+      {
+        "id": "kidemliden_izin",
+        "text": "Kıdemliden izin iste.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -2 }]
+      },
+      {
+        "id": "hastayim_de",
+        "text": "'Hastayım' de.",
+        "immediateEffects": { "stress": 6 },
+        "flags": { "set": { "soc_yalan_soyledi": true } }
+      }
+    ]
+  },
+  {
+    "id": "soc_002_aile_ziyareti",
+    "title": "MEMLEKET",
+    "description": "Ailenden 'ne zaman geliyorsun' mesajı geldi. Son ziyaretinin üzerinden dört ay geçmiş. Sen bunu bilmiyordun, telefon hatırlattı.",
+    "category": "SOCIAL",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "izin_ayarla",
+        "text": "İzin ayarlayıp git.",
+        "immediateEffects": { "stress": -10, "fatigue": -5, "money": -1500 },
+        "relationshipEffects": [{ "npc": "aile_generic", "trust": 10 }]
+      },
+      {
+        "id": "video_arama",
+        "text": "Video araması yeter de.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "aile_generic", "trust": 1 }]
+      },
+      {
+        "id": "erteleme",
+        "text": "'Bayramda kesin gelirim' de.",
+        "immediateEffects": { "stress": 3 },
+        "relationshipEffects": [{ "npc": "aile_generic", "trust": -3 }]
+      }
+    ]
+  }
+]

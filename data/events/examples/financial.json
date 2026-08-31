@@ -1,0 +1,58 @@
+[
+  {
+    "id": "fin_001_telefon_bozuldu",
+    "title": "TELEFONUN BOZULDU",
+    "description": "Telefonun nöbet sırasında yere düştü. Ekranın artık yalnızca üst üçte biri çalışıyor. Mesajları okumak için telefonu ters çevirip aşağıdan yukarı kaydırmayı öğrendin.",
+    "category": "FINANCIAL",
+    "weight": 6,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [] },
+    "choices": [
+      {
+        "id": "yeni_telefon",
+        "text": "Yeni telefon al.",
+        "immediateEffects": { "money": -18000, "stress": -4 }
+      },
+      {
+        "id": "ekran_degistir",
+        "text": "Ekranı değiştir.",
+        "immediateEffects": { "money": -3500, "stress": -1 }
+      },
+      {
+        "id": "boyle_kullan",
+        "text": "Böyle kullanmaya devam et.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "kirik_telefon": true } }
+      }
+    ]
+  },
+  {
+    "id": "fin_002_dogum_gunu",
+    "title": "DOĞUM GÜNÜ",
+    "description": "Sevgilinin doğum gününü hatırladın. Daha doğrusu telefonun hatırlattı.",
+    "category": "FINANCIAL",
+    "weight": 6,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "flag": "has_partner", "eq": true }] },
+    "choices": [
+      {
+        "id": "guzel_hediye",
+        "text": "Güzel bir hediye al.",
+        "immediateEffects": { "money": -4000, "stress": -3 },
+        "relationshipEffects": [{ "npc": "sevgili_generic", "trust": 8 }]
+      },
+      {
+        "id": "kucuk_hediye",
+        "text": "Küçük bir şey al.",
+        "immediateEffects": { "money": -800 },
+        "relationshipEffects": [{ "npc": "sevgili_generic", "trust": 2 }]
+      },
+      {
+        "id": "nobet_bahanesi",
+        "text": "'Bu hafta nöbet çok yoğundu' de.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "sevgili_generic", "trust": -6 }]
+      }
+    ]
+  }
+]

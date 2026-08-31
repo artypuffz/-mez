@@ -1,0 +1,255 @@
+[
+  {
+    "id": "chain_baris_01_ilk_gorev",
+    "title": "KIDEMLİ BARIŞ",
+    "description": "Üçüncü kıdem asistan Barış seni koridorda durdurdu. Elindeki bir deste epikrizi sana uzattı. 'Yeni başlayanlar önce evrak işini öğrenmeli' dedi, gülümsemesi samimi mi alaycı mı anlayamadın.",
+    "category": "GENERAL",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "stat": "career.week", "gte": 6 }, { "stat": "career.week", "lte": 16 }] },
+    "choices": [
+      {
+        "id": "sessizce_kabul",
+        "text": "Sessizce kabul et.",
+        "immediateEffects": { "fatigue": 5, "stress": 2 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 5, "ego": 5 }],
+        "flags": { "set": { "chain_baris_path": "dostluk" } },
+        "followUpEvent": { "eventId": "chain_baris_02_dostluk", "delayWeeks": 14 }
+      },
+      {
+        "id": "nazik_sinir",
+        "text": "Nazikçe sınır koy: 'Bu benim işim değil ama yardımcı olurum.'",
+        "immediateEffects": { "fatigue": 3, "stress": 1 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 8, "ego": -2 }],
+        "flags": { "set": { "chain_baris_path": "dostluk" } },
+        "followUpEvent": { "eventId": "chain_baris_02_dostluk", "delayWeeks": 14 }
+      },
+      {
+        "id": "reddet",
+        "text": "'Bu senin işin' de.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "baris", "grudge": 10, "trust": -5 }],
+        "flags": { "set": { "chain_baris_path": "gerilim" } },
+        "followUpEvent": { "eventId": "chain_baris_02_gerilim", "delayWeeks": 14 }
+      },
+      {
+        "id": "kidemliye_sikayet",
+        "text": "Bölüm kıdemlisine şikayet et.",
+        "immediateEffects": { "stress": 6 },
+        "relationshipEffects": [{ "npc": "baris", "grudge": 20, "trust": -10 }],
+        "flags": { "set": { "chain_baris_path": "gerilim", "chain_baris_yonetime_gitti": true } },
+        "followUpEvent": { "eventId": "chain_baris_02_gerilim", "delayWeeks": 14 }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_02_dostluk",
+    "title": "BARIŞ'TAN BEKLENMEDİK BİR RİCA",
+    "description": "Barış bu sefer farklı bir tonda yaklaştı. Gelecek ay bir aile meselesi çıkmış, cumartesi nöbetini senden istiyor ama karşılığında kendi nöbetlerinden birini sana bırakmayı teklif ediyor.",
+    "category": "GENERAL",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "dostluk" }] },
+    "choices": [
+      {
+        "id": "takasi_kabul",
+        "text": "Takası kabul et.",
+        "immediateEffects": { "fatigue": 4 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 10 }],
+        "followUpEvent": { "eventId": "chain_baris_03_dostluk", "delayWeeks": 20 }
+      },
+      {
+        "id": "karsiliksiz_yardim",
+        "text": "'Takasa gerek yok, değiştiririm' de.",
+        "immediateEffects": { "fatigue": 5, "stress": -2 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 15 }],
+        "followUpEvent": { "eventId": "chain_baris_03_dostluk", "delayWeeks": 20 }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_02_gerilim",
+    "title": "GRUPTA BİR İMA",
+    "description": "Klinik WhatsApp grubunda Barış, ismini vermeden 'bazı yeni asistanlar iş birliğine pek yatkın değil' diye bir mesaj attı. Zamanlama tesadüf olamayacak kadar net.",
+    "category": "MOBBING",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "gerilim" }] },
+    "choices": [
+      {
+        "id": "gruba_yanit",
+        "text": "Gruba doğrudan yanıt yaz.",
+        "immediateEffects": { "stress": 6 },
+        "relationshipEffects": [{ "npc": "baris", "grudge": 8 }],
+        "followUpEvent": { "eventId": "chain_baris_03_gerilim", "delayWeeks": 20 }
+      },
+      {
+        "id": "sessiz_kal",
+        "text": "Sessiz kal, notunu düş.",
+        "immediateEffects": { "stress": 8, "burnout": 2 },
+        "flags": { "set": { "chain_baris_sessiz_kaldi": true } },
+        "followUpEvent": { "eventId": "chain_baris_03_gerilim", "delayWeeks": 20 }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_03_dostluk",
+    "title": "KÖTÜ BİR GECE",
+    "description": "Nöbetin felaket gidiyor: art arda üç zor vaka, yardım isteyecek kimse yok sandığın anda Barış habersizce servise geldi. 'Geçerken uğradım' dedi, sabaha kadar yanında kaldı.",
+    "category": "GENERAL",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "dostluk" }, { "relationship": { "npc": "baris", "trust": { "gte": 15 } } }] },
+    "choices": [
+      {
+        "id": "tesekkur_et",
+        "text": "Sabah içtenlikle teşekkür et.",
+        "immediateEffects": { "stress": -8, "fatigue": -5 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 12 }],
+        "followUpEvent": { "eventId": "chain_baris_04_dostluk", "delayWeeks": 25 }
+      },
+      {
+        "id": "utangac_kal",
+        "text": "Utanarak sadece başını salla.",
+        "immediateEffects": { "stress": -5, "fatigue": -3 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 6 }],
+        "followUpEvent": { "eventId": "chain_baris_04_dostluk", "delayWeeks": 25 }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_03_gerilim",
+    "title": "YALNIZ KALDIĞIN GECE",
+    "description": "Nöbetin felaket gidiyor. Barış'ı aradın, telefonu açık görünüyor ama cevap vermiyor. Sabah 'telefonum sessizdeymiş' dedi. Gözlerindeki ifade özür dilemiyordu.",
+    "category": "MOBBING",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "gerilim" }, { "relationship": { "npc": "baris", "grudge": { "gte": 8 } } }] },
+    "choices": [
+      {
+        "id": "yuzeysel_yuzlestir",
+        "text": "Sabah sakince yüzleştir.",
+        "immediateEffects": { "stress": 8 },
+        "relationshipEffects": [{ "npc": "baris", "grudge": 5, "trust": -3 }],
+        "followUpEvent": { "eventId": "chain_baris_04_gerilim", "delayWeeks": 25 }
+      },
+      {
+        "id": "belgele",
+        "text": "Hiçbir şey söyleme, olanı tarihli olarak not al.",
+        "immediateEffects": { "stress": 10, "burnout": 4 },
+        "flags": { "set": { "chain_baris_belgeledi": true } },
+        "followUpEvent": { "eventId": "chain_baris_04_gerilim", "delayWeeks": 25 }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_04_dostluk",
+    "title": "BARIŞ UZMAN OLDU",
+    "description": "Barış uzmanlık sınavını geçti. Artık aynı serviste farklı bir kimlikle duruyor. İlk yaptığı şeylerden biri, senin için bir sonraki dönem araştırma projesine ortak olmanı önermek oldu.",
+    "category": "CAREER",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "dostluk" }] },
+    "choices": [
+      {
+        "id": "teklifi_kabul",
+        "text": "Teklifi kabul et.",
+        "immediateEffects": { "stress": 3, "fatigue": 4 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 10 }],
+        "followUpEvent": { "eventId": "chain_baris_05_dostluk", "delayWeeks": 25 }
+      },
+      {
+        "id": "kibarca_reddet",
+        "text": "Şu an yükün ağır olduğu için kibarca reddet.",
+        "immediateEffects": { "stress": -2 },
+        "relationshipEffects": [{ "npc": "baris", "trust": 3 }],
+        "followUpEvent": { "eventId": "chain_baris_05_dostluk", "delayWeeks": 25 }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_04_gerilim",
+    "title": "BARIŞ UZMAN OLDU",
+    "description": "Barış uzmanlık sınavını geçti. Artık nöbet listesini o düzenliyor. Senin adının yanına, geçen ay tuttuğun nöbetlerin neredeyse iki katı yazılmış.",
+    "category": "MOBBING",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "gerilim" }] },
+    "choices": [
+      {
+        "id": "itiraz_et",
+        "text": "Bölüm başkanına itiraz et.",
+        "immediateEffects": { "stress": 8 },
+        "relationshipEffects": [{ "npc": "baris", "grudge": 6 }],
+        "flags": { "set": { "chain_baris_itiraz_etti": true } },
+        "followUpEvent": { "eventId": "chain_baris_05_gerilim", "delayWeeks": 25 }
+      },
+      {
+        "id": "sessizce_tut",
+        "text": "Sessizce tüm nöbetleri tut.",
+        "immediateEffects": { "fatigue": 15, "stress": 10, "burnout": 5 },
+        "followUpEvent": { "eventId": "chain_baris_05_gerilim", "delayWeeks": 25 }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_05_dostluk",
+    "title": "VEDA",
+    "description": "Barış başka bir hastaneye geçiyor. Ayrılırken sana 'kendi çömezine benim yaptığım gibi davran, ben de sana kötü davranılmasını izlemek istemedim' dedi. Şimdi kendi ilk yılından bir asistanın var.",
+    "category": "CAREER",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "dostluk" }] },
+    "choices": [
+      {
+        "id": "sozu_tut",
+        "text": "Sözünü tutmaya karar ver.",
+        "immediateEffects": { "stress": -5 },
+        "flags": { "set": { "chain_baris_cycle_outcome": "broke_the_cycle" } },
+        "statistics": { "increment": { "cycle_broken": 1 } }
+      },
+      {
+        "id": "unut_git",
+        "text": "Duygusal anı geçiştir, günlük işe dön.",
+        "immediateEffects": { "stress": 1 },
+        "flags": { "set": { "chain_baris_cycle_outcome": "undecided" } }
+      }
+    ]
+  },
+  {
+    "id": "chain_baris_05_gerilim",
+    "title": "VEDA",
+    "description": "Barış başka bir hastaneye geçiyor. Son gününde ona hiçbir şey söylemedi, sen de söylemedin. Şimdi kendi ilk yılından bir asistanın var ve elinde ona vereceğin bir evrak destesi.",
+    "category": "MOBBING",
+    "weight": 10,
+    "cooldownWeeks": 999,
+    "chainId": "baris",
+    "requirements": { "all": [{ "flag": "chain_baris_path", "eq": "gerilim" }] },
+    "choices": [
+      {
+        "id": "farkli_davran",
+        "text": "Evrakları kendin hallet, çömeze devretme.",
+        "immediateEffects": { "fatigue": 5, "stress": -3 },
+        "relationshipEffects": [{ "npc": "comez_generic", "trust": 8 }],
+        "flags": { "set": { "chain_baris_cycle_outcome": "broke_the_cycle" } },
+        "statistics": { "increment": { "cycle_broken": 1 } }
+      },
+      {
+        "id": "ayni_seyi_yap",
+        "text": "'Yeni başlayanlar önce evrak işini öğrenmeli' de.",
+        "immediateEffects": { "stress": -1 },
+        "relationshipEffects": [{ "npc": "comez_generic", "grudge": 10 }],
+        "flags": { "set": { "chain_baris_cycle_outcome": "repeated_the_cycle" } },
+        "statistics": { "increment": { "cycle_repeated": 1 } }
+      }
+    ]
+  }
+]

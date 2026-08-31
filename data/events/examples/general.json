@@ -1,0 +1,135 @@
+[
+  {
+    "id": "gen_001_sessiz_hafta",
+    "title": "HAFTA 37",
+    "description": "Bu hafta şaşırtıcı şekilde hiçbir şey olmadı. Nöbet normaldi, hoca vizitte sakindi, kimse ağlamadı. Bundan şüpheleniyorsun.",
+    "category": "GENERAL",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "rahatla",
+        "text": "Rahatla, iyi bir hafta da olabilir.",
+        "immediateEffects": { "stress": { "min": -5, "max": -2 } }
+      },
+      {
+        "id": "hazirlan",
+        "text": "Fırtına öncesi sessizlik, tetikte kal.",
+        "immediateEffects": { "stress": 2, "fatigue": 2 }
+      }
+    ]
+  },
+  {
+    "id": "gen_002_vizit_gecikmesi",
+    "title": "SABAH VİZİTİ",
+    "description": "Hoca vizite 40 dakika geç geldi. Sebebini kimse sormuyor. Sen de sormayacaksın. Servis koridorunda hastalar, hasta yakınları ve sen 40 dakikadır ayaktasınız.",
+    "category": "GENERAL",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": { "all": [] },
+    "choices": [
+      {
+        "id": "sessizce_bekle",
+        "text": "Sessizce bekle.",
+        "immediateEffects": { "fatigue": 5, "stress": 3 }
+      },
+      {
+        "id": "dosyalari_hazirla",
+        "text": "Beklerken dosyaları önceden hazırla.",
+        "immediateEffects": { "fatigue": 6, "stress": 1 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": 3 }]
+      },
+      {
+        "id": "kahve_ic",
+        "text": "Gizlice bir kahve iç.",
+        "immediateEffects": { "fatigue": 3, "stress": 2 },
+        "flags": { "set": { "kahve_sayaci_general": 1 } }
+      }
+    ]
+  },
+  {
+    "id": "gen_003_hbys_coktu",
+    "title": "SİSTEM ÇÖKTÜ",
+    "description": "HBYS iki saattir çalışmıyor. IT departmanı 'kısa süre içinde düzelecek' diyor. Bu cümleyi son üç aydır her hafta duyuyorsun. Tüm tetkik sonuçları kağıt üzerinden takip ediliyor, el yazın da giderek kötüleşiyor.",
+    "category": "GENERAL",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [] },
+    "choices": [
+      {
+        "id": "kagit_takip",
+        "text": "Her şeyi kağıda yaz, sonra sisteme gireriz.",
+        "immediateEffects": { "fatigue": 8, "stress": 5 }
+      },
+      {
+        "id": "bekle",
+        "text": "Sistemin açılmasını bekle, iş birikir ama olsun.",
+        "immediateEffects": { "stress": 6 }
+      },
+      {
+        "id": "sikayet_grubu",
+        "text": "Asistan grubuna 'yine mi' diye yaz.",
+        "immediateEffects": { "stress": -1 },
+        "flags": { "set": { "hbys_sikayet_general": true } }
+      }
+    ]
+  },
+  {
+    "id": "gen_004_izin_talebi",
+    "title": "YILLIK İZİN",
+    "description": "Bir haftalık izin hakkın birikti. Kıdemli sekreterya seni arayıp 'şu an uygun değil ama sen yine de dilekçe yaz' dedi. Bu cümlenin ne anlama geldiğinden emin değilsin.",
+    "category": "GENERAL",
+    "weight": 5,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 20 }] },
+    "choices": [
+      {
+        "id": "dilekce_yaz",
+        "text": "Dilekçeyi yaz ve bekle.",
+        "immediateEffects": { "stress": 2 },
+        "flags": { "set": { "izin_dilekcesi_bekliyor": true } }
+      },
+      {
+        "id": "vazgec",
+        "text": "Bu sene izin yok, unut gitsin.",
+        "immediateEffects": { "stress": 8, "burnout": 3 }
+      },
+      {
+        "id": "israrci_ol",
+        "text": "Israrla takip et, her gün sor.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "sekreter_generic", "trust": -3 }]
+      }
+    ]
+  },
+  {
+    "id": "gen_005_kongre_afisi",
+    "title": "KONGRE POSTERİ",
+    "description": "Bölüm senden bir kongre için poster hazırlamanı istedi. Verinin yarısı eksik, kalan yarısı Excel'de üç farklı formatta. Kongre üç hafta sonra.",
+    "category": "GENERAL",
+    "weight": 6,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "gecelere_kal",
+        "text": "Nöbetler dışında gecelerini vererek yetiştir.",
+        "immediateEffects": { "fatigue": 12, "stress": 10 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": 8 }]
+      },
+      {
+        "id": "kaba_taslak",
+        "text": "Elindeki veriyle kaba bir taslak çıkar, gerisi hocaya kalsın.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": 2, "ego": -2 }]
+      },
+      {
+        "id": "baska_asistan",
+        "text": "İşi başka bir asistana devretmeye çalış.",
+        "immediateEffects": { "stress": 6 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "grudge": 5 }]
+      }
+    ]
+  }
+]
