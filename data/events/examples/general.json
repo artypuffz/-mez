@@ -44,9 +44,6 @@
     "triggerMode": "pool",
     "weight": 10,
     "cooldownWeeks": 6,
-    "requirements": {
-      "all": []
-    },
     "choices": [
       {
         "id": "sessizce_bekle",
@@ -93,9 +90,6 @@
     "triggerMode": "pool",
     "weight": 8,
     "cooldownWeeks": 10,
-    "requirements": {
-      "all": []
-    },
     "choices": [
       {
         "id": "kagit_takip",

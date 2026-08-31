@@ -1,6 +1,6 @@
 import { create, type StoreApi, type UseBoundStore } from "zustand";
 
-import type { GameState, TusPrepProfileId } from "../domain/state/types";
+import type { GameState, ResolvedResourceDelta, TusPrepProfileId } from "../domain/state/types";
 import {
   createInitialGameState,
   type CharacterCreationInput,
@@ -17,11 +17,9 @@ import { createScopedRng } from "../domain/rng/seededRng";
 import type { ResidencyProgram } from "../domain/config/residencyPrograms";
 import type { SaveRepository } from "../domain/persistence/SaveRepository";
 import { createAsyncStorageSaveRepository } from "../persistence/asyncStorageSaveRepository";
-import {
-  advanceResidencyWeek,
-  type WeekAdvanceResourceDelta,
-  type WeekAdvanceTransitions,
-} from "../domain/residency/advanceResidencyWeek";
+import type { WeekAdvanceResourceDelta, WeekAdvanceTransitions } from "../domain/residency/advanceResidencyWeek";
+import { advanceResidencyWeekWithEvents, resolveEventChoice } from "../domain/events/engine";
+import { getEventRepository } from "../domain/events/content";
 
 export interface WeekSummary {
   week: number;
@@ -34,10 +32,14 @@ export interface GameStore {
   status: "idle" | "loading" | "ready";
   hasSave: boolean;
   isAdvancingWeek: boolean;
+  isResolvingEvent: boolean;
   // Ephemeral — not persisted, not part of GameState. Resets to null on
   // every fresh load; only reflects "what just happened" within this
   // session, per the design bible's week-summary mock.
   lastWeekSummary: WeekSummary | null;
+  // Same idea, per resolved choice — visible resource deltas only, never
+  // hidden relationship/flag/behaviorTag effects (§26/27).
+  lastChoiceEffects: ResolvedResourceDelta | null;
 
   loadGame: () => Promise<void>;
   createNewGame: (input: CharacterCreationInput) => Promise<void>;
@@ -50,6 +52,7 @@ export interface GameStore {
   goToPreferenceList: () => Promise<void>;
   chooseResidencyProgram: (program: ResidencyProgram) => Promise<void>;
   advanceWeek: () => Promise<void>;
+  resolveActiveEventChoice: (eventId: string, choiceId: string) => Promise<void>;
 }
 
 // The store's only job is orchestration (call domain functions, call the
@@ -68,7 +71,9 @@ export function createGameStore(
     status: "idle",
     hasSave: false,
     isAdvancingWeek: false,
+    isResolvingEvent: false,
     lastWeekSummary: null,
+    lastChoiceEffects: null,
 
     async loadGame() {
       set({ status: "loading" });
@@ -128,23 +133,54 @@ export function createGameStore(
 
     async advanceWeek() {
       const { gameState, isAdvancingWeek } = get();
-      // Double-submit guard: a refresh never re-triggers this (it's only
-      // ever called from the button's onPress), but a rapid double-tap
-      // before the first call's persist lands must not double-tick.
+      // Double-submit guard (rapid double-tap before the first call's
+      // persist lands) + the §20 rule: can't advance with an unresolved
+      // event queue from the previous week still sitting there.
       if (!gameState || isAdvancingWeek || gameState.career.phase !== "residency") return;
+      if (gameState.weeklyEventQueue.length > 0) return;
 
-      set({ isAdvancingWeek: true });
+      set({ isAdvancingWeek: true, lastChoiceEffects: null });
       try {
         const nextWeek = gameState.career.residencyWeek + 1;
-        const rng = createScopedRng(gameState.meta.rngSeed, `residency:week:${nextWeek}`);
-        const result = advanceResidencyWeek(gameState, rng);
+        const weekRng = createScopedRng(gameState.meta.rngSeed, `residency:week:${nextWeek}`);
+        const eventsRng = createScopedRng(gameState.meta.rngSeed, `events:week:${nextWeek}`);
+        const result = advanceResidencyWeekWithEvents(gameState, weekRng, eventsRng, getEventRepository());
         await repository.save(result.state);
         set({
           gameState: result.state,
-          lastWeekSummary: { week: nextWeek, transitions: result.transitions, resourceDelta: result.resourceDelta },
+          lastWeekSummary: {
+            week: nextWeek,
+            transitions: result.weekAdvance.transitions,
+            resourceDelta: result.weekAdvance.resourceDelta,
+          },
         });
+        if (__DEV__) {
+          // Dev-only debug trace (§31) — never rendered in the UI.
+          console.log("[events] week trace", nextWeek, result.trace);
+        }
       } finally {
         set({ isAdvancingWeek: false });
+      }
+    },
+
+    async resolveActiveEventChoice(eventId, choiceId) {
+      const { gameState, isResolvingEvent } = get();
+      if (!gameState || isResolvingEvent) return;
+      if (!gameState.weeklyEventQueue.includes(eventId)) return;
+
+      set({ isResolvingEvent: true });
+      try {
+        const event = getEventRepository().getEventById(eventId);
+        if (!event) return;
+        const rng = createScopedRng(
+          gameState.meta.rngSeed,
+          `events:choice:${gameState.career.residencyWeek}:${eventId}:${choiceId}`
+        );
+        const result = resolveEventChoice(gameState, event, choiceId, rng);
+        await repository.save(result.state);
+        set({ gameState: result.state, lastChoiceEffects: result.visibleEffects });
+      } finally {
+        set({ isResolvingEvent: false });
       }
     },
   }));

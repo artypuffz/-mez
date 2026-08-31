@@ -28,6 +28,14 @@ const migrations: Record<number, Migration> = {
         : career,
     };
   },
+  // v3 (Phase 4) had no event-engine bookkeeping — Phase 5 added it.
+  3: (state) => ({
+    ...state,
+    meta: { ...(state.meta as Record<string, unknown>), saveVersion: 4 },
+    eventCooldowns: {},
+    pendingEffects: [],
+    weeklyEventQueue: [],
+  }),
 };
 
 export function migrateSaveData(raw: unknown): GameState {

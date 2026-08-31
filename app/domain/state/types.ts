@@ -86,9 +86,31 @@ export interface EventLogEntry {
   week: number;
   eventId: string;
   choiceId: string;
+  resolvedTitle: string;
+  category: string;
+  chainId?: string;
+  checkpoint?: string;
 }
 
-export const CURRENT_SAVE_VERSION = 3;
+// Resolved (non-range) resource deltas — a choice's delayedEffects have
+// any {min,max} ranges resolved to a concrete number at scheduling time
+// (same rng pass as the choice's immediateEffects), not re-rolled when
+// they're actually applied N weeks later.
+export interface ResolvedResourceDelta {
+  stress?: number;
+  fatigue?: number;
+  burnout?: number;
+  money?: number;
+}
+
+export interface PendingEffectEntry {
+  dueWeek: number;
+  sourceEventId: string;
+  sourceChoiceId: string;
+  effects: ResolvedResourceDelta;
+}
+
+export const CURRENT_SAVE_VERSION = 4;
 
 export interface GameState {
   meta: {
@@ -149,6 +171,17 @@ export interface GameState {
   behaviorStats: Record<string, number>;
 
   statistics: Record<string, number>;
+
+  // Pool-event cooldown tracking: eventId -> the week it last triggered.
+  eventCooldowns: Record<string, number>;
+
+  pendingEffects: PendingEffectEntry[];
+
+  // Event ids generated for the CURRENT week, awaiting player resolution,
+  // in display order. Must be empty before advanceWeek is allowed to run
+  // again — see the store's guard. Persisted (not ephemeral) so an app
+  // close mid-event doesn't lose or reroll it.
+  weeklyEventQueue: string[];
 
   status: "active" | "gameover" | "specialist";
 }

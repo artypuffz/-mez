@@ -7,9 +7,6 @@
     "triggerMode": "pool",
     "weight": 6,
     "cooldownWeeks": 30,
-    "requirements": {
-      "all": []
-    },
     "choices": [
       {
         "id": "yeni_telefon",
@@ -49,14 +46,6 @@
     "triggerMode": "pool",
     "weight": 6,
     "cooldownWeeks": 24,
-    "requirements": {
-      "all": [
-        {
-          "flag": "has_partner",
-          "eq": true
-        }
-      ]
-    },
     "choices": [
       {
         "id": "guzel_hediye",

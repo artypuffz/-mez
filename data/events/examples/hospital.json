@@ -7,9 +7,6 @@
     "triggerMode": "pool",
     "weight": 5,
     "cooldownWeeks": 20,
-    "requirements": {
-      "all": []
-    },
     "choices": [
       {
         "id": "merdiven_al",

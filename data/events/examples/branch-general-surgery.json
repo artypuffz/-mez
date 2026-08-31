@@ -11,7 +11,7 @@
       "all": [
         {
           "branchIn": [
-            "general-surgery"
+            "genel_cerrahi"
           ]
         }
       ]
@@ -59,7 +59,7 @@
       "all": [
         {
           "branchIn": [
-            "general-surgery"
+            "genel_cerrahi"
           ]
         },
         {

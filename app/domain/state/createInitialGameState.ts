@@ -70,6 +70,9 @@ export function createInitialGameState(
     eventHistory: [],
     behaviorStats: {},
     statistics: {},
+    eventCooldowns: {},
+    pendingEffects: [],
+    weeklyEventQueue: [],
     status: "active",
   };
 }

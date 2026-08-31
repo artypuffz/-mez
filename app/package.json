@@ -15,10 +15,12 @@
     "react-native-safe-area-context": "~5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-web": "^0.21.2",
+    "zod": "^4.5.4",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
   },
@@ -27,7 +29,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "vitest run"
+    "test": "vitest run",
+    "validate:events": "tsx scripts/validateEvents.ts",
+    "simulate:events": "tsx scripts/simulateEvents.ts"
   },
   "private": true
 }

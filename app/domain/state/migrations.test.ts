@@ -37,9 +37,12 @@ describe('migrateSaveData', () => {
     };
 
     const migrated = migrateSaveData(v1Save);
-    expect(migrated.meta.saveVersion).toBe(3);
+    expect(migrated.meta.saveVersion).toBe(4);
     expect(migrated.tus).toEqual({ step: 'prep', examEventIds: [], examLog: [] });
     expect(migrated.career.residencyStartedAt).toBeUndefined();
+    expect(migrated.eventCooldowns).toEqual({});
+    expect(migrated.pendingEffects).toEqual([]);
+    expect(migrated.weeklyEventQueue).toEqual([]);
     expect(migrated.character.name).toBe('Ada');
   });
 
@@ -61,5 +64,26 @@ describe('migrateSaveData', () => {
     };
     const migrated = migrateSaveData(v2InResidency);
     expect(migrated.career.residencyStartedAt).toBe('2026-09-01');
+  });
+
+  it('backfills empty event-engine bookkeeping for a v3 save', () => {
+    const v3Save = {
+      meta: { saveVersion: 3, rngSeed: 'seed', createdAt: '2026-03-15T00:00:00.000Z' },
+      character: { name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' },
+      career: {
+        phase: 'residency', branch: 'ic_hastaliklari', residencyStartedAt: '2026-09-01',
+        residencyWeek: 5, residencyYear: 1, seniorityStage: 'comez',
+      },
+      tus: { step: 'result', examEventIds: [], examLog: [] },
+      resources: { stress: 40, fatigue: 30, burnout: 0, money: 12000 },
+      relationships: {}, flags: {}, pendingEvents: [], activeChains: {},
+      eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
+    };
+    const migrated = migrateSaveData(v3Save);
+    expect(migrated.meta.saveVersion).toBe(4);
+    expect(migrated.eventCooldowns).toEqual({});
+    expect(migrated.pendingEffects).toEqual([]);
+    expect(migrated.weeklyEventQueue).toEqual([]);
+    expect(migrated.resources.stress).toBe(40);
   });
 });
