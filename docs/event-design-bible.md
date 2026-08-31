@@ -1,10 +1,36 @@
-# ÇÖMEZ — Event Design Bible (v0.1)
+# ÇÖMEZ — Event Design Bible (v0.2)
 
 Bu doküman, implementasyona geçmeden önce event motorunun gerçek içerikle
-test edilmesi amacıyla hazırlandı. ~24 örnek event ve 1 adet 5 aşamalı NPC
+test edilmesi amacıyla hazırlandı. ~24 örnek event ve 1 adet çok aşamalı NPC
 zinciri üzerinden ton, seçim sertliği, kategori dengesi ve şemanın yeterliliği
 doğrulanıyor. Örnek JSON'lar `data/events/examples/` altında, motora
 gireceklerinde `data/events/` altına taşınacak şekilde yazıldı.
+
+**Şema referansı artık ayrı dokümanda:** `docs/event-schema.md` (v0.2).
+Bu doküman *neden* sorularına, `event-schema.md` *nasıl* sorusuna cevap verir.
+
+## v0.2 Değişiklik Özeti
+
+Onaylanan v0.1 + ek 7 tasarım kararı sonrası:
+
+1. **`triggerMode: "pool" | "scheduled"`** — zincir aşamaları artık asla
+   rastgele havuzdan tesadüfen tetiklenmiyor.
+2. **`choice.requirements`** — kıdeme/flag'e/relationship'e göre seçenek
+   görünürlüğü (bkz. §6, ayna event çifti).
+3. **Koşullu metin varyantları** (`descriptionVariants`/`titleVariants`) —
+   eval yok, aynı requirement DSL'i yeniden kullanılıyor.
+4. **Esnek zincir çözümleme** — `chainId + chainCheckpoint + priority +
+   requirements(any/all)` ile, flag tek başına kaderi belirlemiyor; güncel
+   `relationship` state'i de değerlendiriliyor (bkz. §5).
+5. **`behaviorTags`** — sabit isimli sayaçlar (`supportiveJuniorChoices` vb.)
+   yerine serbest, ad alanlı etiketler (`"junior:supportive"` vb.); yeni
+   davranış kategorisi eklemek şema değişikliği gerektirmiyor.
+6. **Trade-off kuralı** ton rehberine eklendi (bkz. §2.1).
+7. **Deadpan sıkılaştırma** — NPC'lerin temayı doğrudan söylemesi yasak
+   (bkz. §2.2, Barış Hattı stage5 revizyonu).
+
+Detaylı şema: `docs/event-schema.md`. Aşağıdaki bölümler bu kararların
+tasarım gerekçesini ve örnek uygulamalarını içerir.
 
 ---
 
@@ -29,6 +55,44 @@ Kural: **Şaka, doktorların yaşadığı kötü koşullar değil; bu koşullar�
 Referans cümle (prompt'tan, hedef ton budur):
 > "04.17. Telefonun çaldı. Kıdemlin arıyor. Bugün nöbetçi değilsin. Bunun
 > kıdemlin açısından herhangi bir önemi yok."
+
+### 1.1 Trade-off Kuralı (YENİ, v0.2)
+
+Özellikle mobbing/hiyerarşi kararlarında **hiçbir seçenek net "iyi" veya
+"kötü" olarak işaretlenmiş hissettirmemeli.** Somut kural:
+
+- Çömeze yük aktaran seçenek, oyuncunun kendi stres/yorgunluk/zamanını
+  **gerçekten** azaltmalı (kozmetik değil, ölçülebilir bir kazanç).
+- Çömezi koruyan/destekleyen seçenek de **gerçek bir bedel** taşımalı
+  (zaman, stres veya para) — "bedelsiz erdem" yazılmaz.
+- Yazarken kontrol sorusu: *"Bu seçeneği neden bir oyuncu seçsin?"* — cevap
+  yalnızca "çünkü doğrusu bu" ise seçenek yeniden yazılır.
+
+Önce/sonra örneği (`career-npc-mirror.json`, `mirror_02_kidemli_yeni_comez`):
+
+| Önce (v0.1) | Sonra (v0.2) |
+|---|---|
+| "Nöbetini değiştir" → sadece `fatigue+6` | "Nöbetini değiştir" → `fatigue+6, stress+2` **+** kendi o haftaki başka bir yükümlülüğünü (`flags.set: missed_own_prep`) aksatma riski taşıyor — destek bedelsiz değil. |
+| "Reddet" → sadece ilişki hasarı | "Reddet" → `stress:-3` (kendi yükü hafifler) + ilişki hasarı — reddetmenin *gerçek* bir kazancı var, salt kötülük için kötülük değil. |
+
+### 1.2 Deadpan Sıkılaştırma Kuralı (YENİ, v0.2)
+
+NPC diyalogları veya anlatı metni **oyunun temasını doğrudan açıklamamalı**
+("döngü", "sistem böyle" gibi ders çıkarma cümleleri narratörden gelmemeli).
+Tema, durumun kendisinden ve tekrar eden imgelerden (örn. "evrak destesi"
+motifinin Barış Hattı'nın hem başında hem sonunda geri dönmesi) hissettirilir.
+
+Önce/sonra örneği (`chain-baris.json`, `chain_baris_05_dostluk`):
+
+> **Önce:** "...sana 'kendi çömezine benim yaptığım gibi davran, ben de sana
+> kötü davranılmasını izlemek istemedim' dedi."
+>
+> **Sonra:** "...sana eski nöbet defterini uzattı, 'artık senin' dedi ve
+> gitti. Masanın üstünde, kendi ilk yılından bir asistanın bıraktığı bir
+> evrak destesi duruyor."
+
+Ders anlatılmıyor, sadece sahne kuruluyor — oyuncu Stage 1'deki kendi evrak
+sahnesini hatırlayıp bağlantıyı kendisi kuruyor.
 
 ---
 
@@ -101,110 +165,139 @@ Oranlar örnekleme amaçlı; gerçek içerik doldurulurken (Faz 8) otomatik bir
 ## 5. Zincir Vaka Analizi: "Barış Hattı"
 
 Amaç: aynı NPC ile aylar süren, oyuncunun erken kararlarına göre **dallanan**
-(mobbing hattı vs. dostluk hattı) ve güç dengesi zamanla tersine dönen
-(çömez → kıdemli) 5 aşamalı bir hikâye.
+(mobbing hattı vs. dostluk hattı) ama **rigid olmayan** — sonraki eventlerin
+güncel ilişki durumunu yeniden değerlendirdiği — ve güç dengesi zamanla
+tersine dönen (çömez → kıdemli) çok aşamalı bir hikâye.
 
-### Mekanik akış
+### Mekanik akış (v0.2, checkpoint tabanlı)
 
 ```
-Stage 1 (Hafta 6): chain_baris_01_ilk_gorev
-  ├─ Seçenek A/B  → flags.baris_path = "dostluk"  → followUp: chain_baris_02_dostluk (delay 14 hafta)
-  └─ Seçenek C/D  → flags.baris_path = "gerilim"   → followUp: chain_baris_02_gerilim (delay 14 hafta)
+Stage 1 (Hafta 6-16 arası, triggerMode:"pool"): chain_baris_01_ilk_gorev
+  ├─ Seçenek A/B  → relationship.baris.trust +5..+15 + flags.chain_baris_path="dostluk"
+  │                 → followUp: {chainId:"baris", checkpoint:"stage2", delayWeeks:14}
+  └─ Seçenek C/D  → relationship.baris.grudge +10..+20 + flags.chain_baris_path="gerilim"
+                    → followUp: {chainId:"baris", checkpoint:"stage2", delayWeeks:14}
 
-Stage 2 (~Hafta 20): chain_baris_02_dostluk | chain_baris_02_gerilim
-  → her ikisi de kendi requirements'ında flags.baris_path'i kontrol eder
-  → followUp: chain_baris_03_dostluk | chain_baris_03_gerilim (delay 20 hafta)
+Stage 2 (~Hafta 20, checkpoint:"stage2", triggerMode:"scheduled"):
+  Adaylar: chain_baris_02_dostluk, chain_baris_02_gerilim
+  → her adayın requirements'ı `any: [flag eşleşmesi, relationship eşiği]`
+  → o anki relationship.trust/grudge flag'i geçersiz kılabilir (esneklik burada)
+  → followUp: checkpoint:"stage3" (delayWeeks 20)
 
-Stage 3 (~Hafta 40): kriz anında destek/yalnızlık
-  → relationship.trust/grudge güncellenir
-  → followUp: chain_baris_04_dostluk | chain_baris_04_gerilim (delay 25 hafta)
+Stage 3 (~Hafta 40, checkpoint:"stage3"): kriz anında destek/yalnızlık
+  → relationship.trust/grudge yine güncellenir
+  → followUp: checkpoint:"stage4" (delayWeeks 25)
 
-Stage 4 (~Hafta 65): Barış uzman oluyor — güç dengesi değişimi
-  → NPC lifecycle transition (isActive kalır ama seniorityLevel/role değişir)
-  → followUp: chain_baris_05_dostluk | chain_baris_05_gerilim (delay 25 hafta)
+Stage 4 (~Hafta 65, checkpoint:"stage4"): Barış uzman oluyor — güç dengesi değişimi
+  → NPC lifecycle transition event'in kendisi tarafından zorla tetiklenir
+  → followUp: checkpoint:"stage5" (delayWeeks 25)
 
-Stage 5 (~Hafta 90): Veda / ayna sahnesi
-  → flags.broke_the_cycle veya flags.repeated_the_cycle set edilir
-  → final karneye statistics.cycleOutcome olarak yazılır
+Stage 5 (~Hafta 90, checkpoint:"stage5"): Veda / ayna sahnesi
+  → flags.chain_baris_cycle_outcome set edilir
+  → statistics.behaviorTagCounts["junior:*"] final örüntü değerlendirmesine girer
 ```
 
 ### Bu vaka şema hakkında ne öğretti
 
-1. **`followUpEvent` seçim-bazlı olmalı, event-bazlı değil.** İlk tasarımda
-   `followUpEvent` event seviyesinde tek bir alan olarak düşünülmüştü; ama
-   dallanma için her `choice` kendi `followUpEvent`'ini taşımalı (zaten
-   mimari dokümanda böyleydi, bu vaka bunu doğruladı — değişiklik gerekmedi).
-2. **Requirements'a `relationship` sorgusu şart.** Stage 3→4 geçişinde
-   "Barış'a ne kadar güveniyorsun" gibi bir eşik gerekiyor; bu yüzden
-   requirements DSL'ine `{ "relationship": { "npc": "baris", "trust": { "gte": 40 } } }`
-   biçimi eklendi (mimari dokümanda ima edilmişti, burada netleştirildi).
+1. **`followUpEvent` seçim-bazlı olmalı, checkpoint-bazlı olmalı, event-id-bazlı olmamalı.**
+   v0.1'de her choice doğrudan bir sonraki event id'sini hedefliyordu — bu,
+   "chain path rigid olmasın" isteğiyle çelişiyordu (bir kez "gerilim" flag'i
+   set edilince yol değişemiyordu). v0.2'de choice artık `chainId+checkpoint`
+   hedefliyor; o checkpoint'teki adaylar arasından **o anki** relationship
+   durumuna göre seçim yapılıyor (bkz. `event-schema.md` §4.2).
+2. **Requirements'a `relationship` sorgusu ve `any`/OR desteği şart.**
+   Flag tek başına yeterli değil — "Barış'a ne kadar güveniyorsun" gibi bir
+   canlı eşik gerekiyor, ve flag ile relationship'in *ikisinden biri*
+   yeterli olmalı (OR) ki flag hâlâ bir varsayılan/fallback sinyali olarak
+   iş görsün.
 3. **NPC lifecycle ile chain'in kesişmesi gerekiyor.** Stage 4, Barış'ın
    arka plan simülasyonunda "uzman oldu" transition'ına bağlı olmalı ama bu
    transition'ın *tam olarak* chain'in beklediği haftada olması garanti değil.
    Çözüm: chain event'i kendi zamanlamasını dayatır (`delayWeeks` ile), NPC'nin
    `seniorityLevel/role` alanı bu event'in `immediateEffects`'i içinde zorla
-   güncellenir — yani kritik anlatı NPC transition'ları arka plan simülasyonuna
+   güncellenir — kritik anlatı NPC transition'ları arka plan simülasyonuna
    bırakılmaz, chain event'in kendisi tetikler. Arka plan simülasyonu sıradan
    (anlatısal önemi olmayan) NPC'ler için kullanılır.
 4. **Flag adlandırma çakışması riski.** `baris_path` gibi NPC'ye özel
    flag'lerin global flag namespace'inde çakışmaması için flag key'lerinin
    `chain_<chainId>_<key>` prefix'i taşıması öneriliyor (örn.
    `chain_baris_path`).
-5. **Final istatistik bağlantısı çalışıyor.** Stage 5'in `flags.set` alanı
-   doğrudan madde 25'teki "DÖNGÜYÜ KIRDIN" achievement'ına bağlanabiliyor —
-   ek bir özel sistem gerekmedi, mevcut flag+statistics mekanizması yeterli.
+5. **Her checkpoint'in kaybolmama güvencesi olmalı.** Bir checkpoint'te
+   hiçbir aday requirements'ı sağlamazsa zincir "ölür". Bu yüzden her
+   checkpoint'te tam olarak bir `isFallback:true` aday bulunmalı (Barış
+   Hattı'nda bu, flag disjunct'i sayesinde pratikte her zaman en az bir
+   aday eşleştiği için şimdilik gerekmedi, ama motor implementasyonunda
+   güvenlik ağı olarak desteklenmeli).
+6. **Final istatistik bağlantısı artık tek event'e değil örüntüye bağlı.**
+   Stage 5, tek bir `flags.set` yerine `behaviorTags` üretiyor; "DÖNGÜYÜ
+   KIRDIN" gibi achievement'lar bu chain'in *dışındaki* (mirror event'ler
+   gibi) davranışlarla birlikte toplam örüntüden hesaplanıyor (bkz. §6).
 
 Tam JSON: `data/events/examples/chain-baris.json`
 
 ---
 
-## 6. Çömez ↔ Kıdemli Ayna Çifti
+## 6. Çömez ↔ Kıdemli Ayna Çifti ve Örüntü Takibi (v0.2)
 
-`data/events/examples/career-npc-mirror.json` içinde iki event:
+`data/events/examples/career-npc-mirror.json` artık iki değil **dört**
+event içeriyor — madde 5'teki "tek seçime bağlama" uyarısı, örüntünün
+birden fazla event boyunca örneklenmesini gerektiriyordu:
 
 - `mirror_01_comez_nobet_istegi` (erken oyun, oyuncu çömez): kıdemli oyuncudan
   nöbet ister, oyuncunun seçenekleri sınırlı (reddetme lüksü düşük).
 - `mirror_02_kidemli_yeni_comez` (geç oyun, oyuncu kıdemli): yeni asistan
-  oyuncudan aynı şeyi ister. Bu event'in requirements'ı
-  `career.seniorityStage == "kıdemli"`; eğer oyuncunun
-  `flags.chain_mobbing_deneyimi_var` (erken oyunda kötü muamele gördüğünü
-  işaretleyen genel bir flag) `true` ise, ekstra bir intikamcı seçenek
-  ("Biz çömezken böyle şeyler isteyemezdik.") havuza girer — yani seçenek
-  sayısı bile oyuncunun geçmişine göre değişebiliyor.
+  aynı şeyi senden istiyor. `career.seniorityStage == "kidemli"` gerektirir;
+  `flags.chain_mobbing_deneyimi_var` true ise ekstra bir `choice.requirements`
+  ile kilitli seçenek ("Biz çömezken böyle şeyler isteyemezdik.") havuza girer.
+- `mirror_03_kidemli_hata_devri` (YENİ): kendi küçük bir hatanı (geç kalan
+  bir tetkik takibi) ya üstlenirsin ya da sessizce yeni asistana yıkarsın.
+- `mirror_04_kidemli_kongre_izni` (YENİ): yeni asistanın kongre izni talebini
+  değerlendirirsin — onaylamak senin kendi iznini riske atar, reddetmek
+  onun kongre fırsatını.
 
-**Şemaya etki:** `choices` dizisinin tamamı sabit değil, bir seçenek de
-kendi `requirements`'ına sahip olabilmeli (event'in genel requirements'ından
-ayrı, seçenek-seviyesinde opsiyonel `requirements`). Bu, mimari dokümanda
-belirtilmemişti — **yeni bulgu**, şemaya eklenmesi gerekiyor.
+Her seçenek artık bir `behaviorTags` üretiyor (`junior:supportive`,
+`junior:exploitative`, `junior:protected`, `junior:burdened`, vb. — bkz.
+`event-schema.md` §6) ve **hiçbiri bedelsiz değil** (bkz. §1.1 Trade-off
+Kuralı). Final karnedeki "DÖNGÜYÜ KIRDIN" değerlendirmesi bu dört event'in
++ Barış Hattı'nın ürettiği etiketlerin toplam oranından hesaplanacak, tek
+bir event'in tek bir seçimine değil.
+
+**Şemaya etki:** `choice.requirements` (event'in genel requirements'ından
+ayrı, seçenek-seviyesinde koşullu görünürlük) — bu, ilk mimari dokümanda
+yoktu, bu vaka sırasında ortaya çıktı ve `event-schema.md`'ye işlendi.
 
 ---
 
-## 7. Şema Revizyon Özeti (bu turun çıktısı)
+## 7. Şema Revizyonları — Durum (v0.2, tamamlandı)
 
-Faz 5 (Event Engine) başlamadan önce mimari dokümana şu netleştirmeler eklenmeli:
+Önceki turda listelenen 6 madde + bu turda onaylanan 7 ek karar
+`docs/event-schema.md` (v0.2) içine tam olarak işlendi:
 
-1. `requirements.relationship.<npc>.<trait>` sorgu biçimi.
-2. `choice.requirements` (opsiyonel, seçenek seviyesinde koşullu görünürlük).
-3. `immediateEffects` alanlarının sabit sayı yerine `{min,max}` aralığı da
-   kabul etmesi (seeded RNG ile çözülecek) — örn. `"stress": {"min":3,"max":8}`.
-4. Flag namespace kuralı: chain'e özel flag'ler `chain_<chainId>_*` prefix'i taşır.
-5. `CRISIS` alt kategorisi (eşik-tetiklemeli, `RARE`'den ayrı).
-6. Narrative-kritik NPC transition'larının chain event'ler tarafından
-   doğrudan tetiklenebilmesi (arka plan simülasyonunu bypass eden bir yol).
+| # | Revizyon | Durum |
+|---|---|---|
+| 1 | `requirements.relationship.<npc>.<trait>` sorgu biçimi | ✅ event-schema.md §3, §6 |
+| 2 | `choice.requirements` | ✅ event-schema.md §3 |
+| 3 | `{min,max}` aralıklı efektler (seeded RNG) | ✅ event-schema.md §2 |
+| 4 | Flag namespace kuralı (`chain_<chainId>_*`) | ✅ uygulandı (chain-baris.json) |
+| 5 | `CRISIS` alt kategorisi | ✅ event-schema.md §1 |
+| 6 | Chain event'lerin NPC transition'ı doğrudan tetikleyebilmesi | ✅ event-schema.md §4.2, Barış Hattı Stage 4 |
+| 7 | `triggerMode: "pool"|"scheduled"` | ✅ event-schema.md §4.1 |
+| 8 | Koşullu metin varyantları (eval'siz) | ✅ event-schema.md §5 |
+| 9 | Esnek/checkpoint tabanlı zincir çözümleme + `any`/`all` | ✅ event-schema.md §4.2-4.3 |
+| 10 | `behaviorTags` (genelleştirilmiş sayaçlar) | ✅ event-schema.md §6 |
+| 11 | Trade-off yazım kuralı | ✅ §1.1 (bu doküman) |
+| 12 | Deadpan sıkılaştırma kuralı | ✅ §1.2 (bu doküman) |
 
-Bu 6 madde dışında mimari dokümandaki tasarım (özellikle `applyWeek(state, rng)`
-saflığı) hiçbir değişiklik gerektirmeden bu vakayı kaldırdı — motorun temel
-tasarımı doğrulandı.
+Bu 12 madde dışında mimari dokümandaki temel tasarım (özellikle
+`applyWeek(state, rng)` saflığı, engine/UI ayrımı) hiçbir değişiklik
+gerektirmeden bu iki tasarım turunu kaldırdı — motorun temel mimarisi
+doğrulandı. **Migration gerekmiyor** (henüz çalışan bir save/engine yok).
 
 ---
 
 ## 8. Sonraki Adım
 
-Şema revizyonları küçük ve mimariyi bozmuyor. Onayınla:
-- Bu 6 maddeyi mimari dokümana (event engine bölümü) işleyip
-- Faz 1'e (proje iskeleti + navigasyon) geçebiliriz.
-
-Onaylamadan önce örnek event'lerin tamamını (`data/events/examples/`)
-gözden geçirmek istersen, ton ve sertlik seviyesi hakkında geri bildirim
-verebilirsin — içerik dolgusu (Faz 8) başlamadan bu kalıbı netleştirmek
-en ucuz düzeltme noktası.
+Onaylandı — Faz 1'e (proje iskeleti + navigasyon) geçildi. İlerleme ve
+çıktı raporu için oturumun genel özetine bakınız; bu doküman yalnızca
+içerik/tasarım kararlarını kayıt altına alır, implementasyon durumunu
+değil.

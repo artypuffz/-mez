@@ -4,6 +4,7 @@
     "title": "KIDEMLİN SENDEN...",
     "description": "Kıdemlin cumartesi nöbetini senden değiştirmeni istedi. Sebep söylemedi. Sen de sormadın, sormamayı öğrendin.",
     "category": "CAREER",
+    "triggerMode": "pool",
     "weight": 9,
     "cooldownWeeks": 12,
     "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "comez" }] },
@@ -38,40 +39,94 @@
   {
     "id": "mirror_02_kidemli_yeni_comez",
     "title": "YENİ ÇÖMEZ",
-    "description": "Yeni asistan yarınki nöbetini değiştirmek istiyor. Annesinin ameliyatı var.",
+    "description": "Yeni asistan yarınki nöbetini değiştirmek istiyor. Annesinin ameliyatı var. Kendi haftan zaten dolu.",
     "category": "CAREER",
+    "triggerMode": "pool",
     "weight": 9,
-    "cooldownWeeks": 12,
+    "cooldownWeeks": 16,
     "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
     "choices": [
       {
         "id": "nobetini_degistir",
         "text": "Nöbetini değiştir.",
-        "immediateEffects": { "fatigue": 6, "stress": 2 },
+        "immediateEffects": { "fatigue": 8, "stress": 4 },
         "relationshipEffects": [{ "npc": "comez_generic", "trust": 12 }],
-        "flags": { "set": { "helped_new_comez": true } },
-        "statistics": { "increment": { "yeni_comeze_yardim": 1 } }
+        "flags": { "set": { "helped_new_comez": true, "missed_own_prep": true } },
+        "behaviorTags": ["junior:supportive"]
       },
       {
         "id": "baskasini_bulsun",
         "text": "Başka birini bulmasını söyle.",
-        "immediateEffects": { "stress": 1 },
-        "relationshipEffects": [{ "npc": "comez_generic", "trust": -3 }]
+        "immediateEffects": { "stress": -1 },
+        "relationshipEffects": [{ "npc": "comez_generic", "trust": -3 }],
+        "behaviorTags": ["junior:burdened"]
       },
       {
         "id": "reddet",
-        "text": "Reddet.",
-        "immediateEffects": { "stress": 2 },
+        "text": "Reddet, kendi haftanı koru.",
+        "immediateEffects": { "stress": -3 },
         "relationshipEffects": [{ "npc": "comez_generic", "grudge": 6 }],
-        "statistics": { "increment": { "yeni_comeze_mobbing": 1 } }
+        "behaviorTags": ["junior:exploitative"]
       },
       {
         "id": "biz_comezken",
         "text": "'Biz çömezken böyle şeyler isteyemezdik.' de.",
         "requirements": { "all": [{ "flag": "chain_mobbing_deneyimi_var", "eq": true }] },
-        "immediateEffects": { "stress": -2 },
+        "immediateEffects": { "stress": -4 },
         "relationshipEffects": [{ "npc": "comez_generic", "grudge": 10, "trust": -8 }],
-        "statistics": { "increment": { "yeni_comeze_mobbing": 1 } }
+        "behaviorTags": ["junior:exploitative", "junior:humiliated"]
+      }
+    ]
+  },
+  {
+    "id": "mirror_03_kidemli_hata_devri",
+    "title": "TETKİK GECİKMESİ",
+    "description": "Geçen hafta senin takip ettiğin bir tetkik sonucu üç gün gecikmeyle fark edildi. Hoca vizitte 'bunu kim atladı' diye sordu. Yeni asistan da o gün nöbetteydi.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "choices": [
+      {
+        "id": "sahiplen",
+        "text": "'Benim atladığım bir şey' de.",
+        "immediateEffects": { "stress": 6 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": -3 }, { "npc": "comez_generic", "trust": 10 }],
+        "behaviorTags": ["junior:defended"]
+      },
+      {
+        "id": "sessiz_kal",
+        "text": "Hiçbir şey söyleme, hoca zaten yeni asistana bakıyor.",
+        "immediateEffects": { "stress": -2 },
+        "relationshipEffects": [{ "npc": "comez_generic", "trust": -6 }],
+        "behaviorTags": ["junior:humiliated"]
+      }
+    ]
+  },
+  {
+    "id": "mirror_04_kidemli_kongre_izni",
+    "title": "KONGRE İZNİ",
+    "description": "Yeni asistan bir kongre için izin istiyor. Bölümün bu ay için tanıdığı kongre izni kotası bir kişilik ve sen de aynı kongreye gitmeyi düşünüyordun.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "choices": [
+      {
+        "id": "kotayi_ona_birak",
+        "text": "Kotayı ona bırak.",
+        "immediateEffects": { "stress": 3, "money": -1000 },
+        "relationshipEffects": [{ "npc": "comez_generic", "trust": 10 }],
+        "behaviorTags": ["junior:supportive"]
+      },
+      {
+        "id": "kendin_kullan",
+        "text": "Kotayı kendin kullan, o gelecek yıl gider.",
+        "immediateEffects": { "stress": -3 },
+        "relationshipEffects": [{ "npc": "comez_generic", "grudge": 5 }],
+        "behaviorTags": ["junior:exploitative"]
       }
     ]
   }

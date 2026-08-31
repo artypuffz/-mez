@@ -4,20 +4,31 @@
     "title": "ASANSÖR",
     "description": "Ana bina asansörü bozuldu. Servisin 7. katta. Acil hasta transferi merdivenden yapılıyor. Bakım ekibi 'parça bekleniyor' diyor, bu üçüncü haftaya giriyor.",
     "category": "HOSPITAL",
+    "triggerMode": "pool",
     "weight": 5,
     "cooldownWeeks": 20,
-    "requirements": { "all": [] },
+    "requirements": {
+      "all": []
+    },
     "choices": [
       {
         "id": "merdiven_al",
         "text": "Şikayet etmeden merdivenleri kullan.",
-        "immediateEffects": { "fatigue": 6 }
+        "immediateEffects": {
+          "fatigue": 6
+        }
       },
       {
         "id": "resmi_sikayet",
         "text": "İdareye resmi şikayet dilekçesi ver.",
-        "immediateEffects": { "stress": 3 },
-        "flags": { "set": { "hosp_asansor_sikayeti": true } }
+        "immediateEffects": {
+          "stress": 3
+        },
+        "flags": {
+          "set": {
+            "hosp_asansor_sikayeti": true
+          }
+        }
       }
     ]
   },
@@ -26,20 +37,38 @@
     "title": "YENİ BAŞHEKİM",
     "description": "Hastaneye yeni bir başhekim atandı. İlk genelgesi nöbet odalarının 'verimlilik' gerekçesiyle yeniden düzenlenmesi. Senin nöbet odan artık depo.",
     "category": "HOSPITAL",
+    "triggerMode": "pool",
     "weight": 4,
     "cooldownWeeks": 40,
-    "requirements": { "all": [{ "stat": "career.week", "gte": 20 }] },
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "gte": 20
+        }
+      ]
+    },
     "choices": [
       {
         "id": "yeni_duzene_uy",
         "text": "Yeni düzene uy, dinlenme alanı bulmaya çalış.",
-        "immediateEffects": { "fatigue": 8, "stress": 4 }
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        }
       },
       {
         "id": "alternatif_bul",
         "text": "Kıdemlilerle konuşup alternatif bir alan ayarla.",
-        "immediateEffects": { "stress": 5 },
-        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": 4 }]
+        "immediateEffects": {
+          "stress": 5
+        },
+        "relationshipEffects": [
+          {
+            "npc": "kidemli_generic",
+            "trust": 4
+          }
+        ]
       }
     ]
   }

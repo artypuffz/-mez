@@ -4,21 +4,46 @@
     "title": "AMELİYATHANE",
     "description": "Planlanan ameliyat 2 saat sürecekti. 6 saattir masadasın. Ekip değişti, sen değişmedin. Ameliyathanenin saatine bakmaktan vazgeçtin.",
     "category": "BRANCH",
+    "triggerMode": "pool",
     "weight": 12,
     "cooldownWeeks": 6,
-    "requirements": { "all": [{ "branchIn": ["general-surgery"] }] },
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "general-surgery"
+          ]
+        }
+      ]
+    },
     "choices": [
       {
         "id": "sonuna_kadar_kal",
         "text": "Sonuna kadar masada kal.",
-        "immediateEffects": { "fatigue": 18, "stress": 8 },
-        "relationshipEffects": [{ "npc": "hoca_generic", "trust": 6 }]
+        "immediateEffects": {
+          "fatigue": 18,
+          "stress": 8
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 6
+          }
+        ]
       },
       {
         "id": "degisim_iste",
         "text": "Bir sonraki asistanla değişmeyi öner.",
-        "immediateEffects": { "fatigue": 8, "stress": 5 },
-        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 2 }]
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 5
+        },
+        "relationshipEffects": [
+          {
+            "npc": "asistan_generic",
+            "trust": 2
+          }
+        ]
       }
     ]
   },
@@ -27,26 +52,57 @@
     "title": "SABAH 08.00",
     "description": "Gece boyunca üç acil ameliyata girdin. Nöbet bitti ama bugünkü elektif ameliyat listesi de sana ait. Kimse bu listeyi değiştirmeyi düşünmedi çünkü 'zaten oradasın'.",
     "category": "BRANCH",
+    "triggerMode": "pool",
     "weight": 10,
     "cooldownWeeks": 8,
-    "requirements": { "all": [{ "branchIn": ["general-surgery"] }, { "stat": "career.week", "gte": 6 }] },
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "general-surgery"
+          ]
+        },
+        {
+          "stat": "career.week",
+          "gte": 6
+        }
+      ]
+    },
     "choices": [
       {
         "id": "devam_et",
         "text": "Kahve iç, listeye devam et.",
-        "immediateEffects": { "fatigue": 20, "stress": 10, "burnout": 3 }
+        "immediateEffects": {
+          "fatigue": 20,
+          "stress": 10,
+          "burnout": 3
+        }
       },
       {
         "id": "izin_iste",
         "text": "Kıdemliden birkaç saat izin iste.",
-        "immediateEffects": { "stress": 6 },
-        "relationshipEffects": [{ "npc": "kidemli_generic_gs", "trust": -2 }]
+        "immediateEffects": {
+          "stress": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "kidemli_generic_gs",
+            "trust": -2
+          }
+        ]
       },
       {
         "id": "sessizce_gec",
         "text": "Hiçbir şey söylemeden listeyi başka bir asistana devret.",
-        "immediateEffects": { "stress": 8 },
-        "relationshipEffects": [{ "npc": "asistan_generic", "grudge": 4 }]
+        "immediateEffects": {
+          "stress": 8
+        },
+        "relationshipEffects": [
+          {
+            "npc": "asistan_generic",
+            "grudge": 4
+          }
+        ]
       }
     ]
   }

@@ -4,26 +4,52 @@
     "title": "GÖRÜŞME ODASI",
     "description": "Planlanan görüşme 30 dakikaydı. 90. dakikadasın. Dışarıda bekleyen üç hasta daha var, birinin refakatçisi kapıyı iki kez araladı.",
     "category": "BRANCH",
+    "triggerMode": "pool",
     "weight": 10,
     "cooldownWeeks": 8,
-    "requirements": { "all": [{ "branchIn": ["psychiatry"] }] },
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "psychiatry"
+          ]
+        }
+      ]
+    },
     "choices": [
       {
         "id": "gorusmeyi_uzat",
         "text": "Görüşmeyi doğal bitiş noktasına kadar sürdür.",
-        "immediateEffects": { "fatigue": 6, "stress": 4 },
-        "relationshipEffects": [{ "npc": "hasta_generic", "trust": 6 }]
+        "immediateEffects": {
+          "fatigue": 6,
+          "stress": 4
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hasta_generic",
+            "trust": 6
+          }
+        ]
       },
       {
         "id": "nazikce_kes",
         "text": "Nazikçe sonlandır, devam randevusu ver.",
-        "immediateEffects": { "stress": 5 }
+        "immediateEffects": {
+          "stress": 5
+        }
       },
       {
         "id": "sekreteri_gonder",
         "text": "Sekreteri gönderip diğerlerini beklemesini söyle.",
-        "immediateEffects": { "stress": 3 },
-        "relationshipEffects": [{ "npc": "sekreter_generic", "trust": -2 }]
+        "immediateEffects": {
+          "stress": 3
+        },
+        "relationshipEffects": [
+          {
+            "npc": "sekreter_generic",
+            "trust": -2
+          }
+        ]
       }
     ]
   },
@@ -32,26 +58,59 @@
     "title": "SÜPERVİZYON",
     "description": "Haftalık süpervizyon randevun bu hafta da iptal oldu. Hocanın asistanı 'başka zaman bakılır' dedi. Bu, art arda dördüncü iptal. Vaka notların bilgisayarında sessizce birikiyor.",
     "category": "BRANCH",
+    "triggerMode": "pool",
     "weight": 7,
     "cooldownWeeks": 10,
-    "requirements": { "all": [{ "branchIn": ["psychiatry"] }, { "stat": "career.week", "gte": 10 }] },
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "psychiatry"
+          ]
+        },
+        {
+          "stat": "career.week",
+          "gte": 10
+        }
+      ]
+    },
     "choices": [
       {
         "id": "resmi_talep",
         "text": "Bölüm sekreterliğine resmi olarak yeni bir tarih talep et.",
-        "immediateEffects": { "stress": 3 },
-        "flags": { "set": { "psy_supervizyon_takipte": true } }
+        "immediateEffects": {
+          "stress": 3
+        },
+        "flags": {
+          "set": {
+            "psy_supervizyon_takipte": true
+          }
+        }
       },
       {
         "id": "sessizce_bekle",
         "text": "Sessizce bir sonraki haftayı bekle.",
-        "immediateEffects": { "stress": 5, "burnout": 2 }
+        "immediateEffects": {
+          "stress": 5,
+          "burnout": 2
+        }
       },
       {
         "id": "baska_hocaya_git",
         "text": "Başka bir öğretim üyesinden yardım iste.",
-        "immediateEffects": { "stress": 4 },
-        "relationshipEffects": [{ "npc": "hoca_generic", "trust": -3 }, { "npc": "hoca_ikinci_generic", "trust": 5 }]
+        "immediateEffects": {
+          "stress": 4
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          },
+          {
+            "npc": "hoca_ikinci_generic",
+            "trust": 5
+          }
+        ]
       }
     ]
   }
