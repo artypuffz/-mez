@@ -1,4 +1,3 @@
-import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import HomeScreen from '../screens/HomeScreen';
@@ -15,15 +14,15 @@ export type RootTabParamList = {
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
+// Nested inside RootStack's "Residency" screen — must not render its own
+// NavigationContainer, react-navigation only allows one for the whole app.
 export default function RootNavigator() {
   return (
-    <NavigationContainer>
-      <Tab.Navigator screenOptions={{ headerShown: false }}>
-        <Tab.Screen name="AnaSayfa" component={HomeScreen} options={{ title: 'Ana Sayfa' }} />
-        <Tab.Screen name="Hastane" component={HospitalScreen} options={{ title: 'Hastane' }} />
-        <Tab.Screen name="Iliskiler" component={RelationshipsScreen} options={{ title: 'İlişkiler' }} />
-        <Tab.Screen name="Profil" component={ProfileScreen} options={{ title: 'Profil' }} />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Screen name="AnaSayfa" component={HomeScreen} options={{ title: 'Ana Sayfa' }} />
+      <Tab.Screen name="Hastane" component={HospitalScreen} options={{ title: 'Hastane' }} />
+      <Tab.Screen name="Iliskiler" component={RelationshipsScreen} options={{ title: 'İlişkiler' }} />
+      <Tab.Screen name="Profil" component={ProfileScreen} options={{ title: 'Profil' }} />
+    </Tab.Navigator>
   );
 }
