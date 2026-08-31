@@ -45,6 +45,13 @@ export function createSeededRng(seed: string): SeededRng {
   };
 }
 
+// A subsystem (TUS scoring, later the weekly event engine, ...) derives
+// its own rng from the save's base seed plus a fixed scope string, so
+// unrelated subsystems never share a draw sequence or depend on call order.
+export function createScopedRng(baseSeed: string, scope: string): SeededRng {
+  return createSeededRng(`${baseSeed}:${scope}`);
+}
+
 // For a brand new game — never shown to the player, only used internally
 // and (in debug/test contexts) to reproduce a specific playthrough.
 export function generateRandomSeed(): string {

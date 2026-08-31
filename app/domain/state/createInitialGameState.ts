@@ -52,6 +52,11 @@ export function createInitialGameState(
       residencyYear: 0,
       seniorityStage: "none",
     },
+    tus: {
+      step: "prep",
+      examEventIds: [],
+      examLog: [],
+    },
     resources: {
       stress: clampResource(DEFAULT_RESOURCES.stress + (modifiers.stress ?? 0)),
       fatigue: clampResource(DEFAULT_RESOURCES.fatigue + (modifiers.fatigue ?? 0)),

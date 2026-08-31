@@ -48,7 +48,7 @@ export default function CharacterCreationScreen({ navigation }: Props) {
       hometown: trimmedHometown,
       background,
     });
-    navigation.replace('TusPlaceholder');
+    navigation.replace('TusPrepProfile');
   };
 
   const selectedBackground = BACKGROUND_DEFINITIONS.find((b) => b.id === background) ?? null;

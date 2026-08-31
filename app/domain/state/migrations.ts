@@ -1,11 +1,18 @@
 import { CURRENT_SAVE_VERSION, type GameState } from "./types";
 
-// Each entry migrates FROM its key version TO key+1. Nothing needed yet —
-// v1 is the first version — but load() always runs data through this so
-// a future v1->v2 migration only means adding one entry here.
+// Each entry migrates FROM its key version TO key+1. load() always runs
+// data through this, so adding support for a future save version only
+// ever means adding one entry here — never touching call sites.
 type Migration = (state: Record<string, unknown>) => Record<string, unknown>;
 
-const migrations: Record<number, Migration> = {};
+const migrations: Record<number, Migration> = {
+  // v1 (Phase 2) had no `tus` slice — Phase 3 added it.
+  1: (state) => ({
+    ...state,
+    meta: { ...(state.meta as Record<string, unknown>), saveVersion: 2 },
+    tus: { step: "prep", examEventIds: [], examLog: [] },
+  }),
+};
 
 export function migrateSaveData(raw: unknown): GameState {
   let state = raw as Record<string, unknown>;

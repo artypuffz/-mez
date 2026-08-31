@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSeededRng, generateRandomSeed } from './seededRng';
+import { createScopedRng, createSeededRng, generateRandomSeed } from './seededRng';
 
 describe('createSeededRng', () => {
   it('produces the same sequence for the same seed', () => {
@@ -48,6 +48,20 @@ describe('createSeededRng', () => {
   it('pick() throws on an empty array', () => {
     const rng = createSeededRng('empty-check');
     expect(() => rng.pick([])).toThrow();
+  });
+});
+
+describe('createScopedRng', () => {
+  it('is deterministic per base seed + scope', () => {
+    const a = createScopedRng('base-seed', 'tus:score');
+    const b = createScopedRng('base-seed', 'tus:score');
+    expect(a.next()).toBe(b.next());
+  });
+
+  it('gives different scopes independent sequences', () => {
+    const a = createScopedRng('base-seed', 'tus:examselect');
+    const b = createScopedRng('base-seed', 'tus:score');
+    expect(a.next()).not.toBe(b.next());
   });
 });
 

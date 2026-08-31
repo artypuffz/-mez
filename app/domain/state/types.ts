@@ -6,12 +6,37 @@ export type BackgroundId =
   | "ekonomik_rahat"
   | "kendi_basina";
 
-// Placeholder id types — real city/branch/hospital content lands in later
-// phases (preference system, branch/hospital data). Kept as branded-ish
-// string aliases now so the GameState shape doesn't need to change then.
+// Content ids — kept as plain string aliases since the real definitions
+// live in domain/config/*.ts, not here.
 export type CityId = string;
 export type BranchId = string;
 export type HospitalId = string;
+export type ProgramId = string;
+
+export type TusPrepProfileId =
+  | "duzenli"
+  | "internlukle"
+  | "son_uc_ay"
+  | "son_ay_panik"
+  | "temelime_guveniyorum";
+
+export type TusStep = "prep" | "exam" | "result";
+
+export interface TusExamChoiceLogEntry {
+  eventId: string;
+  choiceId: string;
+}
+
+export interface TusState {
+  step: TusStep;
+  prepProfileId?: TusPrepProfileId;
+  // The subset+order of exam-day events chosen for this playthrough —
+  // fixed once at "prep -> exam" so a resumed session sees the same
+  // events in the same order, not a freshly re-rolled set.
+  examEventIds: string[];
+  examLog: TusExamChoiceLogEntry[];
+  selectedProgramId?: ProgramId;
+}
 
 export type CareerPhase =
   | "character_creation"
@@ -58,7 +83,7 @@ export interface EventLogEntry {
   choiceId: string;
 }
 
-export const CURRENT_SAVE_VERSION = 1;
+export const CURRENT_SAVE_VERSION = 2;
 
 export interface GameState {
   meta: {
@@ -90,6 +115,8 @@ export interface GameState {
 
     seniorityStage: SeniorityStage;
   };
+
+  tus: TusState;
 
   resources: {
     stress: number;
