@@ -1,4 +1,5 @@
 import { CURRENT_SAVE_VERSION, type GameState } from "./types";
+import { deriveResidencyStartDate } from "../residency/calendar";
 
 // Each entry migrates FROM its key version TO key+1. load() always runs
 // data through this, so adding support for a future save version only
@@ -12,6 +13,21 @@ const migrations: Record<number, Migration> = {
     meta: { ...(state.meta as Record<string, unknown>), saveVersion: 2 },
     tus: { step: "prep", examEventIds: [], examLog: [] },
   }),
+  // v2 (Phase 3) had no career.residencyStartedAt — Phase 4 added it.
+  // Only backfilled for a save already in residency; earlier phases pick
+  // it up naturally via selectResidencyProgram when they get there.
+  2: (state) => {
+    const meta = state.meta as Record<string, unknown>;
+    const career = state.career as Record<string, unknown>;
+    const needsStart = career.phase === "residency" && !career.residencyStartedAt;
+    return {
+      ...state,
+      meta: { ...meta, saveVersion: 3 },
+      career: needsStart
+        ? { ...career, residencyStartedAt: deriveResidencyStartDate(meta.createdAt as string) }
+        : career,
+    };
+  },
 };
 
 export function migrateSaveData(raw: unknown): GameState {

@@ -20,7 +20,7 @@ describe('migrateSaveData', () => {
     expect(() => migrateSaveData(raw)).toThrow();
   });
 
-  it('migrates a v1 (Phase 2) save by adding a default tus slice', () => {
+  it('migrates a v1 (Phase 2) save all the way to the current version', () => {
     const v1Save = {
       meta: { saveVersion: 1, rngSeed: 'seed', createdAt: '2026-01-01T00:00:00.000Z' },
       character: { name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' },
@@ -37,8 +37,29 @@ describe('migrateSaveData', () => {
     };
 
     const migrated = migrateSaveData(v1Save);
-    expect(migrated.meta.saveVersion).toBe(2);
+    expect(migrated.meta.saveVersion).toBe(3);
     expect(migrated.tus).toEqual({ step: 'prep', examEventIds: [], examLog: [] });
+    expect(migrated.career.residencyStartedAt).toBeUndefined();
     expect(migrated.character.name).toBe('Ada');
+  });
+
+  it('backfills residencyStartedAt only for a v2 save already in residency', () => {
+    const v2NotYetResidency = {
+      meta: { saveVersion: 2, rngSeed: 'seed', createdAt: '2026-03-15T00:00:00.000Z' },
+      character: { name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' },
+      career: { phase: 'preference', residencyWeek: 0, residencyYear: 1, seniorityStage: 'none' },
+      tus: { step: 'result', examEventIds: [], examLog: [] },
+      resources: { stress: 20, fatigue: 15, burnout: 0, money: 12000 },
+      relationships: {}, flags: {}, pendingEvents: [], activeChains: {},
+      eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
+    };
+    expect(migrateSaveData(v2NotYetResidency).career.residencyStartedAt).toBeUndefined();
+
+    const v2InResidency = {
+      ...v2NotYetResidency,
+      career: { phase: 'residency', branch: 'ic_hastaliklari', residencyWeek: 5, residencyYear: 1, seniorityStage: 'comez' },
+    };
+    const migrated = migrateSaveData(v2InResidency);
+    expect(migrated.career.residencyStartedAt).toBe('2026-09-01');
   });
 });

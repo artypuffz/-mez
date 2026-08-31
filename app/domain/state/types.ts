@@ -43,6 +43,11 @@ export type CareerPhase =
   | "tus"
   | "preference"
   | "residency"
+  // Total residency length reached; "Haftayı Geç" stops working. Phase 9
+  // replaces this with the real specialist-exam flow — kept as its own
+  // phase rather than jumping straight to "specialist" so nothing has to
+  // pretend a system exists before it does.
+  | "residency_complete"
   | "gameover"
   | "specialist";
 
@@ -83,7 +88,7 @@ export interface EventLogEntry {
   choiceId: string;
 }
 
-export const CURRENT_SAVE_VERSION = 2;
+export const CURRENT_SAVE_VERSION = 3;
 
 export interface GameState {
   meta: {
@@ -109,6 +114,12 @@ export interface GameState {
     city?: CityId;
 
     tusScore?: number;
+
+    // Set once, when selectResidencyProgram runs — YYYY-MM-DD, UTC,
+    // date-only (see domain/residency/calendar.ts). Weeks are computed by
+    // adding residencyWeek*7 days to this, never by tracking a running
+    // month/day counter directly.
+    residencyStartedAt?: string;
 
     residencyWeek: number;
     residencyYear: number;

@@ -7,6 +7,7 @@ import { DEFAULT_TUS_SCORE_CONFIG } from "../config/tusScoreConfig";
 import { pickTusExamEvents } from "../tus/pickTusExamEvents";
 import { computeTusScore } from "../tus/computeTusScore";
 import type { ResidencyProgram } from "../config/residencyPrograms";
+import { deriveResidencyStartDate } from "../residency/calendar";
 
 // prep -> exam: picks and freezes this playthrough's exam-day event
 // subset+order, so a resumed session sees exactly what it saw before.
@@ -75,6 +76,7 @@ export function selectResidencyProgram(state: GameState, program: ResidencyProgr
       hospital: program.hospitalId,
       city: program.cityId,
       phase: "residency",
+      residencyStartedAt: deriveResidencyStartDate(state.meta.createdAt),
       residencyWeek: 0,
       residencyYear: 1,
       seniorityStage: "comez",
