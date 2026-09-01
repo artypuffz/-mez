@@ -51,6 +51,16 @@ describe('migrateSaveData', () => {
     expect(() => migrateSaveData(raw)).toThrow();
   });
 
+  // RC2 (RC-001 test matrix) — a saveVersion ABOVE current used to skip
+  // the migration loop entirely (its guard is version < CURRENT) and
+  // return the raw, unvalidated object as a "valid" GameState, deferring
+  // the crash to whatever read it later instead of failing here where
+  // the caller's try/catch (useGameStore.loadGame) can handle it.
+  it('throws for a save version newer than the app supports', () => {
+    const raw = { meta: { saveVersion: 999 } };
+    expect(() => migrateSaveData(raw)).toThrow(/newer than this app supports/);
+  });
+
   it('migrates a v1 (Phase 2) save all the way to the current version', () => {
     const v1Save = {
       meta: { saveVersion: 1, rngSeed: 'seed', createdAt: '2026-01-01T00:00:00.000Z' },

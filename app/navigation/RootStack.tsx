@@ -85,13 +85,48 @@ function useEndingRedirect(navigationRef: ReturnType<typeof useNavigationContain
     if (!navigationRef.isReady()) return;
     const target = phase === 'gameover' ? 'GameOver' : 'SpecialistEnding';
     if (navigationRef.getCurrentRoute()?.name === target) return;
-    navigationRef.navigate(target);
+    // RC2 (RC-IMP-003) — a plain .navigate() left the Residency stack
+    // entry (and its nested tab state) sitting right below this one in
+    // history: Android back from here popped back into a HomeScreen that
+    // rendered as if gameplay were still live (branch/hospital/city stay
+    // set after a career ends), even though advanceWeek's own phase guard
+    // silently no-ops there. A full reset makes this the only entry —
+    // nothing left to back into.
+    navigationRef.reset({ index: 0, routes: [{ name: target }] });
   }, [phase, navigationRef]);
+}
+
+// RC2 (§6/§19) — a dev-only navigation inspection bridge, same pattern
+// and same safety guarantee as the store's __COMEZ_DEBUG__ (see
+// store/useGameStore.ts): `__DEV__` is false in a release build, so this
+// is a no-op there. Lets the E2E harness assert on the actual
+// react-navigation stack shape (route count, current route name) after a
+// terminal transition, since there's no real Android hardware back
+// button to press in this environment and the web build doesn't sync to
+// browser history — goBack() here calls react-navigation's own
+// dispatcher directly, the same thing Android's hardware back would.
+function useNavigationDebugBridge(navigationRef: ReturnType<typeof useNavigationContainerRef<RootStackParamList>>) {
+  useEffect(() => {
+    if (!__DEV__ || typeof window === 'undefined') return;
+    const existing = (window as unknown as { __COMEZ_DEBUG__?: Record<string, unknown> }).__COMEZ_DEBUG__ ?? {};
+    (window as unknown as { __COMEZ_DEBUG__: Record<string, unknown> }).__COMEZ_DEBUG__ = {
+      ...existing,
+      getNavigationState: () => navigationRef.getRootState(),
+      navigationGoBack: () => {
+        if (navigationRef.canGoBack()) {
+          navigationRef.goBack();
+          return true;
+        }
+        return false;
+      },
+    };
+  }, [navigationRef]);
 }
 
 export default function RootStack() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
   useEndingRedirect(navigationRef);
+  useNavigationDebugBridge(navigationRef);
 
   return (
     <NavigationContainer ref={navigationRef}>

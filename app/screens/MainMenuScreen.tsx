@@ -48,6 +48,7 @@ export default function MainMenuScreen({ navigation }: Props) {
   const gameState = useGameStore((s) => s.gameState);
   const loadGame = useGameStore((s) => s.loadGame);
   const resetGame = useGameStore((s) => s.resetGame);
+  const loadError = useGameStore((s) => s.loadError);
   const [debugPanelOpen, setDebugPanelOpen] = useState(false);
 
   useEffect(() => {
@@ -93,6 +94,11 @@ export default function MainMenuScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>ÇÖMEZ</Text>
+      {loadError && (
+        <Text style={styles.loadErrorText} testID="load-error-text">
+          Kaydedilmiş oyun yüklenemedi.
+        </Text>
+      )}
       <View style={styles.buttons}>
         <Pressable
           style={[styles.button, !hasSave && styles.buttonDisabled]}
@@ -129,6 +135,7 @@ export default function MainMenuScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 24 },
   title: { fontSize: 36, fontWeight: '700' },
+  loadErrorText: { fontSize: 13, color: '#a83a3a', textAlign: 'center', maxWidth: 260 },
   buttons: { gap: 12, width: 220 },
   button: { backgroundColor: '#222', paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
   buttonDisabled: { backgroundColor: '#ccc' },

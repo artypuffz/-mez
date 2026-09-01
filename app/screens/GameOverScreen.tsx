@@ -120,7 +120,7 @@ export default function GameOverScreen({ navigation }: Props) {
       <View style={styles.buttons}>
         <Pressable
           style={styles.button}
-          onPress={() => navigation.navigate('CareerReport')}
+          onPress={() => navigation.replace('CareerReport')}
           accessibilityRole="button"
           testID="btn-career-report"
         >

@@ -41,6 +41,12 @@ export interface GameStore {
   // Same idea, per resolved choice — visible resource deltas only, never
   // hidden relationship/flag/behaviorTag effects (§26/27).
   lastChoiceEffects: ResolvedResourceDelta | null;
+  // RC1 review — a corrupt/unreadable save (bad JSON, an unmigratable
+  // shape) must never blank-screen the app. Set when repository.load()
+  // throws; MainMenuScreen surfaces it instead of crashing. The bad data
+  // itself is left untouched in storage (never silently cleared) — it's
+  // only ever overwritten if the player explicitly starts a new game.
+  loadError: boolean;
 
   loadGame: () => Promise<void>;
   createNewGame: (input: CharacterCreationInput) => Promise<void>;
@@ -79,11 +85,19 @@ export function createGameStore(
     isResolvingEvent: false,
     lastWeekSummary: null,
     lastChoiceEffects: null,
+    loadError: false,
 
     async loadGame() {
       set({ status: "loading" });
-      const loaded = await repository.load();
-      set({ gameState: loaded, hasSave: loaded !== null, status: "ready" });
+      try {
+        const loaded = await repository.load();
+        set({ gameState: loaded, hasSave: loaded !== null, status: "ready", loadError: false });
+      } catch (err) {
+        if (__DEV__) {
+          console.error("[loadGame] could not read/migrate the saved game", err);
+        }
+        set({ gameState: null, hasSave: false, status: "ready", loadError: true });
+      }
     },
 
     async createNewGame(input) {

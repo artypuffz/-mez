@@ -145,6 +145,18 @@ export function migrateSaveData(raw: unknown): GameState {
   let state = raw as Record<string, unknown>;
   let version = ((state?.meta as Record<string, unknown> | undefined)?.saveVersion as number) ?? 0;
 
+  // RC2 (RC-001 test matrix) — a saveVersion ABOVE current isn't a
+  // migration case the `while` loop below ever runs for (its guard is
+  // `version < CURRENT_SAVE_VERSION`), so it used to fall straight
+  // through and return the raw, unvalidated object as-is — a save
+  // written by a newer app version, or simply a corrupted saveVersion
+  // number, would sail through here and only crash later, wherever it
+  // first got read. Same "we can't load this" failure as an unmigratable
+  // version below current; the caller's try/catch treats it identically.
+  if (version > CURRENT_SAVE_VERSION) {
+    throw new Error(`Save version ${version} is newer than this app supports (current: ${CURRENT_SAVE_VERSION})`);
+  }
+
   while (version < CURRENT_SAVE_VERSION) {
     const migrate = migrations[version];
     if (!migrate) {
