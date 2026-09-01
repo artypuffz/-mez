@@ -74,6 +74,8 @@ export function createInitialGameState(
     eventCooldowns: {},
     pendingEffects: [],
     weeklyEventQueue: [],
+    onCall: { schedule: null },
+    economy: { lastProcessedMonthKey: null, lastBreakdown: null },
     status: "active",
   };
 }

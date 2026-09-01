@@ -1,4 +1,4 @@
-# ÇÖMEZ — Event Schema & DSL Referansı (v0.3)
+# ÇÖMEZ — Event Schema & DSL Referansı (v0.4)
 
 Bu doküman, event motoru (Faz 5) implementasyonunda kullanılacak resmi
 şemadır. `docs/event-design-bible.md` bu şemanın *neden* bu şekilde
@@ -21,6 +21,14 @@ olduğunu (tasarım gerekçesi, örnekler) anlatır; burası sade referans.
   requiredNpcTemplate` authored karakter şablonlarını (örn. "baris")
   isim özel-case'lemeden gate'liyor (§11); `choice.npcTransitions`
   authored, anlık NPC lifecycle geçişleri için (§12).
+- **v0.4** (bu doküman, Faz 7) → nöbet + aylık ekonomi sistemi entegrasyonu
+  sonrası: `choice.onCallEffects` eklendi — o anki ayın nöbet schedule'ını
+  mutasyona uğratan, küçük ve sabit bir surface area (§14); requirement
+  DSL'in mevcut `stat` dot-path leaf'i artık `onCall.currentMonthTotalShifts`
+  / `onCall.weekendShiftCount` / `onCall.staffingLoad` path'lerini de
+  okuyabiliyor — yeni bir requirement-node türü **eklenmedi**, sadece
+  RequirementContext'e yeni alanlar eklendi (§14). Motor nöbet/ekonomi
+  sisteminin anlamını bilmiyor, yalnızca bu state'i okuyor/yazıyor.
 
 ---
 
@@ -67,6 +75,7 @@ interface ChoiceDef {
   statistics?: { increment?: Record<string, number> }; // serbest sayaçlar (nadiren gerekir; genelde behaviorTags tercih edilir)
   followUpEvent?: FollowUpRef;         // GÜNCELLENDİ (v0.2) — bkz. §4
   npcTransitions?: NpcTransitionEffect[]; // YENİ (v0.3) — bkz. §12
+  onCallEffects?: OnCallEffect[];      // YENİ (v0.4) — bkz. §14
 }
 ```
 
@@ -361,3 +370,56 @@ bırakılmıyor) — mevcut `baris` gibi gerçek roster id'lerine ait
 relationship kayıtları varsa bu üretimin üzerine yazılıp korunuyor, henüz
 asistanlığa başlamamış bir save için roster boş kalıyor (karakter
 `selectResidencyProgram`'a normal akışla ulaştığında üretilecek).
+
+## 14. `choice.onCallEffects` ve Nöbet/Ekonomi State'i (YENİ, v0.4)
+
+Faz 7, oyuncunun aylık nöbet schedule'ını (`GameState.onCall.schedule`) ve
+aylık ekonomi breakdown'ını (`GameState.economy`) motora bağladı. Bunlar
+kendi domain modülleri var (`domain/oncall/`, `domain/economy/`) —
+event motoru bu sistemlerin *anlamını* bilmiyor, yalnızca iki yerden
+dokunuyor:
+
+### 14.1 Requirement DSL — yeni bir node türü değil, yeni context alanları
+
+```json
+{ "stat": "onCall.currentMonthTotalShifts", "gte": 8 }
+{ "stat": "onCall.staffingLoad", "gte": 55 }
+{ "stat": "onCall.weekendShiftCount", "gte": 3 }
+```
+
+Mevcut generic `stat` leaf'i zaten herhangi bir dot-path'i okuyabiliyordu
+(§requirements.ts, `RequirementContext`); Faz 7 sadece context'e
+`onCall: {currentMonthTotalShifts, weekendShiftCount, staffingLoad}`
+alanını ekledi. Şema tarafında hiçbir yeni `LeafCondition` türü yok.
+
+### 14.2 `choice.onCallEffects` — küçük, sabit bir surface area
+
+```ts
+type OnCallEffect =
+  | { type: "add_player_shift"; count: number; shiftType?: "weekday" | "weekend" }
+  | { type: "remove_player_shift"; count: number };
+```
+
+`resolveEventChoice`, seçimin `onCallEffects`'ini
+`domain/oncall/applyEffects.ts`'teki `applyOnCallEffects`'e devrediyor —
+motor içinde nöbet-özel bir kod yolu yok. `add_player_shift`, o ayın
+takviminde oyuncunun henüz nöbetçi olmadığı bir günü (seçilen
+`shiftType`'a uygun) seçip yeni bir `OnCallAssignment` ekliyor;
+`remove_player_shift` mevcut bir oyuncu nöbetini kaldırıyor. İkisi de
+`domain/oncall/mutations.ts`'teki aynı doğrulanmış (validate edilmiş)
+`addExtraShift`/`removeShift` fonksiyonlarını kullanıyor — save-safe,
+double-booking yok.
+
+Daha geniş `swapOnCallAssignment`/`transferOnCallAssignment` mutasyonları
+da var (aynı dosyada) ama Faz 7'de hiçbir choice effect'ine bağlı değil —
+Faz 8'in "haksız nöbet" içeriği için hazır, test edilmiş, ama henüz
+kullanılmıyor.
+
+### 14.3 Aylık orkestrasyon — event motorunun dışında
+
+Nöbet schedule üretimi ve aylık ekonomi işleme, `choice` effect'i değil —
+her ikisi de `domain/events/engine.ts`'teki `advanceResidencyWeekWithEvents`
+fonksiyonunun `monthChanged` bloğunda, NPC lifecycle'dan hemen sonra
+çalışıyor (bkz. Faz 7 raporu §1). Bu, event content'in hiçbir zaman
+"ayın maaşını öde" gibi bir effect yazmasına gerek olmadığı anlamına
+gelir — o tamamen otomatik ve idempotent.

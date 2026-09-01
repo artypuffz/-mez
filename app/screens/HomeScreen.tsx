@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useGameStore } from '../store/useGameStore';
 import { selectCharacterSummary, selectResidencySummary } from '../domain/state/selectors';
 import { getEventRepository } from '../domain/events/content';
-import type { ResolvedResourceDelta } from '../domain/state/types';
+import { formatMonthLabel } from '../domain/oncall/monthLabel';
+import type { MonthlyEconomyBreakdown, OnCallSchedule, ResolvedResourceDelta } from '../domain/state/types';
 import ResourceBar from '../components/ResourceBar';
 import EventCard from '../components/EventCard';
 
@@ -28,6 +29,49 @@ function formatVisibleEffects(delta: ResolvedResourceDelta): string[] {
   return (Object.keys(delta) as (keyof ResolvedResourceDelta)[])
     .filter((key) => delta[key] !== undefined && delta[key] !== 0)
     .map((key) => `${RESOURCE_LABELS[key]} ${key === 'money' ? formatMoney(delta[key]!) : formatDelta(delta[key]!)}`);
+}
+
+function formatSigned(amount: number): string {
+  return amount >= 0 ? `+${formatMoney(amount)}` : `-${formatMoney(Math.abs(amount))}`;
+}
+
+// §8 — a read-only info card, not a choice event. Shown once, the week
+// the month actually changes (see the render call site below).
+function OnCallCard({ schedule }: { schedule: OnCallSchedule }) {
+  const gotWorse =
+    schedule.clinicSummary.previousActiveResidents !== undefined &&
+    schedule.clinicSummary.activeResidents < schedule.clinicSummary.previousActiveResidents;
+
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardHeading}>{formatMonthLabel(schedule.monthKey)} NÖBET LİSTESİ</Text>
+      <Text style={styles.cardBody}>Bu ay {schedule.player.totalShifts} nöbetin var.</Text>
+      {schedule.player.weekendShifts > 0 && (
+        <Text style={styles.cardBody}>{schedule.player.weekendShifts}'i hafta sonu.</Text>
+      )}
+      {gotWorse && (
+        <Text style={styles.cardBody}>Klinikte aktif asistan sayısı geçen aya göre azaldı.</Text>
+      )}
+    </View>
+  );
+}
+
+// §18 — same idea: a plain summary card, no separate finance screen.
+function EconomyCard({ breakdown, balance }: { breakdown: MonthlyEconomyBreakdown; balance: number }) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardHeading}>AYLIK DURUM</Text>
+      <Text style={styles.cardBody}>Maaş: {formatSigned(breakdown.income.salary)}</Text>
+      <Text style={styles.cardBody}>Nöbet ödemesi: {formatSigned(breakdown.income.onCallPay)}</Text>
+      <Text style={styles.cardBody}>Kira: -{formatMoney(breakdown.expenses.rent)}</Text>
+      <Text style={styles.cardBody}>Yemek: -{formatMoney(breakdown.expenses.food)}</Text>
+      <Text style={styles.cardBody}>Ulaşım: -{formatMoney(breakdown.expenses.transport)}</Text>
+      <Text style={styles.cardBody}>Faturalar: -{formatMoney(breakdown.expenses.utilities)}</Text>
+      <Text style={styles.cardBody}>Diğer: -{formatMoney(breakdown.expenses.fixedOther)}</Text>
+      <Text style={styles.cardNet}>Bu ay net: {formatSigned(breakdown.net)}</Text>
+      <Text style={styles.cardBody}>Yeni bakiye: {formatMoney(balance)}</Text>
+    </View>
+  );
 }
 
 export default function HomeScreen() {
@@ -57,6 +101,16 @@ export default function HomeScreen() {
   const activeEvent = activeInstance ? getEventRepository().getEventById(activeInstance.eventId) : undefined;
   const effectLines = lastChoiceEffects ? formatVisibleEffects(lastChoiceEffects) : [];
 
+  // Only on the exact week the month changed — an ephemeral, store-only
+  // signal (lastWeekSummary resets on reload), so this is a "just
+  // happened" notice, not a persistent fixture. The underlying data
+  // (gameState.onCall/economy) is what survives a refresh, see Hastane/
+  // Profil for that.
+  const showMonthlyCards =
+    !!lastWeekSummary &&
+    lastWeekSummary.week === residencySummary.residencyWeek &&
+    !!lastWeekSummary.transitions.monthChanged;
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>ÇÖMEZ</Text>
@@ -80,6 +134,13 @@ export default function HomeScreen() {
             <Text key={line} style={styles.effectLine}>{line}</Text>
           ))}
         </View>
+      )}
+
+      {showMonthlyCards && gameState.onCall.schedule && (
+        <OnCallCard schedule={gameState.onCall.schedule} />
+      )}
+      {showMonthlyCards && gameState.economy.lastBreakdown && (
+        <EconomyCard breakdown={gameState.economy.lastBreakdown} balance={resources.money} />
       )}
 
       {activeEvent ? (
@@ -139,6 +200,18 @@ const styles = StyleSheet.create({
   money: { fontSize: 14, color: '#333', marginBottom: 18 },
   effectBox: { width: '100%', gap: 2, marginBottom: 16 },
   effectLine: { fontSize: 13, color: '#2563eb' },
+  card: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 14,
+    gap: 3,
+    marginBottom: 16,
+  },
+  cardHeading: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
+  cardBody: { fontSize: 13, color: '#444' },
+  cardNet: { fontSize: 13, fontWeight: '700', color: '#222', marginTop: 4 },
   weekBox: {
     width: '100%',
     borderWidth: 1,

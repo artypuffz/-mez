@@ -86,6 +86,18 @@ const migrations: Record<number, Migration> = {
       weeklyEventQueue: migratedQueue,
     };
   },
+  // v5 (Phase 6) had no on-call/economy state — Phase 7 added both.
+  // Unlike the Phase 6 NPC backfill, no retroactive generation is needed
+  // here: an empty onCall/economy slice is completely safe because both
+  // regenerate naturally on the save's very next monthChanged tick (the
+  // same monthKey guard that makes them idempotent also makes "start
+  // empty" a correct starting state, not a special case).
+  5: (state) => ({
+    ...state,
+    meta: { ...(state.meta as Record<string, unknown>), saveVersion: 6 },
+    onCall: { schedule: null },
+    economy: { lastProcessedMonthKey: null, lastBreakdown: null },
+  }),
 };
 
 export function migrateSaveData(raw: unknown): GameState {

@@ -138,6 +138,13 @@ const DelayedEffectEntrySchema = z
   .object({ delayWeeks: z.number().int().positive(), effects: EffectMapSchema })
   .strict();
 
+// Phase 7 §23 — tiny surface, matching domain/oncall/applyEffects.ts's
+// OnCallEffect union exactly.
+const OnCallEffectSchema = z.union([
+  z.object({ type: z.literal("add_player_shift"), count: z.number().int().positive(), shiftType: z.enum(["weekday", "weekend"]).optional() }).strict(),
+  z.object({ type: z.literal("remove_player_shift"), count: z.number().int().positive() }).strict(),
+]);
+
 // "domain:direction[:more]" — e.g. junior:supportive, npc:baris:cooperative.
 const BEHAVIOR_TAG_PATTERN = /^[a-z0-9]+(:[a-z0-9_]+)+$/;
 
@@ -160,6 +167,7 @@ const ChoiceDefinitionSchema = z
     statistics: z.object({ increment: z.record(z.string(), z.number()).optional() }).strict().optional(),
     followUpEvent: FollowUpRefSchema.optional(),
     npcTransitions: z.array(NpcTransitionEffectSchema).optional(),
+    onCallEffects: z.array(OnCallEffectSchema).optional(),
   })
   .strict();
 

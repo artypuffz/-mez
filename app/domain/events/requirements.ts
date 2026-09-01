@@ -42,6 +42,14 @@ export interface RequirementContext {
   // (authored content like "baris") — a procedurally-bound npc's id
   // isn't known at content-authoring time.
   npcs: Record<string, { role: string; career: { stage: string }; active: boolean }>;
+  // Phase 7 §21 — the CURRENT month's on-call state, readable via
+  // {stat: "onCall.currentMonthTotalShifts", gte: 8} etc. Zeroed when no
+  // schedule exists yet (before the first monthChanged tick).
+  onCall: {
+    currentMonthTotalShifts: number;
+    weekendShiftCount: number;
+    staffingLoad: number;
+  };
 }
 
 export function buildRequirementContext(
@@ -74,6 +82,11 @@ export function buildRequirementContext(
     boundNpcIds,
     activeNpcTemplateIds,
     npcs,
+    onCall: {
+      currentMonthTotalShifts: state.onCall.schedule?.player.totalShifts ?? 0,
+      weekendShiftCount: state.onCall.schedule?.player.weekendShifts ?? 0,
+      staffingLoad: state.onCall.schedule?.clinicSummary.staffingLoad ?? 0,
+    },
   };
 }
 

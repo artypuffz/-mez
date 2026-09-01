@@ -2,10 +2,18 @@ import type { GameState, NpcTransition, QueuedEventInstance, ResolvedResourceDel
 import type { SeededRng } from "../rng/seededRng";
 import { createScopedRng } from "../rng/seededRng";
 import { advanceResidencyWeek, type WeekAdvanceResult } from "../residency/advanceResidencyWeek";
+import { getResidencyCalendar } from "../residency/calendar";
 import { getResidencyProgram } from "../config/residencyPrograms";
+import { getBranchDefinition } from "../config/branches";
+import { getCityDefinition } from "../config/cities";
+import { DEFAULT_CLINIC_COMPOSITION } from "../config/clinicComposition";
 import { tickNpcLifecycle } from "../npc/lifecycle";
 import { tickRelationshipDecay } from "../npc/relationshipDecay";
 import { resolveNpcSelectors } from "../npc/selector";
+import { generateOnCallSchedule } from "../oncall/generateSchedule";
+import { computeOnCallPressureModifier } from "../oncall/pressure";
+import { applyOnCallEffects } from "../oncall/applyEffects";
+import { computeMonthlyEconomy } from "../economy/monthlyEconomy";
 import { buildRequirementContext } from "./requirements";
 import { getVisibleChoices } from "./choices";
 import { resolveText } from "./variants";
@@ -82,6 +90,10 @@ export function advanceResidencyWeekWithEvents(
       throw new Error("Residency state is missing selectedProgramId during a monthChanged NPC lifecycle tick");
     }
     const program = getResidencyProgram(programId);
+
+    // 1. NPC lifecycle/replenishment first (your ordering) — so a
+    // departure this same month already shows up in the staffing load
+    // the on-call schedule below is generated from.
     const lifecycleRng = createScopedRng(state.meta.rngSeed, `npc:lifecycle:${currentWeek}`);
     const lifecycle = tickNpcLifecycle(workingState.npcs, workingState.relationships, program, currentWeek, lifecycleRng, {
       ensureJuniorForSeniorPlayer: workingState.career.seniorityStage === "kidemli",
@@ -92,7 +104,67 @@ export function advanceResidencyWeekWithEvents(
       npcs: lifecycle.npcs,
       relationships: tickRelationshipDecay(lifecycle.relationships),
     };
+
+    // 2/3. Staffing load off the just-updated roster, then the new
+    // month's on-call schedule — guarded by monthKey so a re-entrant call
+    // (there isn't one today, but §7/§9 ask for the guard regardless)
+    // never rerolls an already-generated month.
+    const calendarPoint = getResidencyCalendar(workingState.career.residencyStartedAt!, currentWeek);
+    const monthKey = `${calendarPoint.year}-${String(calendarPoint.month).padStart(2, "0")}`;
+
+    if (workingState.onCall.schedule?.monthKey !== monthKey) {
+      const branch = getBranchDefinition(workingState.career.branch!);
+      const activeResidents =
+        Object.values(workingState.npcs).filter(
+          (n) => n.active && (n.role === "senior_resident" || n.role === "peer_resident" || n.role === "junior_resident")
+        ).length + 1; // +1 for the player, who is also a resident carrying shifts
+      const targetResidents =
+        DEFAULT_CLINIC_COMPOSITION.senior_resident.max +
+        DEFAULT_CLINIC_COMPOSITION.peer_resident.max +
+        DEFAULT_CLINIC_COMPOSITION.junior_resident.max;
+
+      const onCallRng = createScopedRng(state.meta.rngSeed, `oncall:${monthKey}`);
+      const schedule = generateOnCallSchedule({
+        monthKey,
+        generatedAtWeek: currentWeek,
+        onCallProfile: branch.onCallProfile,
+        seniorityStage: workingState.career.seniorityStage,
+        activeResidents,
+        targetResidents,
+        staffingPressure: program.hiddenProfile.staffingPressure,
+        previousActiveResidents: workingState.onCall.schedule?.clinicSummary.activeResidents,
+        rng: onCallRng,
+      });
+      workingState = { ...workingState, onCall: { schedule } };
+    }
+
+    // 5. Monthly economy, idempotent via lastProcessedMonthKey — applied
+    // once the schedule for this month exists, since on-call pay depends
+    // on it.
+    if (workingState.economy.lastProcessedMonthKey !== monthKey) {
+      const city = getCityDefinition(program.cityId);
+      const breakdown = computeMonthlyEconomy({
+        monthKey,
+        seniorityStage: workingState.career.seniorityStage,
+        onCallSchedule: workingState.onCall.schedule,
+        city,
+        background: workingState.character.background,
+      });
+      workingState = {
+        ...workingState,
+        resources: applyResourceDelta(workingState.resources, { money: breakdown.net }),
+        economy: { lastProcessedMonthKey: monthKey, lastBreakdown: breakdown },
+      };
+    }
   }
+
+  // §11 — every week (not just the month boundary), a small extra
+  // fatigue/stress nudge from the CURRENT month's on-call schedule, on
+  // top of Phase 4's already-computed baseline tick.
+  workingState = {
+    ...workingState,
+    resources: applyResourceDelta(workingState.resources, computeOnCallPressureModifier(workingState.onCall.schedule)),
+  };
 
   const { state: afterEffects } = applyDuePendingEffects(workingState, currentWeek);
   const { state: afterScheduled, resolvedEvents, traces: scheduledTrace } = resolveDuePendingEvents(
@@ -187,6 +259,7 @@ export function resolveEventChoice(
   const resources = applyResourceDelta(state.resources, immediateDelta);
   const relationships = applyRelationshipEffects(state.relationships, choice.relationshipEffects, boundNpcIds);
   const { npcs, transitions: npcTransitions } = applyNpcTransitionEffects(state.npcs, choice.npcTransitions, boundNpcIds, currentWeek);
+  const onCallSchedule = applyOnCallEffects(state.onCall.schedule, choice.onCallEffects, rng);
   const flags = applyFlags(state.flags, choice.flags);
   const statistics = applyStatistics(state.statistics, choice.statistics);
   const behaviorStats = applyBehaviorTags(state.behaviorStats, choice.behaviorTags);
@@ -236,6 +309,7 @@ export function resolveEventChoice(
       resources,
       relationships,
       npcs,
+      onCall: { schedule: onCallSchedule },
       flags,
       statistics,
       behaviorStats,

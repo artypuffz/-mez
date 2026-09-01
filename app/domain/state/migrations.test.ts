@@ -37,13 +37,15 @@ describe('migrateSaveData', () => {
     };
 
     const migrated = migrateSaveData(v1Save);
-    expect(migrated.meta.saveVersion).toBe(5);
+    expect(migrated.meta.saveVersion).toBe(6);
     expect(migrated.tus).toEqual({ step: 'prep', examEventIds: [], examLog: [] });
     expect(migrated.career.residencyStartedAt).toBeUndefined();
     expect(migrated.eventCooldowns).toEqual({});
     expect(migrated.pendingEffects).toEqual([]);
     expect(migrated.weeklyEventQueue).toEqual([]);
     expect(migrated.npcs).toEqual({});
+    expect(migrated.onCall).toEqual({ schedule: null });
+    expect(migrated.economy).toEqual({ lastProcessedMonthKey: null, lastBreakdown: null });
     expect(migrated.character.name).toBe('Ada');
   });
 
@@ -81,7 +83,7 @@ describe('migrateSaveData', () => {
       eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
     };
     const migrated = migrateSaveData(v3Save);
-    expect(migrated.meta.saveVersion).toBe(5);
+    expect(migrated.meta.saveVersion).toBe(6);
     expect(migrated.eventCooldowns).toEqual({});
     expect(migrated.pendingEffects).toEqual([]);
     expect(migrated.weeklyEventQueue).toEqual([]);
@@ -109,7 +111,7 @@ describe('migrateSaveData', () => {
       weeklyEventQueue: ['some_queued_event'],
     };
     const migrated = migrateSaveData(v4Save);
-    expect(migrated.meta.saveVersion).toBe(5);
+    expect(migrated.meta.saveVersion).toBe(6);
     expect(migrated.relationships.baris).toEqual({ trust: 5, friendship: 2, grudge: 1 });
     expect(migrated.npcs).toEqual({});
     expect(migrated.weeklyEventQueue).toEqual([
@@ -145,5 +147,25 @@ describe('migrateSaveData', () => {
     const otherNpcId = Object.keys(migrated.npcs).find((id) => id !== 'baris');
     expect(otherNpcId).toBeDefined();
     expect(migrated.relationships[otherNpcId!]).toBeDefined();
+  });
+
+  it('migrates a v5 (Phase 6) save to v6 with an empty onCall/economy slice (safe — both regenerate on the next monthChanged tick)', () => {
+    const v5Save = {
+      meta: { saveVersion: 5, rngSeed: 'seed', createdAt: '2026-03-15T00:00:00.000Z' },
+      character: { name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' },
+      career: {
+        phase: 'residency', branch: 'ic_hastaliklari', residencyStartedAt: '2026-09-01',
+        residencyWeek: 5, residencyYear: 1, seniorityStage: 'comez',
+      },
+      tus: { step: 'result', examEventIds: [], examLog: [], selectedProgramId: 'baskent_ic' },
+      resources: { stress: 40, fatigue: 30, burnout: 0, money: 12000 },
+      relationships: {}, npcs: {}, flags: {}, pendingEvents: [], activeChains: {},
+      eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
+      eventCooldowns: {}, pendingEffects: [], weeklyEventQueue: [],
+    };
+    const migrated = migrateSaveData(v5Save);
+    expect(migrated.meta.saveVersion).toBe(6);
+    expect(migrated.onCall).toEqual({ schedule: null });
+    expect(migrated.economy).toEqual({ lastProcessedMonthKey: null, lastBreakdown: null });
   });
 });

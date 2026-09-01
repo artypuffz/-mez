@@ -6,6 +6,7 @@
 import type { NpcTargetRef } from "./npcTargets";
 import type { NpcSelector } from "../npc/selector";
 import type { NpcTransition } from "../state/types";
+import type { OnCallEffect } from "../oncall/applyEffects";
 
 export type EventCategory =
   | "GENERAL"
@@ -118,6 +119,11 @@ export interface ChoiceDefinition {
   statistics?: { increment?: Record<string, number> };
   followUpEvent?: FollowUpRef;
   npcTransitions?: NpcTransitionEffect[];
+  // Phase 7 §23 — mutates the CURRENT month's on-call schedule. A no-op
+  // (never throws) if there's no active schedule yet (e.g. an event
+  // resolved before residency starts, which shouldn't happen but stays
+  // safe either way) or if a mutation runs out of valid dates/assignments.
+  onCallEffects?: OnCallEffect[];
 }
 
 export interface EventDefinition {

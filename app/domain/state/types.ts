@@ -193,7 +193,63 @@ export interface QueuedEventInstance {
   boundNpcIds: Record<string, NpcId>;
 }
 
-export const CURRENT_SAVE_VERSION = 5;
+// Phase 7 — a single on-call assignment. Only the PLAYER's own shifts are
+// ever generated as concrete assignments (§25/§37 of the Phase 7 spec — a
+// player-centric schedule, not a full per-NPC simulation); `assignedNpcId`
+// still allows "player" | a real NpcId so a future transfer/swap can move
+// an assignment onto (or off of) an NPC without changing this shape.
+export type OnCallAssignmentType = "weekday" | "weekend" | "holiday";
+export type OnCallAssignmentSource = "generated" | "swap" | "extra";
+
+export interface OnCallAssignment {
+  id: string;
+  date: string; // YYYY-MM-DD, within the schedule's monthKey
+  type: OnCallAssignmentType;
+  assignedNpcId: NpcId | "player";
+  source: OnCallAssignmentSource;
+}
+
+export interface OnCallSchedule {
+  monthKey: string; // YYYY-MM
+  generatedAtWeek: number;
+  player: {
+    totalShifts: number;
+    weekendShifts: number;
+    // No real holiday calendar exists yet — always 0 this phase; the
+    // field stays so a future holiday system doesn't need a shape change.
+    holidayShifts: number;
+    extraShifts: number;
+  };
+  clinicSummary: {
+    activeResidents: number;
+    staffingLoad: number; // 0..100
+    // Undefined for the very first schedule of a residency (nothing to
+    // compare against yet) — lets the monthly card's "roster/staffing
+    // kötüleşti" line show ONLY when it's actually true (§8), without
+    // storing a full schedule history just for this one comparison.
+    previousActiveResidents?: number;
+  };
+  assignments: OnCallAssignment[];
+}
+
+export interface MonthlyEconomyBreakdown {
+  monthKey: string;
+  income: {
+    salary: number;
+    onCallPay: number;
+    other: number;
+  };
+  expenses: {
+    rent: number;
+    food: number;
+    transport: number;
+    utilities: number;
+    fixedOther: number;
+  };
+  net: number;
+}
+
+export const CURRENT_SAVE_VERSION = 6;
 
 export interface GameState {
   meta: {
@@ -267,6 +323,22 @@ export interface GameState {
   // again — see the store's guard. Persisted (not ephemeral) so an app
   // close mid-event doesn't lose it, reroll it, or re-bind its NPCs.
   weeklyEventQueue: QueuedEventInstance[];
+
+  // Phase 7 — current month's on-call schedule. Regenerated only when
+  // monthKey changes (§7/§9); a refresh/reload just re-reads this, never
+  // rerolls it.
+  onCall: {
+    schedule: OnCallSchedule | null;
+  };
+
+  // Phase 7 — idempotent monthly income/expense processing (§20). A
+  // month's salary/rent/on-call pay is applied to resources.money exactly
+  // once, guarded by lastProcessedMonthKey; lastBreakdown is kept only
+  // for display (the feed card, Profile summary) — it is not a ledger.
+  economy: {
+    lastProcessedMonthKey: string | null;
+    lastBreakdown: MonthlyEconomyBreakdown | null;
+  };
 
   status: "active" | "gameover" | "specialist";
 }

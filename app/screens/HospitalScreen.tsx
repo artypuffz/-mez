@@ -21,6 +21,7 @@ export default function HospitalScreen() {
   const residencySummary = selectResidencySummary(gameState);
   const groups = selectHospitalRoster(gameState);
   const detail = selectedNpcId ? selectNpcDetail(gameState, selectedNpcId) : null;
+  const schedule = gameState.onCall.schedule;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -29,6 +30,13 @@ export default function HospitalScreen() {
         <Text style={styles.subtitle}>
           {residencySummary.hospitalName} — {residencySummary.branchName}
         </Text>
+      )}
+
+      {schedule && (
+        <View style={styles.onCallSummary}>
+          <Text style={styles.onCallSummaryLine}>Bu ay: {schedule.player.totalShifts} nöbet</Text>
+          <Text style={styles.onCallSummaryLine}>{schedule.player.weekendShifts} hafta sonu</Text>
+        </View>
       )}
 
       {detail && (
@@ -65,6 +73,13 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 24 },
   title: { fontSize: 22, fontWeight: '700', textAlign: 'center' },
   subtitle: { fontSize: 13, color: '#666', textAlign: 'center', marginBottom: 16 },
+  onCallSummary: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 16,
+  },
+  onCallSummaryLine: { fontSize: 13, color: '#333', fontWeight: '600' },
   group: { marginTop: 16 },
   groupLabel: { fontSize: 12, fontWeight: '700', color: '#999', letterSpacing: 0.5, marginBottom: 6 },
   row: {

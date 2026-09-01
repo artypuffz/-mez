@@ -32,7 +32,8 @@
     "test": "vitest run",
     "validate:events": "tsx scripts/validateEvents.ts",
     "simulate:events": "tsx scripts/simulateEvents.ts",
-    "simulate:npcs": "tsx scripts/simulateNpcs.ts"
+    "simulate:npcs": "tsx scripts/simulateNpcs.ts",
+    "simulate:oncall-economy": "tsx scripts/simulateOnCallEconomy.ts"
   },
   "private": true
 }

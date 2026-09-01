@@ -15,6 +15,7 @@ import general from "../../../data/events/examples/general.json";
 import healthSystem from "../../../data/events/examples/health-system.json";
 import hospital from "../../../data/events/examples/hospital.json";
 import mobbing from "../../../data/events/examples/mobbing.json";
+import onCallEconomy from "../../../data/events/examples/oncall-economy.json";
 import rare from "../../../data/events/examples/rare.json";
 import social from "../../../data/events/examples/social.json";
 
@@ -39,6 +40,7 @@ const RAW_EVENT_FILES: unknown[] = [
   ...healthSystem,
   ...hospital,
   ...mobbing,
+  ...onCallEconomy,
   ...rare,
   ...social,
 ];
