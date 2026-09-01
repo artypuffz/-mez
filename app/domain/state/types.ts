@@ -43,11 +43,19 @@ export type CareerPhase =
   | "tus"
   | "preference"
   | "residency"
-  // Total residency length reached; "Haftayı Geç" stops working. Phase 9
-  // replaces this with the real specialist-exam flow — kept as its own
-  // phase rather than jumping straight to "specialist" so nothing has to
-  // pretend a system exists before it does.
+  // Set for exactly one engine tick (the week residencyCompleted fires)
+  // and always immediately collapsed into "specialist_exam" in the same
+  // call — see advanceResidencyWeekWithEvents. Never persisted, never
+  // observed by the UI; kept in the union only because it's the value
+  // advanceResidencyWeek (Phase 4, untouched) itself still sets.
   | "residency_complete"
+  // Phase 10 — the short prep/attempt sequence between residency ending
+  // and either "specialist" or a gameover ending. Its own weekly-advance
+  // path (advanceSpecialistExamWeek) is intentionally NOT the residency
+  // one — no baseline resource tick, no on-call, no economy; only due
+  // pendingEvents/pendingEffects resolve, same generic machinery as
+  // every other chain.
+  | "specialist_exam"
   | "gameover"
   | "specialist";
 
@@ -286,7 +294,11 @@ export type GameOverReason =
   | "resigned_career"
   | "financial_collapse"
   | "program_left"
-  | "dismissed";
+  | "dismissed"
+  // Phase 10 §5 — the second (final, MVP-capped) specialist exam attempt
+  // failed. Deliberately not framed as worse than resigning — see
+  // GameOverScreen's REASON_TEXT.
+  | "specialist_exam_failed";
 
 // Phase 9 §24/§25 — set exactly once, by resolveEventChoice applying a
 // `careerEffects: [{type:"end_career", ...}]` DSL entry (see
@@ -300,7 +312,18 @@ export interface GameOverState {
   selectedChoiceId?: string;
 }
 
-export const CURRENT_SAVE_VERSION = 7;
+// Phase 10 §4 — "preparation" is deliberately NOT a field here; it's
+// derived at attempt time from statistics.specialist_exam_prep_points
+// (built up by ordinary choice.statistics.increment entries on the prep
+// events), the same generic mechanism every other accumulating stat in
+// the game already uses, rather than a second parallel counter to keep
+// in sync.
+export interface SpecialistExamState {
+  attempt: number;
+  result?: "passed" | "failed";
+}
+
+export const CURRENT_SAVE_VERSION = 8;
 
 export interface GameState {
   meta: {
@@ -356,6 +379,10 @@ export interface GameState {
   // Set once the career actually ends (see GameOverState above). Absent
   // for the entire rest of the game, including every other phase.
   gameOver?: GameOverState;
+
+  // Phase 10 — present only once career.phase has reached
+  // "specialist_exam" at least once; absent before that.
+  specialistExam?: SpecialistExamState;
 
   relationships: Record<NpcId, RelationshipState>;
 

@@ -68,6 +68,8 @@ export default function CharacterCreationScreen({ navigation }: Props) {
             onChangeText={setName}
             placeholder="Adın"
             maxLength={40}
+            accessibilityLabel="İsim"
+            testID="input-name"
           />
 
           <Text style={styles.label}>Yaş: {age}</Text>
@@ -76,6 +78,8 @@ export default function CharacterCreationScreen({ navigation }: Props) {
               style={styles.stepperButton}
               disabled={age <= MIN_AGE}
               onPress={() => setAge((a) => Math.max(MIN_AGE, a - 1))}
+              accessibilityRole="button"
+              accessibilityLabel="Yaşı azalt"
             >
               <Text style={styles.stepperButtonText}>−</Text>
             </Pressable>
@@ -84,6 +88,8 @@ export default function CharacterCreationScreen({ navigation }: Props) {
               style={styles.stepperButton}
               disabled={age >= MAX_AGE}
               onPress={() => setAge((a) => Math.min(MAX_AGE, a + 1))}
+              accessibilityRole="button"
+              accessibilityLabel="Yaşı artır"
             >
               <Text style={styles.stepperButtonText}>+</Text>
             </Pressable>
@@ -96,6 +102,7 @@ export default function CharacterCreationScreen({ navigation }: Props) {
                 key={opt.id}
                 style={[styles.chip, gender === opt.id && styles.chipSelected]}
                 onPress={() => setGender(opt.id)}
+                accessibilityRole="button"
               >
                 <Text style={[styles.chipText, gender === opt.id && styles.chipTextSelected]}>
                   {opt.label}
@@ -111,12 +118,16 @@ export default function CharacterCreationScreen({ navigation }: Props) {
             onChangeText={setHometown}
             placeholder="Şehir"
             maxLength={40}
+            accessibilityLabel="Memleket"
+            testID="input-hometown"
           />
 
           <Pressable
             style={[styles.primaryButton, !step1Valid && styles.buttonDisabled]}
             disabled={!step1Valid}
             onPress={() => setStep(2)}
+            accessibilityRole="button"
+            testID="btn-step1-next"
           >
             <Text style={styles.primaryButtonText}>İleri</Text>
           </Pressable>
@@ -131,6 +142,8 @@ export default function CharacterCreationScreen({ navigation }: Props) {
               key={def.id}
               style={[styles.card, background === def.id && styles.cardSelected]}
               onPress={() => setBackground(def.id)}
+              accessibilityRole="button"
+              testID={`background-${def.id}`}
             >
               <Text style={styles.cardTitle}>{def.label}</Text>
               <Text style={styles.cardDescription}>{def.shortDescription}</Text>
@@ -138,13 +151,15 @@ export default function CharacterCreationScreen({ navigation }: Props) {
           ))}
 
           <View style={styles.navRow}>
-            <Pressable style={styles.secondaryButton} onPress={() => setStep(1)}>
+            <Pressable style={styles.secondaryButton} onPress={() => setStep(1)} accessibilityRole="button">
               <Text style={styles.secondaryButtonText}>Geri</Text>
             </Pressable>
             <Pressable
               style={[styles.primaryButton, !step2Valid && styles.buttonDisabled]}
               disabled={!step2Valid}
               onPress={() => setStep(3)}
+              accessibilityRole="button"
+              testID="btn-step2-next"
             >
               <Text style={styles.primaryButtonText}>İleri</Text>
             </Pressable>
@@ -163,10 +178,16 @@ export default function CharacterCreationScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.navRow}>
-            <Pressable style={styles.secondaryButton} onPress={() => setStep(2)}>
+            <Pressable style={styles.secondaryButton} onPress={() => setStep(2)} accessibilityRole="button">
               <Text style={styles.secondaryButtonText}>Geri</Text>
             </Pressable>
-            <Pressable style={styles.primaryButton} onPress={handleStart} disabled={submitting}>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={handleStart}
+              disabled={submitting}
+              accessibilityRole="button"
+              testID="btn-start-tus"
+            >
               <Text style={styles.primaryButtonText}>
                 {submitting ? '...' : "TUS'A GİR"}
               </Text>
@@ -209,7 +230,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 16,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 10,
   },
   chipSelected: { backgroundColor: '#222', borderColor: '#222' },
   chipText: { fontSize: 13, color: '#333' },

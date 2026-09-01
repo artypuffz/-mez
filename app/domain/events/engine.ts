@@ -24,6 +24,7 @@ import {
   applyNpcTransitionEffects,
   applyRelationshipEffects,
   applyResourceDelta,
+  applySpecialistExamAttempt,
   applyStatistics,
   resolveEffectMap,
 } from "./effects";
@@ -138,7 +139,23 @@ export function advanceResidencyWeekWithEvents(
         previousActiveResidents: workingState.onCall.schedule?.clinicSummary.activeResidents,
         rng: onCallRng,
       });
-      workingState = { ...workingState, onCall: { schedule } };
+      // Phase 10 §8 — the only place a lifetime on-call total is ever
+      // accumulated (the schedule itself only ever holds ONE month at a
+      // time, per Phase 7's player-centric model). Same generic
+      // statistics mechanism every other counter in the game already
+      // uses, not a bespoke field — the Career Report reads it back the
+      // same way it reads crisis:total or career_opportunities_taken.
+      workingState = {
+        ...workingState,
+        onCall: { schedule },
+        statistics: applyStatistics(workingState.statistics, {
+          increment: {
+            oncall_lifetime_shifts: schedule.player.totalShifts,
+            oncall_lifetime_weekend_shifts: schedule.player.weekendShifts,
+            oncall_lifetime_extra_shifts: schedule.player.extraShifts,
+          },
+        }),
+      };
     }
 
     // 5. Monthly economy, idempotent via lastProcessedMonthKey — applied
@@ -176,6 +193,22 @@ export function advanceResidencyWeekWithEvents(
     ...workingState,
     resources: applyResourceDelta(workingState.resources, computeOnCallPressureModifier(workingState.onCall.schedule)),
   };
+
+  // §1/§3 — collapses the one-tick "residency_complete" transitional
+  // value (still what Phase 4's advanceResidencyWeek itself sets) into
+  // the real "specialist_exam" phase, seeding its opening chain event the
+  // same week — reuses the exact pendingEvents/scheduled machinery every
+  // other chain uses, no new mechanism.
+  if (weekAdvance.transitions.residencyCompleted) {
+    workingState = {
+      ...workingState,
+      career: { ...workingState.career, phase: "specialist_exam" },
+      pendingEvents: [
+        ...workingState.pendingEvents,
+        { chainId: "specialist_exam", checkpoint: "stage1", triggerWeek: currentWeek, sourceEventId: "residency_completed", sourceChoiceId: "auto" },
+      ],
+    };
+  }
 
   const { state: afterEffects } = applyDuePendingEffects(workingState, currentWeek);
   const { state: afterScheduled, resolvedEvents, traces: scheduledTrace } = resolveDuePendingEvents(
@@ -246,6 +279,37 @@ export function advanceResidencyWeekWithEvents(
   };
 }
 
+export interface SpecialistExamWeekResult {
+  state: GameState;
+  queuedEventIds: string[];
+}
+
+// Phase 10 §1 — the specialist_exam phase's OWN week-advance path,
+// deliberately NOT advanceResidencyWeekWithEvents: no baseline resource
+// tick, no on-call, no economy, no NPC lifecycle, no pool/crisis
+// selection — residency is over, none of that applies anymore. Only due
+// pendingEffects/pendingEvents resolve, via the exact same generic
+// machinery every chain already uses. The week counter itself keeps
+// incrementing (residencyWeek "N+1" reads fine as "week N+1 of the
+// character's life", not a residency week specifically).
+export function advanceSpecialistExamWeek(state: GameState, repository: EventRepository): SpecialistExamWeekResult {
+  if (state.career.phase !== "specialist_exam") {
+    throw new Error(`advanceSpecialistExamWeek called outside the specialist_exam phase (phase=${state.career.phase})`);
+  }
+  const currentWeek = state.career.residencyWeek + 1;
+  const advanced: GameState = { ...state, career: { ...state.career, residencyWeek: currentWeek } };
+
+  const { state: afterEffects } = applyDuePendingEffects(advanced, currentWeek);
+  const { state: afterScheduled, resolvedEvents } = resolveDuePendingEvents(afterEffects, currentWeek, repository);
+
+  const weeklyEventQueue: QueuedEventInstance[] = resolvedEvents.map((event) =>
+    bindQueuedInstance(event, currentWeek, afterScheduled.npcs, afterScheduled.relationships, createScopedRng(state.meta.rngSeed, `specialist-exam:bind:${currentWeek}`))
+  );
+
+  const finalState: GameState = { ...afterScheduled, weeklyEventQueue };
+  return { state: finalState, queuedEventIds: weeklyEventQueue.map((q) => q.eventId) };
+}
+
 export interface ResolveEventChoiceResult {
   state: GameState;
   visibleEffects: ResolvedResourceDelta;
@@ -289,7 +353,17 @@ export function resolveEventChoice(
   const relationships = applyRelationshipEffects(state.relationships, choice.relationshipEffects, boundNpcIds);
   const { npcs, transitions: npcTransitions } = applyNpcTransitionEffects(state.npcs, choice.npcTransitions, boundNpcIds, currentWeek);
   const onCallSchedule = applyOnCallEffects(state.onCall.schedule, choice.onCallEffects, rng, boundNpcIds);
-  const flags = applyFlags(state.flags, choice.flags);
+
+  // §4 — deterministic given state + this exact seed scope, independent
+  // of whatever scope the caller passed `rng` under, so a refresh can
+  // never reroll an already-resolved attempt.
+  const examAttemptScope = `specialist-exam:attempt:${(state.specialistExam?.attempt ?? 0) + 1}`;
+  const examAttemptRng = createScopedRng(state.meta.rngSeed, examAttemptScope);
+  const examAttempt = applySpecialistExamAttempt(choice.specialistExamEffects, state, examAttemptRng);
+
+  const flags = examAttempt
+    ? applyFlags(applyFlags(state.flags, { set: { specialist_exam_result: examAttempt.resultFlag } }), choice.flags)
+    : applyFlags(state.flags, choice.flags);
   const statistics = applyStatistics(state.statistics, choice.statistics);
   const behaviorStats = applyBehaviorTags(state.behaviorStats, choice.behaviorTags);
 
@@ -332,10 +406,17 @@ export function resolveEventChoice(
 
   const weeklyEventQueue = state.weeklyEventQueue.filter((q) => q.eventId !== event.id);
 
-  // §25/§51 — always last: every other effect on this choice already
-  // landed above. Never derived from a resource threshold, only from an
-  // explicit authored careerEffects entry on the choice the player picked.
-  const gameOver = applyCareerEffects(choice.careerEffects, currentWeek, event.id, choice.id) ?? state.gameOver;
+  // §25/§51, extended §6 — always last: every other effect on this choice
+  // already landed above. Never derived from a resource threshold, only
+  // from an explicit authored careerEffects entry on the choice picked.
+  const careerResult = applyCareerEffects(choice.careerEffects, currentWeek, event.id, choice.id);
+  const gameOver = careerResult.gameOver ?? state.gameOver;
+  const becameSpecialist = careerResult.becameSpecialist && state.career.phase !== "specialist";
+  const nextPhase = gameOver && !state.gameOver
+    ? "gameover"
+    : becameSpecialist
+      ? "specialist"
+      : state.career.phase;
 
   return {
     state: {
@@ -352,7 +433,9 @@ export function resolveEventChoice(
       eventHistory,
       weeklyEventQueue,
       gameOver,
-      career: gameOver && !state.gameOver ? { ...state.career, phase: "gameover" } : state.career,
+      specialistExam: examAttempt?.specialistExam ?? state.specialistExam,
+      status: becameSpecialist ? "specialist" : state.status,
+      career: nextPhase !== state.career.phase ? { ...state.career, phase: nextPhase } : state.career,
     },
     visibleEffects: immediateDelta,
     npcTransitions,

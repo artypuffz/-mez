@@ -22,6 +22,7 @@ import crisisExhaustion from "../../../data/events/crisis/exhaustion-spiral.json
 import crisisBurnout from "../../../data/events/crisis/burnout-resignation.json";
 import crisisFinancial from "../../../data/events/crisis/economic-crisis.json";
 import crisisCareer from "../../../data/events/crisis/career-crisis.json";
+import specialistExam from "../../../data/events/specialist-exam/specialist-exam.json";
 import economy from "../../../data/events/economy/economy.json";
 import economyExpansion from "../../../data/events/economy/economy-expansion.json";
 import general from "../../../data/events/general/general.json";
@@ -51,6 +52,11 @@ import { BACKGROUND_DEFINITIONS } from "../config/backgrounds";
 // set by an event's flags.set, but they're a legitimate source too.
 const BACKGROUND_FLAGS = BACKGROUND_DEFINITIONS.flatMap((b) => Object.keys(b.flags));
 
+// Phase 10 §4 — set by the engine itself (applySpecialistExamAttempt),
+// never by any event's flags.set; same "legitimate but not content-set"
+// case as BACKGROUND_FLAGS above.
+const ENGINE_SET_FLAGS = ["specialist_exam_result"];
+
 const RAW_EVENT_FILES: unknown[] = [
   ...branchInternalMedicine,
   ...branchSurgery,
@@ -65,6 +71,7 @@ const RAW_EVENT_FILES: unknown[] = [
   ...crisisBurnout,
   ...crisisFinancial,
   ...crisisCareer,
+  ...specialistExam,
   ...economy,
   ...economyExpansion,
   ...general,
@@ -89,7 +96,7 @@ let cached: { events: EventDefinition[]; issues: ValidationIssue[] } | null = nu
 
 function load(): { events: EventDefinition[]; issues: ValidationIssue[] } {
   if (!cached) {
-    cached = validateEventContent(RAW_EVENT_FILES, BACKGROUND_FLAGS);
+    cached = validateEventContent(RAW_EVENT_FILES, [...BACKGROUND_FLAGS, ...ENGINE_SET_FLAGS]);
   }
   return cached;
 }

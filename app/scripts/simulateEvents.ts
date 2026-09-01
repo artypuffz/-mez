@@ -1,9 +1,10 @@
 // npm run simulate:events
-// Headless sanity pass over the FULL event pool — NOT final balancing
-// (that's Phase 10+). Catches unreachable content, cooldown bugs, a
-// choiceless/crashing event, chain dead-ends, an obviously broken
-// economy/resource curve, or a crisis/game-over rate outside sane bounds
-// as the content pool grows (Phase 8 §41-44, Phase 9 §40-45).
+// Headless sanity pass over the FULL event pool, now through the
+// specialist exam (Phase 10 §27/§53) — NOT final balancing beyond what's
+// described in the Phase 10 report. Catches unreachable content, cooldown
+// bugs, a choiceless/crashing event, chain dead-ends, an obviously broken
+// economy/resource curve, a crisis/game-over rate outside sane bounds, or
+// a specialist/behavior-ending distribution stuck at 0%/100%.
 import { runHeadlessSimulation, type ChoiceStrategy, type SimulationReport } from "../domain/events/headlessSimulation";
 
 const PROGRAM_IDS = [
@@ -12,7 +13,7 @@ const PROGRAM_IDS = [
 ];
 
 function runFor(strategy: ChoiceStrategy): SimulationReport {
-  return runHeadlessSimulation({ seedCount: 500, weeksPerSeed: 260, programIds: PROGRAM_IDS, choiceStrategy: strategy });
+  return runHeadlessSimulation({ seedCount: 1000, weeksPerSeed: 260, programIds: PROGRAM_IDS, choiceStrategy: strategy });
 }
 
 function printReport(strategy: ChoiceStrategy, report: SimulationReport) {
@@ -83,6 +84,21 @@ function printReport(strategy: ChoiceStrategy, report: SimulationReport) {
   for (const [branch, stats] of Object.entries(report.gameOver.branchRate)) {
     console.log(`    ${branch}: ${stats.gameOvers}/${stats.runs} (${((stats.gameOvers / stats.runs) * 100).toFixed(1)}%)`);
   }
+
+  console.log("\nSpecialist exam / ending (Phase 10 §27-29, §53):");
+  console.log(`  Specialist rate: ${(report.specialist.rate * 100).toFixed(1)}%`);
+  console.log(`  Avg completion week: ${report.specialist.avgCompletionWeek.toFixed(0)}`);
+  console.log(`  Exam first-attempt pass rate: ${(report.specialist.examFirstAttemptPassRate * 100).toFixed(1)}%`);
+  console.log(`  Exam retry rate: ${(report.specialist.examRetryRate * 100).toFixed(1)}%`);
+  console.log("  Branch specialist rate:");
+  for (const [branch, stats] of Object.entries(report.specialist.branchRate)) {
+    console.log(`    ${branch}: ${stats.specialists}/${stats.runs} (${((stats.specialists / stats.runs) * 100).toFixed(1)}%)`);
+  }
+
+  console.log("\nBehavior ending distribution (Phase 10 §29):");
+  console.log(`  Döngüyü Kırdın (broke_cycle): ${(report.behaviorEnding.brokeCycleRate * 100).toFixed(1)}%`);
+  console.log(`  Elinden Geldiğince (mixed): ${(report.behaviorEnding.mixedRate * 100).toFixed(1)}%`);
+  console.log(`  Devir Teslim (repeated_cycle): ${(report.behaviorEnding.repeatedCycleRate * 100).toFixed(1)}%`);
 
   console.log(`\nCooldown violations: ${report.cooldownViolations.length}`);
   for (const v of report.cooldownViolations) console.log(`  ${v}`);

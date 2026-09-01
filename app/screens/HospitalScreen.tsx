@@ -40,7 +40,7 @@ export default function HospitalScreen() {
       )}
 
       {detail && (
-        <Pressable style={styles.detailCard} onPress={() => setSelectedNpcId(null)}>
+        <Pressable style={styles.detailCard} onPress={() => setSelectedNpcId(null)} accessibilityRole="button">
           <Text style={styles.detailName}>{detail.name}</Text>
           <Text style={styles.detailRole}>{detail.roleLabel}</Text>
           <Text style={styles.detailLine}>{detail.tenureLabel}</Text>

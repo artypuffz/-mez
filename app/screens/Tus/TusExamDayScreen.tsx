@@ -34,7 +34,7 @@ export default function TusExamDayScreen({ navigation }: Props) {
   const event = getTusExamEvent(currentEventId);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="tus-exam-screen">
       <Text style={styles.progress}>
         {currentIndex + 1}/{tus.examEventIds.length}
       </Text>
@@ -46,6 +46,8 @@ export default function TusExamDayScreen({ navigation }: Props) {
             key={choice.id}
             style={styles.choiceButton}
             onPress={() => submitTusExamChoice(event.id, choice.id)}
+            accessibilityRole="button"
+            testID={`tus-exam-choice-${choice.id}`}
           >
             <Text style={styles.choiceText}>{choice.text}</Text>
           </Pressable>

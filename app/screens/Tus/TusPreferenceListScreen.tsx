@@ -44,7 +44,12 @@ function ProgramCard({ program, onPick }: { program: ResidencyProgram; onPick: (
 
       {program.hintText && <Text style={styles.hint}>"Asistan yorumları: {program.hintText}"</Text>}
 
-      <Pressable style={styles.pickButton} onPress={onPick}>
+      <Pressable
+        style={styles.pickButton}
+        onPress={onPick}
+        accessibilityRole="button"
+        testID={`pick-program-${program.id}`}
+      >
         <Text style={styles.pickButtonText}>TERCİH ET</Text>
       </Pressable>
     </View>

@@ -27,7 +27,7 @@ export default function EventCard({ event, gameState, disabled, onChoose, boundN
   const isCrisis = event.triggerMode === 'crisis' || event.category === 'CRISIS';
 
   return (
-    <View style={[styles.card, isCrisis && styles.cardCrisis]}>
+    <View style={[styles.card, isCrisis && styles.cardCrisis]} testID={`event-card-${event.id}`}>
       {isCrisis && <Text style={styles.crisisTag}>KRİTİK HAFTA</Text>}
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
@@ -37,8 +37,10 @@ export default function EventCard({ event, gameState, disabled, onChoose, boundN
             key={choice.id}
             disabled={disabled}
             accessibilityRole="button"
+            accessibilityLabel={choice.text}
             style={[styles.choiceButton, disabled && styles.choiceButtonDisabled]}
             onPress={() => onChoose(choice.id)}
+            testID={`choice-${choice.id}`}
           >
             <Text style={styles.choiceText}>{choice.text}</Text>
           </Pressable>

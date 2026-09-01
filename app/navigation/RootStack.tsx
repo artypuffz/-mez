@@ -11,6 +11,8 @@ import TusResultScreen from '../screens/Tus/TusResultScreen';
 import TusPreferenceListScreen from '../screens/Tus/TusPreferenceListScreen';
 import TusPreferenceConfirmScreen from '../screens/Tus/TusPreferenceConfirmScreen';
 import GameOverScreen from '../screens/GameOverScreen';
+import SpecialistEndingScreen from '../screens/SpecialistEndingScreen';
+import CareerReportScreen from '../screens/CareerReportScreen';
 import RootNavigator from './RootNavigator';
 import type { GameState } from '../domain/state/types';
 
@@ -24,6 +26,8 @@ export type RootStackParamList = {
   TusPreferenceConfirm: { programId: string };
   Residency: undefined;
   GameOver: undefined;
+  SpecialistEnding: undefined;
+  CareerReport: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,8 +37,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export type EntryRouteName = Exclude<keyof RootStackParamList, 'TusPreferenceConfirm'>;
 
 // Resumes to the exact TUS checkpoint the player last reached — see
-// tus.step in domain/state/types.ts. "specialist" has no real screen yet
-// and falls back to Residency until Phase 10 implements it.
+// tus.step in domain/state/types.ts. "specialist_exam" resumes to
+// Residency (its own weekly-advance loop lives on HomeScreen, same as
+// residency) rather than a dedicated screen — there's nothing else to
+// show between exam stages.
 export function resolveEntryRoute(state: GameState | null): EntryRouteName {
   if (!state) return 'CharacterCreation';
 
@@ -56,31 +62,36 @@ export function resolveEntryRoute(state: GameState | null): EntryRouteName {
       return 'TusPreferenceList';
     case 'gameover':
       return 'GameOver';
+    case 'specialist':
+      return 'SpecialistEnding';
+    case 'specialist_exam':
     case 'residency':
     default:
       return 'Residency';
   }
 }
 
-// Phase 9 — a resignation/game-over can happen mid-session from any
-// screen inside the Residency tab navigator (resolving a crisis choice on
+// Phase 9, extended Phase 10 — a resignation/game-over OR a successful
+// specialist ending can happen mid-session from any screen inside the
+// Residency tab navigator (resolving a crisis or exam-result choice on
 // HomeScreen, most likely). Watching gameState.career.phase here, at the
 // top of the whole app, means every such screen gets the transition for
-// free instead of each one needing its own navigate-on-gameover logic.
-function useGameOverRedirect(navigationRef: ReturnType<typeof useNavigationContainerRef<RootStackParamList>>) {
+// free instead of each one needing its own navigate-on-ending logic.
+function useEndingRedirect(navigationRef: ReturnType<typeof useNavigationContainerRef<RootStackParamList>>) {
   const phase = useGameStore((s) => s.gameState?.career.phase);
 
   useEffect(() => {
-    if (phase !== 'gameover') return;
+    if (phase !== 'gameover' && phase !== 'specialist') return;
     if (!navigationRef.isReady()) return;
-    if (navigationRef.getCurrentRoute()?.name === 'GameOver') return;
-    navigationRef.navigate('GameOver');
+    const target = phase === 'gameover' ? 'GameOver' : 'SpecialistEnding';
+    if (navigationRef.getCurrentRoute()?.name === target) return;
+    navigationRef.navigate(target);
   }, [phase, navigationRef]);
 }
 
 export default function RootStack() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
-  useGameOverRedirect(navigationRef);
+  useEndingRedirect(navigationRef);
 
   return (
     <NavigationContainer ref={navigationRef}>
@@ -94,6 +105,8 @@ export default function RootStack() {
         <Stack.Screen name="TusPreferenceConfirm" component={TusPreferenceConfirmScreen} />
         <Stack.Screen name="Residency" component={RootNavigator} />
         <Stack.Screen name="GameOver" component={GameOverScreen} />
+        <Stack.Screen name="SpecialistEnding" component={SpecialistEndingScreen} />
+        <Stack.Screen name="CareerReport" component={CareerReportScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

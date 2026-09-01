@@ -11,14 +11,15 @@ import {
 import { createSeededRng } from '../rng/seededRng';
 
 describe('applyCareerEffects', () => {
-  it('returns undefined when there is no end_career effect', () => {
-    expect(applyCareerEffects(undefined, 30, 'ev', 'choice')).toBeUndefined();
-    expect(applyCareerEffects([], 30, 'ev', 'choice')).toBeUndefined();
+  it('returns an empty result when there is no end_career/become_specialist effect', () => {
+    expect(applyCareerEffects(undefined, 30, 'ev', 'choice')).toEqual({});
+    expect(applyCareerEffects([], 30, 'ev', 'choice')).toEqual({});
   });
 
   it('produces a GameOverState carrying the reason/week/source when end_career is present', () => {
     const result = applyCareerEffects([{ type: 'end_career', reason: 'resigned_burnout' }], 42, 'crisis_ev', 'istifa_et');
-    expect(result).toEqual({ reason: 'resigned_burnout', week: 42, triggeredByEventId: 'crisis_ev', selectedChoiceId: 'istifa_et' });
+    expect(result.gameOver).toEqual({ reason: 'resigned_burnout', week: 42, triggeredByEventId: 'crisis_ev', selectedChoiceId: 'istifa_et' });
+    expect(result.becameSpecialist).toBeUndefined();
   });
 
   it('picks the first end_career entry if more than one is somehow present', () => {
@@ -26,7 +27,12 @@ describe('applyCareerEffects', () => {
       [{ type: 'end_career', reason: 'resigned_career' }, { type: 'end_career', reason: 'financial_collapse' }],
       10, 'ev', 'choice'
     );
-    expect(result?.reason).toBe('resigned_career');
+    expect(result.gameOver?.reason).toBe('resigned_career');
+  });
+
+  it('produces becameSpecialist:true when become_specialist is present', () => {
+    const result = applyCareerEffects([{ type: 'become_specialist' }], 260, 'ev', 'choice');
+    expect(result).toEqual({ becameSpecialist: true });
   });
 });
 

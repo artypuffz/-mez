@@ -162,8 +162,13 @@ const BEHAVIOR_TAG_PATTERN = /^[a-z0-9]+(:[a-z0-9_]+)+$/;
 // Phase 9 §51/§52 — mirrors CareerEffect exactly (domain/events/types.ts):
 // the only DSL entry allowed to end a career, and GameOverReason is a
 // closed, explicit list — never an arbitrary string.
-const GAME_OVER_REASONS = ["resigned_burnout", "resigned_career", "financial_collapse", "program_left", "dismissed"] as const;
-const CareerEffectSchema = z.object({ type: z.literal("end_career"), reason: z.enum(GAME_OVER_REASONS) }).strict();
+const GAME_OVER_REASONS = ["resigned_burnout", "resigned_career", "financial_collapse", "program_left", "dismissed", "specialist_exam_failed"] as const;
+const CareerEffectSchema = z.union([
+  z.object({ type: z.literal("end_career"), reason: z.enum(GAME_OVER_REASONS) }).strict(),
+  z.object({ type: z.literal("become_specialist") }).strict(),
+]);
+// Phase 10 §4 — mirrors SpecialistExamEffect (domain/events/types.ts).
+const SpecialistExamEffectSchema = z.object({ type: z.literal("attempt") }).strict();
 
 const ChoiceDefinitionSchema = z
   .object({
@@ -186,6 +191,7 @@ const ChoiceDefinitionSchema = z
     npcTransitions: z.array(NpcTransitionEffectSchema).optional(),
     onCallEffects: z.array(OnCallEffectSchema).optional(),
     careerEffects: z.array(CareerEffectSchema).optional(),
+    specialistExamEffects: z.array(SpecialistExamEffectSchema).optional(),
   })
   .strict();
 

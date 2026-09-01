@@ -29,10 +29,15 @@ export default function TusPreferenceConfirmScreen({ route, navigation }: Props)
       </View>
       <Text style={styles.note}>Bu tercihle asistanlığa başlayacaksın.</Text>
       <View style={styles.buttons}>
-        <Pressable style={styles.confirmButton} onPress={handleConfirm}>
+        <Pressable
+          style={styles.confirmButton}
+          onPress={handleConfirm}
+          accessibilityRole="button"
+          testID="btn-confirm-program"
+        >
           <Text style={styles.confirmButtonText}>EMİNİM</Text>
         </Pressable>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Pressable style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button">
           <Text style={styles.backButtonText}>GERİ DÖN</Text>
         </Pressable>
       </View>

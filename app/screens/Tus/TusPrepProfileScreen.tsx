@@ -21,7 +21,13 @@ export default function TusPrepProfileScreen({ navigation }: Props) {
       <Text style={styles.question}>Son altı ay TUS'a nasıl hazırlandın?</Text>
       <View style={styles.list}>
         {TUS_PREP_PROFILE_DEFINITIONS.map((profile) => (
-          <Pressable key={profile.id} style={styles.card} onPress={() => handleSelect(profile.id)}>
+          <Pressable
+            key={profile.id}
+            style={styles.card}
+            onPress={() => handleSelect(profile.id)}
+            accessibilityRole="button"
+            testID={`prep-profile-${profile.id}`}
+          >
             <Text style={styles.cardTitle}>{profile.title}</Text>
             <Text style={styles.cardDescription}>{profile.description}</Text>
           </Pressable>

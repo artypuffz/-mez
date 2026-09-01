@@ -1,4 +1,4 @@
-# ÇÖMEZ — Event Schema & DSL Referansı (v0.6)
+# ÇÖMEZ — Event Schema & DSL Referansı (v0.7)
 
 Bu doküman, event motoru (Faz 5) implementasyonunda kullanılacak resmi
 şemadır. `docs/event-design-bible.md` bu şemanın *neden* bu şekilde
@@ -70,6 +70,37 @@ olduğunu (tasarım gerekçesi, örnekler) anlatır; burası sade referans.
     `crisisType`/`severity`, geçersiz `careerEffects.reason` artık hata.
     Kriz zinciri dead-end'leri zaten var olan dangling-`followUpEvent`/
     fallback kontrolleriyle yakalanıyor — ayrı bir kontrol gerekmedi.
+- **v0.7** (bu doküman, Faz 10) → uzmanlık sınavı + kariyer raporu
+  sonrası: kasıtlı olarak **yeni bir `triggerMode` eklenmedi** — uzmanlık
+  sınavı zinciri (`specialist_exam`) mevcut `pool`/`scheduled`
+  mekanizmalarıyla, sıradan bir authored zincir gibi ifade ediliyor.
+  - `choice.careerEffects`'e ikinci bir varyant eklendi:
+    `{type:"become_specialist"}`. `GameOverReason` kapalı listesine
+    `"specialist_exam_failed"` eklendi (ikinci ve MVP'de son sınav
+    denemesinin de başarısız olması — §5, resign etmekten "daha kötü"
+    olarak çerçevelenmiyor). Motorun `applyCareerEffects` dönüş tipi artık
+    `{gameOver?, becameSpecialist?}` — tek bir `GameOverState|undefined`
+    yerine, çünkü artık bir choice hem kariyeri bitirebilir hem de
+    (farklı bir choice'ta) `career.phase`'i `"specialist"`'e taşıyabilir.
+  - Yeni bir DSL alanı: `choice.specialistExamEffects: [{type:"attempt"}]`.
+    Motor bunu gördüğünde `domain/specialistExam/outcome.ts`'deki saf
+    `calculateSpecialistExamOutcome` fonksiyonunu (mevcut kaynak/kriz/
+    ilişki state'inden + `statistics.specialist_exam_prep_points`'ten
+    türetilen deterministik bir skor) çağırıp sonucu hem
+    `state.specialistExam`'e hem de motor tarafından set edilen
+    `flags.specialist_exam_result` (`"passed"|"failed"`) flag'ine yazıyor
+    — içerik bu flag'i sıradan bir `requirements.flag` koşuluyla okuyarak
+    stage3'te "geçtin" / "geçemedin" dallanmasını yapıyor, yeni bir
+    requirement-node türü **eklenmedi**.
+  - İçerik-kalitesi doğrulaması (§38/§50) genişledi: `specialist_exam_result`
+    motor tarafından set edildiği için "hiç set edilmeyen flag okunuyor"
+    uyarısının kapsamı dışına alındı (`ENGINE_SET_FLAGS`, aynı
+    `BACKGROUND_FLAGS`'in yanına eklendi — bkz. `domain/events/content.ts`).
+  - `CareerPhase`'e (event şemasının değil, `domain/state/types.ts`'in bir
+    parçası, burada sadece bağlam için not düşülüyor) `"specialist_exam"`
+    eklendi — `"residency_complete"` artık tek bir motor tick'inde her
+    zaman `"specialist_exam"`'e çöküyor, kalıcı bir faz olarak hiç
+    gözlemlenmiyor (bkz. `advanceResidencyWeekWithEvents`).
 
 ---
 

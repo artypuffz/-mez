@@ -1,7 +1,8 @@
 import type { SeededRng } from "../rng/seededRng";
-import { clampRelationshipField, type GameOverState, type NpcState, type NpcTransition, type RelationshipState, type ResolvedResourceDelta } from "../state/types";
-import type { CareerEffect, EffectMap, NpcTransitionEffect, NumericOrRange, RelationshipEffect, RelationshipField } from "./types";
+import { clampRelationshipField, type GameOverState, type GameState, type NpcState, type NpcTransition, type RelationshipState, type ResolvedResourceDelta, type SpecialistExamState } from "../state/types";
+import type { CareerEffect, EffectMap, NpcTransitionEffect, NumericOrRange, RelationshipEffect, RelationshipField, SpecialistExamEffect } from "./types";
 import { resolveNpcTargetId } from "./npcTargets";
+import { buildExamFactors, calculateSpecialistExamOutcome } from "../specialistExam/outcome";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -153,21 +154,50 @@ export function applyStatistics(
   return next;
 }
 
-// Phase 9 §25/§51 — the ONLY function allowed to produce a GameOverState.
-// Always applied last by resolveEventChoice; every other effect on the
-// same choice still lands first (a resignation's stress relief is real).
-// A choice with more than one end_career entry is content authoring
-// error territory (validated), but if it ever happens, the first one wins
-// — never silently overwritten mid-resolution.
+export interface CareerEffectResult {
+  gameOver?: GameOverState;
+  becameSpecialist?: boolean;
+}
+
+// Phase 9 §25/§51, extended Phase 10 §6 — the ONLY function allowed to
+// end OR successfully close the career. Always applied last by
+// resolveEventChoice; every other effect on the same choice still lands
+// first. A choice with more than one entry of the same kind is content
+// authoring error territory (validated), but if it ever happens, the
+// first one wins — never silently overwritten mid-resolution.
 export function applyCareerEffects(
   effects: CareerEffect[] | undefined,
   currentWeek: number,
   eventId: string,
   choiceId: string
-): GameOverState | undefined {
+): CareerEffectResult {
   const endCareer = effects?.find((e) => e.type === "end_career");
-  if (!endCareer) return undefined;
-  return { reason: endCareer.reason, week: currentWeek, triggeredByEventId: eventId, selectedChoiceId: choiceId };
+  if (endCareer) {
+    return { gameOver: { reason: endCareer.reason, week: currentWeek, triggeredByEventId: eventId, selectedChoiceId: choiceId } };
+  }
+  const becameSpecialist = effects?.some((e) => e.type === "become_specialist");
+  if (becameSpecialist) return { becameSpecialist: true };
+  return {};
+}
+
+// Phase 10 §4 — the ONLY function allowed to resolve a specialist exam
+// attempt. Reads the CURRENT state's factors (buildExamFactors), rolls
+// through the caller-scoped rng ("specialist-exam:attempt:N" — see
+// engine.ts), and returns the updated SpecialistExamState plus the
+// content-facing result flag. Absent when the choice didn't request one.
+export function applySpecialistExamAttempt(
+  effects: SpecialistExamEffect[] | undefined,
+  state: GameState,
+  rng: SeededRng
+): { specialistExam: SpecialistExamState; resultFlag: "passed" | "failed" } | undefined {
+  if (!effects?.some((e) => e.type === "attempt")) return undefined;
+  const factors = buildExamFactors(state);
+  const outcome = calculateSpecialistExamOutcome(factors, rng);
+  const result: "passed" | "failed" = outcome.passed ? "passed" : "failed";
+  return {
+    specialistExam: { attempt: factors.attempt, result },
+    resultFlag: result,
+  };
 }
 
 // The engine never interprets what a tag means — it just counts it. See

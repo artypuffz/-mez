@@ -45,7 +45,7 @@ export default function TusResultScreen({ navigation }: Props) {
       <Text style={styles.label}>Puanın</Text>
       <Text style={styles.score}>{tusScore.toFixed(2)}</Text>
       <Text style={styles.comment}>{comment}</Text>
-      <Pressable style={styles.button} onPress={handleContinue}>
+      <Pressable style={styles.button} onPress={handleContinue} accessibilityRole="button" testID="btn-go-to-preferences">
         <Text style={styles.buttonText}>TERCİHLERE GİT</Text>
       </Pressable>
     </View>

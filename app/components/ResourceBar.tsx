@@ -24,7 +24,11 @@ export default function ResourceBar({ label, value, max = 100 }: Props) {
       <Text style={styles.label}>
         {label} {value}/{max}
       </Text>
-      <View style={styles.track}>
+      <View
+        style={styles.track}
+        accessibilityRole="progressbar"
+        accessibilityValue={{ min: 0, max, now: value }}
+      >
         <View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: fillColor(value) }]} />
       </View>
     </View>

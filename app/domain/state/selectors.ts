@@ -69,7 +69,7 @@ export interface GameOverSummary {
   };
 }
 
-function formatDuration(weeks: number): string {
+export function formatDuration(weeks: number): string {
   const years = Math.floor(weeks / 52);
   const remainderWeeks = weeks % 52;
   const months = Math.round(remainderWeeks / (52 / 12));

@@ -19,6 +19,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/react": "~19.2.2",
     "tsx": "^4.23.13",
     "typescript": "~6.0.3",
@@ -30,7 +31,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "validate:events": "tsx scripts/validateEvents.ts",
+    "validate:release": "tsx scripts/validateRelease.ts",
     "simulate:events": "tsx scripts/simulateEvents.ts",
     "simulate:npcs": "tsx scripts/simulateNpcs.ts",
     "simulate:oncall-economy": "tsx scripts/simulateOnCallEconomy.ts",

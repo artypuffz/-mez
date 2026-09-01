@@ -1,0 +1,238 @@
+[
+  {
+    "id": "specialist_exam_01_bir_hafta_once",
+    "title": "SINAVDAN BİR HAFTA ÖNCE",
+    "description": "Son haftalarda yoğun çalışıyorsun. Uzmanlık sınavı yaklaştı.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "specialist_exam",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "yuklen",
+        "text": "Biraz daha yüklen.",
+        "immediateEffects": {
+          "fatigue": 6,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "specialist_exam_prep_points": 20
+          }
+        },
+        "followUpEvent": {
+          "chainId": "specialist_exam",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      },
+      {
+        "id": "dinlen",
+        "text": "Dinlenmeye çalış.",
+        "immediateEffects": {
+          "fatigue": -6,
+          "stress": -4
+        },
+        "statistics": {
+          "increment": {
+            "specialist_exam_prep_points": 8
+          }
+        },
+        "followUpEvent": {
+          "chainId": "specialist_exam",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      },
+      {
+        "id": "normal_tempo",
+        "text": "Normal tempoda devam et.",
+        "immediateEffects": {},
+        "statistics": {
+          "increment": {
+            "specialist_exam_prep_points": 14
+          }
+        },
+        "followUpEvent": {
+          "chainId": "specialist_exam",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "specialist_exam_02_sinav_gunu",
+    "title": "SINAV GÜNÜ",
+    "description": "Salon dolu. Kağıdı önüne koyuyorlar. Bu ana kadar getiren her şey artık geride kaldı.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "specialist_exam",
+    "chainCheckpoint": "stage2",
+    "choices": [
+      {
+        "id": "sinava_gir",
+        "text": "Sınava gir.",
+        "immediateEffects": {
+          "stress": 5
+        },
+        "specialistExamEffects": [
+          {
+            "type": "attempt"
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "specialist_exam",
+          "checkpoint": "stage3",
+          "delayWeeks": 1
+        }
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "specialist_exam_03_gectin",
+    "title": "SONUÇ AÇIKLANDI",
+    "description": "Liste yayınlandı. Adını buluyorsun.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "specialist_exam",
+    "chainCheckpoint": "stage3",
+    "priority": 10,
+    "requirements": {
+      "all": [
+        {
+          "flag": "specialist_exam_result",
+          "eq": "passed"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": -10
+        },
+        "careerEffects": [
+          {
+            "type": "become_specialist"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "specialist_exam_03_gecemedin",
+    "title": "SONUÇ AÇIKLANDI",
+    "description": "Liste yayınlandı. Adını bulamıyorsun. Bir kez daha bakıyorsun. Yine yok.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "specialist_exam",
+    "chainCheckpoint": "stage3",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "tekrar_hazirlan",
+        "text": "Tekrar hazırlan.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "followUpEvent": {
+          "chainId": "specialist_exam",
+          "checkpoint": "stage4",
+          "delayWeeks": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "specialist_exam_04_ikinci_sans",
+    "title": "İKİNCİ ŞANS",
+    "description": "Aynı salon, aynı kağıt türü, biraz daha az heyecan. Bu sefer ne olacağını daha az merak ediyorsun; sadece bitsin istiyorsun.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "specialist_exam",
+    "chainCheckpoint": "stage4",
+    "choices": [
+      {
+        "id": "tekrar_dene",
+        "text": "Tekrar dene.",
+        "immediateEffects": {
+          "stress": 4
+        },
+        "specialistExamEffects": [
+          {
+            "type": "attempt"
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "specialist_exam",
+          "checkpoint": "stage5",
+          "delayWeeks": 1
+        }
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "specialist_exam_05_bu_kez_gectin",
+    "title": "SONUÇ AÇIKLANDI",
+    "description": "İkinci listede adını buluyorsun.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "specialist_exam",
+    "chainCheckpoint": "stage5",
+    "priority": 10,
+    "requirements": {
+      "all": [
+        {
+          "flag": "specialist_exam_result",
+          "eq": "passed"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": -10
+        },
+        "careerEffects": [
+          {
+            "type": "become_specialist"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "specialist_exam_05_yine_olmadi",
+    "title": "SONUÇ AÇIKLANDI",
+    "description": "İkinci listede de adın yok. Bir süre kağıda bakıyorsun, sonra katlayıp cebine koyuyorsun.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "specialist_exam",
+    "chainCheckpoint": "stage5",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": -5
+        },
+        "careerEffects": [
+          {
+            "type": "end_career",
+            "reason": "specialist_exam_failed"
+          }
+        ]
+      }
+    ]
+  }
+]

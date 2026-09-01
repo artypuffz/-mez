@@ -115,6 +115,30 @@ const migrations: Record<number, Migration> = {
       crisisState: { lastCrisisWeek: null },
     };
   },
+  // v7 (Phase 9) had no specialist-exam bookkeeping — Phase 10 added it.
+  // No new field needs a real default (specialistExam is optional, absent
+  // until the exam actually starts). The one real case handled here: a
+  // save that reached the pre-Phase-10 "residency_complete" placeholder
+  // gets bumped straight to "specialist_exam" with its opening chain
+  // event seeded, the same collapse advanceResidencyWeekWithEvents now
+  // does for every NEW run — an old save must not get stuck on a phase
+  // value the game no longer knows how to render.
+  7: (state) => {
+    const career = state.career as Record<string, unknown>;
+    const wasResidencyComplete = career.phase === "residency_complete";
+    const week = (career.residencyWeek as number) ?? 0;
+    return {
+      ...state,
+      meta: { ...(state.meta as Record<string, unknown>), saveVersion: 8 },
+      career: wasResidencyComplete ? { ...career, phase: "specialist_exam" } : career,
+      pendingEvents: wasResidencyComplete
+        ? [
+            ...((state.pendingEvents as unknown[]) ?? []),
+            { chainId: "specialist_exam", checkpoint: "stage1", triggerWeek: week, sourceEventId: "residency_completed", sourceChoiceId: "auto" },
+          ]
+        : (state.pendingEvents ?? []),
+    };
+  },
 };
 
 export function migrateSaveData(raw: unknown): GameState {

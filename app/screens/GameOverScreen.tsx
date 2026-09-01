@@ -42,6 +42,15 @@ const REASON_TEXT: Record<GameOverReason, { heading: string; body: (durationLabe
     heading: 'GÖREVE SON VERİLDİ',
     body: (d) => [`${d} sürdü.`],
   },
+  // Phase 10 §5 — not framed as worse than resigning; two attempts is
+  // the MVP cap, not a verdict on the whole career that preceded it.
+  specialist_exam_failed: {
+    heading: 'UZMANLIK SINAVI',
+    body: (d) => [
+      `${d} sürdü.`,
+      'İkinci deneme de olmadı. Kağıt üstünde asistanlık burada bitiyor.',
+    ],
+  },
 };
 
 function formatMoney(amount: number): string {
@@ -72,14 +81,14 @@ export default function GameOverScreen({ navigation }: Props) {
   const handleMainMenu = () => navigation.replace('MainMenu');
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="gameover-screen">
       <Text style={styles.heading}>ASİSTANLIK BİTTİ</Text>
       <Text style={styles.name}>Dr. {character.name}</Text>
       {summary.branchName && <Text style={styles.subline}>{summary.branchName}</Text>}
       <Text style={styles.subline}>{summary.durationLabel}</Text>
 
       <View style={styles.reasonCard}>
-        <Text style={styles.reasonHeading}>{reasonText.heading}</Text>
+        <Text style={styles.reasonHeading} testID="gameover-reason">{reasonText.heading}</Text>
         {reasonText.body(summary.durationLabel).map((line, i) => (
           <Text key={i} style={styles.reasonLine}>{line}</Text>
         ))}
@@ -109,10 +118,28 @@ export default function GameOverScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.buttons}>
-        <Pressable style={styles.button} onPress={handleNewGame}>
-          <Text style={styles.buttonText}>YENİ OYUN</Text>
+        <Pressable
+          style={styles.button}
+          onPress={() => navigation.navigate('CareerReport')}
+          accessibilityRole="button"
+          testID="btn-career-report"
+        >
+          <Text style={styles.buttonText}>KARİYER KARNESİNİ GÖR</Text>
         </Pressable>
-        <Pressable style={[styles.button, styles.buttonSecondary]} onPress={handleMainMenu}>
+        <Pressable
+          style={[styles.button, styles.buttonSecondary]}
+          onPress={handleNewGame}
+          accessibilityRole="button"
+          testID="btn-gameover-new-game"
+        >
+          <Text style={[styles.buttonText, styles.buttonTextSecondary]}>YENİ OYUN</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.button, styles.buttonSecondary]}
+          onPress={handleMainMenu}
+          accessibilityRole="button"
+          testID="btn-gameover-main-menu"
+        >
           <Text style={[styles.buttonText, styles.buttonTextSecondary]}>ANA MENÜ</Text>
         </Pressable>
       </View>

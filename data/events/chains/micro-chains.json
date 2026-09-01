@@ -1092,6 +1092,11 @@
             "mc_reunion_path": "skipped"
           }
         },
+        "statistics": {
+          "increment": {
+            "social_events_missed": 1
+          }
+        },
         "followUpEvent": {
           "chainId": "mc_reunion",
           "checkpoint": "stage2",

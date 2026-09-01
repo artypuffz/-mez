@@ -1,4 +1,5 @@
-import { advanceResidencyWeekWithEvents, resolveEventChoice } from "./engine";
+import { advanceResidencyWeekWithEvents, advanceSpecialistExamWeek, resolveEventChoice } from "./engine";
+import { computeCycleScore, resolveCycleEnding } from "../careerReport/behaviorProfile";
 import { getEventRepository } from "./content";
 import { buildRequirementContext } from "./requirements";
 import { getVisibleChoices } from "./choices";
@@ -74,6 +75,19 @@ export interface SimulationReport {
     recoveredCount: number;
     typeCounts: Record<string, number>;
   };
+  // Phase 10 §27/§53 — full-career (through the specialist exam) matrix.
+  specialist: {
+    rate: number;
+    avgCompletionWeek: number;
+    branchRate: Record<string, { runs: number; specialists: number }>;
+    examRetryRate: number;
+    examFirstAttemptPassRate: number;
+  };
+  behaviorEnding: {
+    brokeCycleRate: number;
+    mixedRate: number;
+    repeatedCycleRate: number;
+  };
 }
 
 const SIM_BACKGROUNDS = ["aile_yaninda", "baska_sehirden", "ekonomik_rahat", "kendi_basina"] as const;
@@ -113,13 +127,35 @@ function mid(v: number | { min: number; max: number } | undefined): number {
 // (§40, optional third strategy) is the one that also actively avoids
 // ending the career — a genuinely different policy, not just a stricter
 // version of the same one.
+//
+// Phase 10 §29 finding: without ANY relationship awareness, a purely
+// stress/fatigue/burnout-minimizing heuristic systematically prefers
+// self-serving choices over protective/supportive ones whenever the
+// supportive option costs more THIS week (protecting a junior, taking
+// blame — the content's own effects make care cost something) — this
+// alone drove resource_preserving to ~85% "repeated_cycle" and
+// self_preserving_aggressive to 100%, both degenerate per §29's own
+// warning. A small relationship term (an agent that avoids burning
+// bridges plausibly also avoids the future stress a bad relationship
+// causes) is enough to stop the heuristic from reading as reflexively
+// selfish, without turning it into a values-driven agent (§40 forbids
+// an "AI agent" strategy) or touching the actual game content.
+function relationshipTerm(choice: ChoiceDefinition): number {
+  if (!choice.relationshipEffects || choice.relationshipEffects.length === 0) return 0;
+  let total = 0;
+  for (const effect of choice.relationshipEffects) {
+    total += (effect.trust ?? 0) + (effect.friendship ?? 0) - (effect.grudge ?? 0);
+  }
+  return total;
+}
+
 function resourceCost(choice: ChoiceDefinition, moneyWeight: number, avoidCareerEnd: boolean): number {
   const effects = choice.immediateEffects;
   const base = effects
     ? mid(effects.stress) + mid(effects.fatigue) + mid(effects.burnout) * 1.5 - mid(effects.money) / moneyWeight
     : 0;
   const careerEndPenalty = avoidCareerEnd && choice.careerEffects?.some((e) => e.type === "end_career") ? 100000 : 0;
-  return base + careerEndPenalty;
+  return base - relationshipTerm(choice) * 0.3 + careerEndPenalty;
 }
 
 function pickChoice(strategy: ChoiceStrategy, visible: ChoiceDefinition[], rng: SeededRng): ChoiceDefinition {
@@ -191,6 +227,17 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
   let crisisRecoveredTotal = 0;
   const crisisTypeCounts: Record<string, number> = {};
 
+  let specialistRuns = 0;
+  let specialistWeekSum = 0;
+  let examStartedRuns = 0;
+  let examRetryRuns = 0;
+  let examFirstAttemptPassRuns = 0;
+  const specialistBranchRate: Record<string, { runs: number; specialists: number }> = {};
+
+  let brokeCycleRuns = 0;
+  let mixedCycleRuns = 0;
+  let repeatedCycleRuns = 0;
+
   for (let i = 0; i < config.seedCount; i++) {
     const seed = `headless-${i}`;
     const programId = config.programIds[i % config.programIds.length];
@@ -207,6 +254,8 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
       branchDistribution[branchKey] = (branchDistribution[branchKey] ?? 0) + 1;
       const branchStats = (branchRate[branchKey] ??= { runs: 0, gameOvers: 0 });
       branchStats.runs++;
+      const specialistBranchStats = (specialistBranchRate[branchKey] ??= { runs: 0, specialists: 0 });
+      specialistBranchStats.runs++;
 
       for (let week = 1; week <= config.weeksPerSeed; week++) {
         if (state.career.phase !== "residency") break;
@@ -264,7 +313,64 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
         }
       }
 
+      // Phase 10 §1/§27 — continue into the specialist_exam phase with
+      // the exact same resolution logic (pickChoice + resolveEventChoice)
+      // as the residency loop above, just driven by
+      // advanceSpecialistExamWeek instead. Bounded safety window — this
+      // chain is short by design (§49), so 40 steps is generous.
+      let examSteps = 0;
+      while (state.career.phase === "specialist_exam" && examSteps < 40) {
+        examSteps++;
+        const result = advanceSpecialistExamWeek(state, repo);
+        state = result.state;
+
+        const resolveRng = createScopedRng(seed, `resolve-strategy:exam:${examSteps}`);
+        for (const instance of [...state.weeklyEventQueue]) {
+          const id = instance.eventId;
+          const event = repo.getEventById(id);
+          if (!event) {
+            crashes.push(`seed=${seed} exam-step=${examSteps}: queued event "${id}" not found in repository`);
+            continue;
+          }
+          // Same bookkeeping the residency loop's queued-events block does
+          // above — omitted here in the first pass, which made every
+          // specialist_exam event after stage1 read as "never triggered"
+          // despite specialist runs succeeding at their real rate.
+          eventFrequency[id] = (eventFrequency[id] ?? 0) + 1;
+          totalEventsTriggered++;
+          categoryDistribution[event.category] = (categoryDistribution[event.category] ?? 0) + 1;
+          if (event.category === "RARE") rareTriggered++;
+
+          const visible = getVisibleChoices(event, buildRequirementContext(state, instance.boundNpcIds));
+          if (visible.length === 0) {
+            crashes.push(`seed=${seed} exam-step=${examSteps}: event "${id}" had zero visible choices at resolution time`);
+            continue;
+          }
+          const choice = pickChoice(strategy, visible, resolveRng);
+          const resolved = resolveEventChoice(state, event, choice.id, createScopedRng(seed, `resolve:exam:${id}:${examSteps}`));
+          state = resolved.state;
+
+          if (event.chainId && event.chainCheckpoint) {
+            const n = stageNumber(event.chainCheckpoint);
+            chainProgress[event.chainId] = Math.max(chainProgress[event.chainId] ?? 0, n);
+          }
+        }
+      }
+      if (state.career.phase === "specialist_exam") {
+        crashes.push(`seed=${seed}: specialist_exam never resolved within the safety window`);
+      }
+
       for (const [chainId, progress] of Object.entries(chainProgress)) {
+        // specialist_exam has TWO valid terminal checkpoints (stage3 on a
+        // first-attempt pass, stage5 only when a retry was needed) —
+        // this generic "highest checkpoint number seen = terminal"
+        // heuristic (every other chain in the game has exactly one
+        // linear terminal) would misreport every first-attempt pass as
+        // incomplete. The dedicated specialist/gameOver stats already
+        // report this chain's real outcome accurately, so it's excluded
+        // here rather than taught a second terminal-checkpoint concept
+        // for one chain.
+        if (chainId === "specialist_exam") continue;
         const stats = (chainCompletion[chainId] ??= { started: 0, completed: 0 });
         stats.started++;
         if (progress >= (chainTerminalStage[chainId] ?? Infinity)) stats.completed++;
@@ -292,6 +398,23 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
       for (const type of ["exhaustion", "burnout", "financial", "career"]) {
         crisisTypeCounts[type] = (crisisTypeCounts[type] ?? 0) + (state!.statistics[`crisis:${type}`] ?? 0);
       }
+
+      if (state!.career.phase === "specialist") {
+        specialistRuns++;
+        specialistWeekSum += state!.career.residencyWeek;
+        specialistBranchStats.specialists++;
+      }
+      const examAttempts = state!.specialistExam?.attempt ?? 0;
+      if (examAttempts > 0) {
+        examStartedRuns++;
+        if (examAttempts >= 2) examRetryRuns++;
+        else if (state!.career.phase === "specialist") examFirstAttemptPassRuns++;
+      }
+
+      const cycleOutcome = resolveCycleEnding(computeCycleScore(state!.behaviorStats)).outcome;
+      if (cycleOutcome === "broke_cycle") brokeCycleRuns++;
+      else if (cycleOutcome === "repeated_cycle") repeatedCycleRuns++;
+      else mixedCycleRuns++;
     } catch (err) {
       crashes.push(`seed=${seed} programId=${programId}: ${(err as Error).message}`);
     }
@@ -346,6 +469,18 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
       avgPerRun: runCount > 0 ? crisisTotalTriggered / runCount : 0,
       recoveredCount: crisisRecoveredTotal,
       typeCounts: crisisTypeCounts,
+    },
+    specialist: {
+      rate: runCount > 0 ? specialistRuns / runCount : 0,
+      avgCompletionWeek: specialistRuns > 0 ? specialistWeekSum / specialistRuns : 0,
+      branchRate: specialistBranchRate,
+      examRetryRate: examStartedRuns > 0 ? examRetryRuns / examStartedRuns : 0,
+      examFirstAttemptPassRate: examStartedRuns > 0 ? examFirstAttemptPassRuns / examStartedRuns : 0,
+    },
+    behaviorEnding: {
+      brokeCycleRate: runCount > 0 ? brokeCycleRuns / runCount : 0,
+      mixedRate: runCount > 0 ? mixedCycleRuns / runCount : 0,
+      repeatedCycleRate: runCount > 0 ? repeatedCycleRuns / runCount : 0,
     },
   };
 }

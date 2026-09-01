@@ -126,13 +126,26 @@ export type NpcTransitionEffect = NpcTargetRef & {
   type: NpcTransition["type"];
 };
 
-// Phase 9 §51/§52 — the ONLY way a choice can end the career. A generic,
-// explicit, allow-listed DSL (never an arbitrary GameState.career.phase
-// mutation) so content authors can't special-case a new phase value
-// without a schema change. "end_career" is the only member today; a
-// future "set_phase" (§52) would be added here the same way, not as a
-// bare string field somewhere else.
-export type CareerEffect = { type: "end_career"; reason: GameOverReason };
+// Phase 9 §51/§52 — the ONLY way a choice can end (or, since Phase 10,
+// successfully close) the career. A generic, explicit, allow-listed DSL
+// (never an arbitrary GameState.career.phase mutation) so content authors
+// can't special-case a new phase value without a schema change.
+export type CareerEffect =
+  | { type: "end_career"; reason: GameOverReason }
+  // Phase 10 §6 — the only way career.phase becomes "specialist". Applied
+  // by the specialist-exam content's own "pass" branch, itself only
+  // reachable because a prior specialistExamEffects:"attempt" choice
+  // already computed passed:true (§4) — never set directly by a
+  // resource/flag threshold.
+  | { type: "become_specialist" };
+
+// Phase 10 §4 — the ONLY way a choice can trigger the specialist exam
+// outcome computation (domain/specialistExam/outcome.ts). A content
+// author can request an attempt be resolved; the engine (which already
+// owns calculateSpecialistExamOutcome, same pattern as CareerEffect) is
+// what actually computes pass/fail from state — content never rolls its
+// own probability.
+export type SpecialistExamEffect = { type: "attempt" };
 
 export interface ChoiceDefinition {
   id: string;
@@ -156,6 +169,11 @@ export interface ChoiceDefinition {
   // still lands (a resignation choice's stress relief is real, not erased
   // by the career ending), the career just also ends afterward.
   careerEffects?: CareerEffect[];
+  // Phase 10 — see SpecialistExamEffect above. Applied BEFORE careerEffects
+  // in resolveEventChoice, so a "become_specialist" on the SAME choice
+  // (content never does this — the pass/fail branch is always a separate
+  // downstream scheduled event) would see the freshly-computed result.
+  specialistExamEffects?: SpecialistExamEffect[];
 }
 
 export interface EventDefinition {

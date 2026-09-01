@@ -18,8 +18,9 @@ import type { ResidencyProgram } from "../domain/config/residencyPrograms";
 import type { SaveRepository } from "../domain/persistence/SaveRepository";
 import { createAsyncStorageSaveRepository } from "../persistence/asyncStorageSaveRepository";
 import type { WeekAdvanceResourceDelta, WeekAdvanceTransitions } from "../domain/residency/advanceResidencyWeek";
-import { advanceResidencyWeekWithEvents, resolveEventChoice } from "../domain/events/engine";
+import { advanceResidencyWeekWithEvents, advanceSpecialistExamWeek, resolveEventChoice } from "../domain/events/engine";
 import { getEventRepository } from "../domain/events/content";
+import { buildDebugScenario, type DebugScenarioId } from "../domain/debug/debugScenarios";
 
 export interface WeekSummary {
   week: number;
@@ -53,6 +54,10 @@ export interface GameStore {
   chooseResidencyProgram: (program: ResidencyProgram) => Promise<void>;
   advanceWeek: () => Promise<void>;
   resolveActiveEventChoice: (eventId: string, choiceId: string) => Promise<void>;
+  // Phase 10 §30 — dev/test-only deterministic state seeding. A no-op
+  // under `__DEV__ === false` (a release/production build), so this is
+  // never reachable outside a dev server or the E2E harness driving one.
+  debugLoadScenario: (scenarioId: DebugScenarioId) => Promise<void>;
 }
 
 // The store's only job is orchestration (call domain functions, call the
@@ -136,11 +141,21 @@ export function createGameStore(
       // Double-submit guard (rapid double-tap before the first call's
       // persist lands) + the §20 rule: can't advance with an unresolved
       // event queue from the previous week still sitting there.
-      if (!gameState || isAdvancingWeek || gameState.career.phase !== "residency") return;
+      const phase = gameState?.career.phase;
+      if (!gameState || isAdvancingWeek || (phase !== "residency" && phase !== "specialist_exam")) return;
       if (gameState.weeklyEventQueue.length > 0) return;
 
       set({ isAdvancingWeek: true, lastChoiceEffects: null });
       try {
+        if (phase === "specialist_exam") {
+          // Phase 10 §1 — its own, much lighter week-advance path; no
+          // WeekSummary card (no baseline resource tick to summarize).
+          const result = advanceSpecialistExamWeek(gameState, getEventRepository());
+          await repository.save(result.state);
+          set({ gameState: result.state, lastWeekSummary: null });
+          return;
+        }
+
         const nextWeek = gameState.career.residencyWeek + 1;
         const weekRng = createScopedRng(gameState.meta.rngSeed, `residency:week:${nextWeek}`);
         const eventsRng = createScopedRng(gameState.meta.rngSeed, `events:week:${nextWeek}`);
@@ -183,7 +198,28 @@ export function createGameStore(
         set({ isResolvingEvent: false });
       }
     },
+
+    async debugLoadScenario(scenarioId) {
+      if (!__DEV__) return;
+      const state = buildDebugScenario(scenarioId, getEventRepository());
+      await persist(set, state);
+      set({ hasSave: true, lastWeekSummary: null, lastChoiceEffects: null });
+    },
   }));
 }
 
 export const useGameStore = createGameStore(createAsyncStorageSaveRepository());
+
+// Phase 10 §29 — a dev/test-only, read-only bridge so the Playwright E2E
+// harness (which only sees the rendered DOM otherwise) can assert on
+// internal state that's deliberately never rendered as raw numbers (e.g.
+// behaviorStats — see docs/event-design-bible.md). `__DEV__` is false in
+// a release build and `window` doesn't exist on native, so this is a
+// no-op there; on the web dev server it's the only thing exposed here,
+// and it exposes a snapshot getter, never a setter — state mutation
+// still only happens through the store's own actions.
+if (__DEV__ && typeof window !== "undefined") {
+  (window as unknown as { __COMEZ_DEBUG__?: unknown }).__COMEZ_DEBUG__ = {
+    getGameState: () => useGameStore.getState().gameState,
+  };
+}

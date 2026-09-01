@@ -86,7 +86,7 @@ export default function HomeScreen() {
   const characterSummary = gameState ? selectCharacterSummary(gameState) : null;
   const residencySummary = gameState ? selectResidencySummary(gameState) : null;
   const resources = gameState?.resources;
-  const isComplete = gameState?.career.phase === 'residency_complete';
+  const isExam = gameState?.career.phase === 'specialist_exam';
 
   if (!gameState || !characterSummary || !residencySummary || !resources) {
     return (
@@ -112,12 +112,12 @@ export default function HomeScreen() {
     !!lastWeekSummary.transitions.monthChanged;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} testID="home-screen">
       <Text style={styles.title}>ÇÖMEZ</Text>
       <Text style={styles.name}>Dr. {characterSummary.name}</Text>
       <Text style={styles.line}>{residencySummary.branchName}</Text>
       <Text style={styles.line}>{residencySummary.hospitalName}</Text>
-      <Text style={styles.weekLine}>
+      <Text style={styles.weekLine} testID="week-line">
         Yıl {residencySummary.residencyYear} — Hafta {residencySummary.residencyWeek}
       </Text>
 
@@ -155,10 +155,8 @@ export default function HomeScreen() {
         <>
           <View style={styles.weekBox}>
             <Text style={styles.weekBoxHeading}>BU HAFTA</Text>
-            {isComplete ? (
-              <Text style={styles.weekBoxBody}>
-                Asistanlık süren tamamlandı. Uzmanlık sınavı sistemi sonraki fazlarda eklenecek.
-              </Text>
+            {isExam ? (
+              <Text style={styles.weekBoxBody}>Uzmanlık sınavı yaklaşıyor.</Text>
             ) : lastWeekSummary && lastWeekSummary.week === residencySummary.residencyWeek ? (
               <>
                 <Text style={styles.weekBoxTitle}>HAFTA {lastWeekSummary.week}</Text>
@@ -174,15 +172,15 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {!isComplete && (
-            <Pressable
-              style={[styles.button, isAdvancingWeek && styles.buttonDisabled]}
-              disabled={isAdvancingWeek}
-              onPress={advanceWeek}
-            >
-              <Text style={styles.buttonText}>HAFTAYI GEÇ</Text>
-            </Pressable>
-          )}
+          <Pressable
+            style={[styles.button, isAdvancingWeek && styles.buttonDisabled]}
+            disabled={isAdvancingWeek}
+            onPress={advanceWeek}
+            accessibilityRole="button"
+            testID="btn-advance-week"
+          >
+            <Text style={styles.buttonText}>{isExam ? 'DEVAM ET' : 'HAFTAYI GEÇ'}</Text>
+          </Pressable>
         </>
       )}
     </ScrollView>
