@@ -1,0 +1,70 @@
+[
+  {
+    "id": "wrn_001_hicbir_sey_yapmak_istemiyor",
+    "title": "EVE GİDİNCE",
+    "description": "Son zamanlarda eve gidince hiçbir şey yapmak istemiyorsun. Televizyonu bile açmıyorsun. Sadece oturuyorsun.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "stat": "resources.burnout", "gte": 70 }] },
+    "choices": [
+      { "id": "devam", "text": "Devam et.", "immediateEffects": {} },
+      { "id": "kabul_et", "text": "Bunu kendine itiraf et, en azından.", "immediateEffects": { "stress": -2 } }
+    ]
+  },
+  {
+    "id": "wrn_002_uyku_duzeni_bozuldu",
+    "title": "SAAT ÜÇTE UYANMAK",
+    "description": "Son birkaç haftadır aynı saatte uyanıyorsun, yorgunluğun hiç azalmıyor. Uyku sanki artık bir dinlenme değil, sadece gözlerinin kapalı olduğu bir zaman dilimi.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "stat": "resources.fatigue", "gte": 80 }] },
+    "choices": [
+      { "id": "devam", "text": "Devam et.", "immediateEffects": {} }
+    ]
+  },
+  {
+    "id": "wrn_003_surekli_sinirli",
+    "title": "KÜÇÜK ŞEYLER",
+    "description": "Bugün asansörün geç gelmesine neredeyse bağıracaktın. Kendine bile şaşırdın. Son zamanlarda her şey bu kadar sinir bozucu değildi.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "stat": "resources.stress", "gte": 80 }] },
+    "choices": [
+      { "id": "devam", "text": "Devam et.", "immediateEffects": {} },
+      { "id": "nefes_al", "text": "Bir dakika dur, nefes al.", "immediateEffects": { "stress": -3 } }
+    ]
+  },
+  {
+    "id": "wrn_004_hesap_kontrolu",
+    "title": "UYGULAMAYI AÇMAK",
+    "description": "Bankanın uygulamasını açmadan önce bir saniye tereddüt ettin. Son zamanlarda hep böyle oluyor.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 8,
+    "requirements": { "all": [{ "stat": "resources.money", "lt": -3000 }] },
+    "choices": [
+      { "id": "devam", "text": "Devam et.", "immediateEffects": { "stress": 1 } }
+    ]
+  },
+  {
+    "id": "wrn_005_arkadaslardan_uzaklasma",
+    "title": "CEVAPSIZ MESAJ",
+    "description": "Bir arkadaşının haftalar önceki mesajına hâlâ cevap vermedin. Cevap vermemek, cevap vermekten daha kolay geliyor artık.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "stat": "resourcePressure.combinedPressureWeeks", "gte": 3 }] },
+    "choices": [
+      { "id": "devam", "text": "Devam et.", "immediateEffects": {} },
+      { "id": "cevap_yaz", "text": "Kısa bir cevap yaz, en azından.", "immediateEffects": { "stress": -2 } }
+    ]
+  }
+]

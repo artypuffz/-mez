@@ -1,6 +1,6 @@
 import type { SeededRng } from "../rng/seededRng";
-import { clampRelationshipField, type NpcState, type NpcTransition, type RelationshipState, type ResolvedResourceDelta } from "../state/types";
-import type { EffectMap, NpcTransitionEffect, NumericOrRange, RelationshipEffect, RelationshipField } from "./types";
+import { clampRelationshipField, type GameOverState, type NpcState, type NpcTransition, type RelationshipState, type ResolvedResourceDelta } from "../state/types";
+import type { CareerEffect, EffectMap, NpcTransitionEffect, NumericOrRange, RelationshipEffect, RelationshipField } from "./types";
 import { resolveNpcTargetId } from "./npcTargets";
 
 function clamp(value: number, min: number, max: number): number {
@@ -151,6 +151,23 @@ export function applyStatistics(
     next[key] = (next[key] ?? 0) + amount;
   }
   return next;
+}
+
+// Phase 9 §25/§51 — the ONLY function allowed to produce a GameOverState.
+// Always applied last by resolveEventChoice; every other effect on the
+// same choice still lands first (a resignation's stress relief is real).
+// A choice with more than one end_career entry is content authoring
+// error territory (validated), but if it ever happens, the first one wins
+// — never silently overwritten mid-resolution.
+export function applyCareerEffects(
+  effects: CareerEffect[] | undefined,
+  currentWeek: number,
+  eventId: string,
+  choiceId: string
+): GameOverState | undefined {
+  const endCareer = effects?.find((e) => e.type === "end_career");
+  if (!endCareer) return undefined;
+  return { reason: endCareer.reason, week: currentWeek, triggeredByEventId: eventId, selectedChoiceId: choiceId };
 }
 
 // The engine never interprets what a tag means — it just counts it. See

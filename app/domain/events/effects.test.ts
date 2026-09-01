@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyBehaviorTags,
+  applyCareerEffects,
   applyFlags,
   applyRelationshipEffects,
   applyResourceDelta,
@@ -8,6 +9,26 @@ import {
   resolveEffectMap,
 } from './effects';
 import { createSeededRng } from '../rng/seededRng';
+
+describe('applyCareerEffects', () => {
+  it('returns undefined when there is no end_career effect', () => {
+    expect(applyCareerEffects(undefined, 30, 'ev', 'choice')).toBeUndefined();
+    expect(applyCareerEffects([], 30, 'ev', 'choice')).toBeUndefined();
+  });
+
+  it('produces a GameOverState carrying the reason/week/source when end_career is present', () => {
+    const result = applyCareerEffects([{ type: 'end_career', reason: 'resigned_burnout' }], 42, 'crisis_ev', 'istifa_et');
+    expect(result).toEqual({ reason: 'resigned_burnout', week: 42, triggeredByEventId: 'crisis_ev', selectedChoiceId: 'istifa_et' });
+  });
+
+  it('picks the first end_career entry if more than one is somehow present', () => {
+    const result = applyCareerEffects(
+      [{ type: 'end_career', reason: 'resigned_career' }, { type: 'end_career', reason: 'financial_collapse' }],
+      10, 'ev', 'choice'
+    );
+    expect(result?.reason).toBe('resigned_career');
+  });
+});
 
 describe('resolveEffectMap', () => {
   it('passes fixed numbers through unchanged', () => {

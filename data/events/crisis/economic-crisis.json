@@ -1,0 +1,131 @@
+[
+  {
+    "id": "crisis_financial_01_hesap_sifirin_altinda",
+    "title": "SIFIRIN ALTINDA",
+    "description": "Ay sonunda hesabı kontrol ettin. Hesap da seni kontrol etti. Sayı kırmızı, ve bu ilk kez değil.",
+    "category": "CRISIS",
+    "triggerMode": "crisis",
+    "crisisType": "financial",
+    "severity": "serious",
+    "requirements": { "all": [{ "stat": "career.week", "gte": 12 }] },
+    "cooldownWeeks": 36,
+    "npcSelectors": { "friend": { "highestTrustByRole": "peer_resident" } },
+    "chainId": "economic_crisis",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "aileden_yardim_iste",
+        "text": "Aileden yardım iste.",
+        "requirements": { "all": [{ "flag": "lives_with_family", "eq": true }] },
+        "immediateEffects": { "money": 8000, "stress": -5 },
+        "flags": { "set": { "financial_crisis_path": "family_helped" } },
+        "followUpEvent": { "chainId": "economic_crisis", "checkpoint": "stage2", "delayWeeks": 1 }
+      },
+      {
+        "id": "arkadastan_borc_al",
+        "text": "Bir arkadaşından borç al.",
+        "requirements": { "all": [{ "relationship": { "boundNpc": "friend", "trust": { "gte": 5 } } }] },
+        "immediateEffects": { "money": 4000, "stress": -3 },
+        "relationshipEffects": [{ "boundNpc": "friend", "trust": -1 }],
+        "flags": { "set": { "financial_crisis_path": "borrowed" } },
+        "followUpEvent": { "chainId": "economic_crisis", "checkpoint": "stage2", "delayWeeks": 1 }
+      },
+      {
+        "id": "ekstra_nobet_kabul_et",
+        "text": "Ekstra bir nöbet kabul et.",
+        "immediateEffects": { "money": 3500, "fatigue": 5, "stress": 3 },
+        "onCallEffects": [{ "type": "add_player_shift", "count": 1 }],
+        "flags": { "set": { "financial_crisis_path": "extra_shift" } },
+        "statistics": { "increment": { "oncall:extra_shift_accepted": 1 } },
+        "followUpEvent": { "chainId": "economic_crisis", "checkpoint": "stage2", "delayWeeks": 1 }
+      },
+      {
+        "id": "harcamalari_kis",
+        "text": "Harcamaları kıs, idare etmeye çalış.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "financial_crisis_path": "cut_expenses" } },
+        "followUpEvent": { "chainId": "economic_crisis", "checkpoint": "stage2", "delayWeeks": 1 }
+      }
+    ]
+  },
+  {
+    "id": "crisis_financial_02_iyilesme",
+    "title": "BİRAZ RAHATLADI",
+    "description": "Hesap hâlâ ideal değil, ama artık her uygulama bildirimi seni korkutmuyor.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "economic_crisis",
+    "chainCheckpoint": "stage2",
+    "priority": 10,
+    "requirements": { "any": [{ "flag": "financial_crisis_path", "eq": "family_helped" }, { "flag": "financial_crisis_path", "eq": "borrowed" }, { "flag": "financial_crisis_path", "eq": "extra_shift" }] },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": { "stress": -2 },
+        "statistics": { "increment": { "crisis:total": 1, "crisis:financial": 1, "crisis:recovered": 1 } }
+      }
+    ]
+  },
+  {
+    "id": "crisis_financial_02_kisitli_ay",
+    "title": "KISITLI AY",
+    "description": "Kısıtlamalar işe yaramadı değil, ama yeterli de olmadı. Hesap hâlâ dar, ve bu ayki her karar bir öncekinden biraz daha zor.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "economic_crisis",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": { "stress": 2 },
+        "statistics": { "increment": { "crisis:total": 1, "crisis:financial": 1 } },
+        "followUpEvent": { "chainId": "economic_crisis", "checkpoint": "stage3", "delayWeeks": 4 }
+      }
+    ]
+  },
+  {
+    "id": "crisis_financial_03_mali_karar",
+    "title": "MALİ KARAR",
+    "description": "Aylardır aynı yerdesin. Bir hesap makinesi açtın, sonra kapattın. Sayılar değişmiyor, sadece sen onlara daha çok bakıyorsun.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "economic_crisis",
+    "chainCheckpoint": "stage3",
+    "priority": 10,
+    "requirements": { "all": [{ "stat": "financialPressure.consecutiveNegativeMonths", "gte": 3 }] },
+    "choices": [
+      {
+        "id": "son_kez_yardim_ara",
+        "text": "Dışarıdan gerçek bir yardım ara, son kez.",
+        "immediateEffects": { "money": 5000, "stress": -5 },
+        "flags": { "set": { "financial_crisis_path": "final_attempt" } },
+        "statistics": { "increment": { "crisis:total": 1, "crisis:financial": 1 } }
+      },
+      {
+        "id": "isi_birak",
+        "text": "Dilekçeyi hazırla, işi bırak.",
+        "immediateEffects": { "stress": -10 },
+        "statistics": { "increment": { "crisis:total": 1, "crisis:career_end": 1 } },
+        "careerEffects": [{ "type": "end_career", "reason": "financial_collapse" }]
+      }
+    ]
+  },
+  {
+    "id": "crisis_financial_03_devam",
+    "title": "AY YİNE ZOR GEÇTİ",
+    "description": "Kısıtlı ay bitti, bir sonraki başladı. Hâlâ idare ediyorsun; hâlâ zor.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "economic_crisis",
+    "chainCheckpoint": "stage3",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      { "id": "devam", "text": "Devam et.", "immediateEffects": {} }
+    ]
+  }
+]

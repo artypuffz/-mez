@@ -1,0 +1,309 @@
+[
+  {
+    "id": "crisis_burnout_01_yeter",
+    "title": "YETER",
+    "description": "Bu cümleyi bugün üçüncü kez içinden söyledin. Bu kez diğerlerinden biraz farklı geldi.",
+    "category": "CRISIS",
+    "triggerMode": "crisis",
+    "crisisType": "burnout",
+    "severity": "critical",
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "gte": 20
+        }
+      ]
+    },
+    "npcSelectors": {
+      "friend": {
+        "highestTrustByRole": "peer_resident"
+      }
+    },
+    "chainId": "burnout_resignation",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "izin_istemeye_calis",
+        "text": "Birkaç gün izin istemeye çalış.",
+        "immediateEffects": {
+          "fatigue": -6,
+          "stress": -8
+        },
+        "flags": {
+          "set": {
+            "burnout_path": "sought_leave"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "burnout_resignation",
+          "checkpoint": "stage2",
+          "delayWeeks": 2
+        }
+      },
+      {
+        "id": "arkadasla_konus",
+        "text": "Yakın bir arkadaşınla konuş.",
+        "requirements": {
+          "all": [
+            {
+              "relationship": {
+                "boundNpc": "friend",
+                "trust": {
+                  "gte": 5
+                }
+              }
+            }
+          ]
+        },
+        "immediateEffects": {
+          "stress": -6
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "friend",
+            "trust": 2,
+            "friendship": 4
+          }
+        ],
+        "flags": {
+          "set": {
+            "burnout_path": "talked_to_friend"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "burnout_resignation",
+          "checkpoint": "stage2",
+          "delayWeeks": 2
+        }
+      },
+      {
+        "id": "devam_et",
+        "text": "Devam et, üstünde durma.",
+        "immediateEffects": {
+          "burnout": 1,
+          "stress": 2
+        },
+        "flags": {
+          "set": {
+            "burnout_path": "pushed_through"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "burnout_resignation",
+          "checkpoint": "stage2",
+          "delayWeeks": 2
+        }
+      }
+    ],
+    "cooldownWeeks": 55
+  },
+  {
+    "id": "crisis_burnout_02_biraz_rahatlama",
+    "title": "BİRAZ RAHATLADIN",
+    "description": "O günden bu yana geçen zaman içinde bir şeyler biraz açıldı. Hâlâ yorgunsun ama nefes alacak yer var.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "burnout_resignation",
+    "chainCheckpoint": "stage2",
+    "priority": 10,
+    "requirements": {
+      "any": [
+        {
+          "flag": "burnout_path",
+          "eq": "sought_leave"
+        },
+        {
+          "flag": "burnout_path",
+          "eq": "talked_to_friend"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": -2
+        },
+        "statistics": {
+          "increment": {
+            "crisis:total": 1,
+            "crisis:burnout": 1,
+            "crisis:recovered": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "crisis_burnout_02_agirlasiyor",
+    "title": "HAFİF DEĞİL",
+    "description": "Bir meslektaşın geçen ay ayrılan biri hakkında konuşurken \"iyi ki çıktı\" dedi, laf arasında. O cümle aklından çıkmıyor.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "burnout_resignation",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "burnout": 1
+        },
+        "flags": {
+          "set": {
+            "burnout_considering_exit": true
+          }
+        },
+        "statistics": {
+          "increment": {
+            "crisis:total": 1,
+            "crisis:burnout": 1
+          }
+        },
+        "followUpEvent": {
+          "chainId": "burnout_resignation",
+          "checkpoint": "stage3",
+          "delayWeeks": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "crisis_burnout_03_karar_ani",
+    "title": "KARAR ANI",
+    "description": "Bu sabah işe gitmeden önce birkaç dakika arabanda oturdun, kontağı hiç çevirmeden. Bir şeyin değişmesi gerektiğini biliyorsun; ne olduğu henüz net değil.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "burnout_resignation",
+    "chainCheckpoint": "stage3",
+    "priority": 10,
+    "isFallback": true,
+    "requirements": {
+      "all": [
+        {
+          "flag": "burnout_considering_exit",
+          "eq": true
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "tekrar_izin_dene",
+        "text": "Tekrar izin istemeyi dene.",
+        "immediateEffects": {
+          "stress": -3
+        },
+        "flags": {
+          "set": {
+            "burnout_path": "final_leave_attempt"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "burnout_resignation",
+          "checkpoint": "stage4",
+          "delayWeeks": 2
+        }
+      },
+      {
+        "id": "istifayi_dusun",
+        "text": "İstifayı gerçekten düşünmeye başla.",
+        "immediateEffects": {},
+        "flags": {
+          "set": {
+            "burnout_path": "resignation_considered"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "burnout_resignation",
+          "checkpoint": "stage4",
+          "delayWeeks": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "crisis_burnout_04_devam_edebiliyorsun",
+    "title": "YİNE DE DEVAM",
+    "description": "İzin bu kez de tam istediğin gibi çıkmadı, ama birkaç gün en azından kendine ait oldu. Yeterli değil, ama hiç değildi de.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "burnout_resignation",
+    "chainCheckpoint": "stage4",
+    "priority": 10,
+    "requirements": {
+      "all": [
+        {
+          "flag": "burnout_path",
+          "eq": "final_leave_attempt"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "burnout": -1,
+          "stress": -3
+        },
+        "statistics": {
+          "increment": {
+            "crisis:total": 1,
+            "crisis:recovered": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "crisis_burnout_04_karar",
+    "title": "DİLEKÇE",
+    "description": "Dilekçe zaten bir süredir bilgisayarında duruyordu, yarım kalmış. Şimdi karşısına oturdun.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "burnout_resignation",
+    "chainCheckpoint": "stage4",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "biraz_daha_dayan",
+        "text": "Dilekçeyi kapat, biraz daha dayan.",
+        "immediateEffects": {
+          "burnout": 1,
+          "stress": 2
+        },
+        "statistics": {
+          "increment": {
+            "crisis:total": 1,
+            "crisis:burnout": 1
+          }
+        }
+      },
+      {
+        "id": "istifa_et",
+        "text": "Dilekçeyi gönder.",
+        "immediateEffects": {
+          "stress": -15,
+          "fatigue": -10
+        },
+        "statistics": {
+          "increment": {
+            "crisis:total": 1,
+            "crisis:career_end": 1
+          }
+        },
+        "careerEffects": [
+          {
+            "type": "end_career",
+            "reason": "resigned_burnout"
+          }
+        ]
+      }
+    ]
+  }
+]

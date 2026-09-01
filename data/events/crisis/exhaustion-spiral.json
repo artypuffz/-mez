@@ -1,0 +1,193 @@
+[
+  {
+    "id": "crisis_exhaustion_01_bir_gun_daha",
+    "title": "BİR GÜN DAHA",
+    "description": "Sabah alarm çaldı. Telefonu kapattın. Beş dakika sonra tekrar çaldı. Ne kadar uyuduğunu hatırlamıyorsun.",
+    "category": "CRISIS",
+    "triggerMode": "crisis",
+    "crisisType": "exhaustion",
+    "severity": "serious",
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "gte": 8
+        }
+      ]
+    },
+    "npcSelectors": {
+      "friend": {
+        "highestTrustByRole": "peer_resident"
+      }
+    },
+    "chainId": "exhaustion_spiral",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "ise_git",
+        "text": "Kalk, işe git.",
+        "immediateEffects": {
+          "fatigue": 3,
+          "stress": 2
+        },
+        "flags": {
+          "set": {
+            "exhaustion_path": "pushed_through"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "exhaustion_spiral",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      },
+      {
+        "id": "kidemlini_ara",
+        "text": "Kıdemlini ara, durumu söyle.",
+        "immediateEffects": {
+          "fatigue": -3
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "friend",
+            "trust": 1
+          }
+        ],
+        "flags": {
+          "set": {
+            "exhaustion_path": "asked_supervisor"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "exhaustion_spiral",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      },
+      {
+        "id": "rapor_dene",
+        "text": "Rapor almayı dene.",
+        "immediateEffects": {
+          "fatigue": -8,
+          "stress": -2
+        },
+        "flags": {
+          "set": {
+            "exhaustion_path": "tried_leave"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "exhaustion_spiral",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      },
+      {
+        "id": "arkadastan_yardim",
+        "text": "Bir arkadaşından yardım iste.",
+        "requirements": {
+          "all": [
+            {
+              "relationship": {
+                "boundNpc": "friend",
+                "trust": {
+                  "gte": 5
+                }
+              }
+            }
+          ]
+        },
+        "immediateEffects": {
+          "fatigue": -5,
+          "stress": -3
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "friend",
+            "trust": 2,
+            "friendship": 3
+          }
+        ],
+        "flags": {
+          "set": {
+            "exhaustion_path": "got_help"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "exhaustion_spiral",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      }
+    ],
+    "cooldownWeeks": 20
+  },
+  {
+    "id": "crisis_exhaustion_02_toparlanma",
+    "title": "BİRAZ TOPARLANDIN",
+    "description": "O günün üstünden birkaç gün geçti. Tam eskisi gibi değilsin ama en azından alarmı ilk çalışta kapatabiliyorsun.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "exhaustion_spiral",
+    "chainCheckpoint": "stage2",
+    "priority": 10,
+    "requirements": {
+      "any": [
+        {
+          "flag": "exhaustion_path",
+          "eq": "asked_supervisor"
+        },
+        {
+          "flag": "exhaustion_path",
+          "eq": "tried_leave"
+        },
+        {
+          "flag": "exhaustion_path",
+          "eq": "got_help"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "fatigue": -4
+        },
+        "statistics": {
+          "increment": {
+            "crisis:total": 1,
+            "crisis:exhaustion": 1,
+            "crisis:recovered": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "crisis_exhaustion_02_devam_ediyor",
+    "title": "AYNI DÖNGÜ",
+    "description": "Ertesi sabah da aynı şey oldu. Ondan sonraki de. Yorgunluk artık bir hafta sonu meselesi değil, sürekli bir arka plan gürültüsü.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "exhaustion_spiral",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "fatigue": 2
+        },
+        "statistics": {
+          "increment": {
+            "crisis:total": 1,
+            "crisis:exhaustion": 1
+          }
+        }
+      }
+    ]
+  }
+]

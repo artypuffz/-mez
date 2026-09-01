@@ -98,6 +98,23 @@ const migrations: Record<number, Migration> = {
     onCall: { schedule: null },
     economy: { lastProcessedMonthKey: null, lastBreakdown: null },
   }),
+  // v6 (Phase 7) had no sustained-pressure/financial-pressure/crisis
+  // bookkeeping or gameOver slot — Phase 9 added all four. Streaks/
+  // pressure start from zero rather than being reconstructed from
+  // eventHistory (§48 only requires a save load safely, not that a
+  // years-old save retroactively gets pressure history it never tracked);
+  // lowestBalance backfills from the save's CURRENT money so it reads as
+  // "the lowest seen so far" rather than an impossible 0.
+  6: (state) => {
+    const resources = state.resources as Record<string, unknown>;
+    return {
+      ...state,
+      meta: { ...(state.meta as Record<string, unknown>), saveVersion: 7 },
+      resourcePressure: { highStressWeeks: 0, highFatigueWeeks: 0, combinedPressureWeeks: 0, lowPressureWeeks: 0 },
+      financialPressure: { consecutiveNegativeMonths: 0, lowestBalance: (resources?.money as number) ?? 0 },
+      crisisState: { lastCrisisWeek: null },
+    };
+  },
 };
 
 export function migrateSaveData(raw: unknown): GameState {

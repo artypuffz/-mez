@@ -23,6 +23,12 @@ export interface RequirementContext {
     city?: string;
   };
   resources: { stress: number; fatigue: number; burnout: number; money: number };
+  // Phase 9 — sustained-pressure streaks and financial-pressure memory,
+  // readable via the existing generic "stat" dot-path leaf (e.g.
+  // {stat: "resourcePressure.combinedPressureWeeks", gte: 6}) exactly
+  // like onCall's fields below — no new requirement-node kind needed.
+  resourcePressure: { highStressWeeks: number; highFatigueWeeks: number; combinedPressureWeeks: number; lowPressureWeeks: number };
+  financialPressure: { consecutiveNegativeMonths: number; lowestBalance: number };
   flags: Record<string, boolean | number | string>;
   statistics: Record<string, number>;
   behaviorStats: Record<string, number>;
@@ -75,6 +81,8 @@ export function buildRequirementContext(
       city: state.career.city,
     },
     resources: state.resources,
+    resourcePressure: state.resourcePressure,
+    financialPressure: state.financialPressure,
     flags: state.flags,
     statistics: state.statistics,
     behaviorStats: state.behaviorStats,

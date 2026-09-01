@@ -187,4 +187,57 @@ describe('validateEventContent', () => {
       expect(issues.some((i) => i.message.includes('unreachable dead config'))).toBe(false);
     });
   });
+
+  // Phase 9 §50 — crisis system content-quality checks.
+  describe('crisis content validation (§50)', () => {
+    it('rejects a triggerMode:"crisis" event missing crisisType', () => {
+      const errors = errorsFor([baseEvent({ triggerMode: 'crisis' })]);
+      expect(errors.some((e) => e.message.includes('crisisType'))).toBe(true);
+    });
+
+    it('accepts a triggerMode:"crisis" event with a valid crisisType', () => {
+      const errors = errorsFor([baseEvent({ triggerMode: 'crisis', crisisType: 'exhaustion' })]);
+      expect(errors.length).toBe(0);
+    });
+
+    it('rejects an invalid crisisType value', () => {
+      const errors = errorsFor([baseEvent({ triggerMode: 'crisis', crisisType: 'not_a_real_type' })]);
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('rejects an invalid severity value', () => {
+      const errors = errorsFor([baseEvent({ triggerMode: 'crisis', crisisType: 'burnout', severity: 'apocalyptic' })]);
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('rejects crisisType set on a non-crisis (pool/scheduled) event', () => {
+      const errors = errorsFor([baseEvent({ triggerMode: 'pool', crisisType: 'financial' })]);
+      expect(errors.some((e) => e.message.includes('meaningless outside'))).toBe(true);
+    });
+
+    it('rejects a careerEffects entry with an unknown GameOverReason', () => {
+      const errors = errorsFor([
+        baseEvent({ choices: [{ id: 'a', text: 'A', careerEffects: [{ type: 'end_career', reason: 'quit_because_bored' }] }] }),
+      ]);
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('accepts a careerEffects entry with a valid GameOverReason', () => {
+      const errors = errorsFor([
+        baseEvent({ choices: [{ id: 'a', text: 'A', careerEffects: [{ type: 'end_career', reason: 'resigned_burnout' }] }] }),
+      ]);
+      expect(errors.length).toBe(0);
+    });
+
+    it('still catches a crisis chain dead-end via the existing dangling-followUpEvent check', () => {
+      const crisisEntry = baseEvent({
+        id: 'crisis_1', triggerMode: 'crisis', crisisType: 'exhaustion',
+        chainId: 'c', chainCheckpoint: 'stage1',
+        choices: [{ id: 'go', text: 'Go', followUpEvent: { chainId: 'c', checkpoint: 'stage2', delayWeeks: 1 } }],
+      });
+      // stage2 is never declared anywhere — a dead end.
+      const errors = errorsFor([crisisEntry]);
+      expect(errors.some((e) => e.message.includes('unknown checkpoint'))).toBe(true);
+    });
+  });
 });

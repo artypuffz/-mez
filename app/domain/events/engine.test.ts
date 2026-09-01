@@ -163,4 +163,74 @@ describe('resolveEventChoice', () => {
     expect(result.state.relationships.baris.trust).toBe(trustBefore + 10);
     expect(result.visibleEffects).toEqual({});
   });
+
+  it('applies a careerEffects end_career entry: sets gameOver and flips career.phase (§25/§51)', () => {
+    const resignEvent: EventDefinition = {
+      id: 'resign_a', title: 'T', description: 'D', category: 'CRISIS', triggerMode: 'crisis', crisisType: 'burnout',
+      choices: [{
+        id: 'quit', text: 'Quit', immediateEffects: { stress: -10 },
+        careerEffects: [{ type: 'end_career', reason: 'resigned_burnout' }],
+      }],
+    };
+    const state: GameState = {
+      ...residencyState('resign'),
+      weeklyEventQueue: [{ instanceId: resignEvent.id, eventId: resignEvent.id, boundNpcIds: {} }],
+    };
+    const result = resolveEventChoice(state, resignEvent, 'quit', createScopedRng('x', 'y'));
+    // every other effect on the same choice still lands
+    expect(result.state.resources.stress).toBe(state.resources.stress - 10);
+    expect(result.state.career.phase).toBe('gameover');
+    expect(result.state.gameOver).toMatchObject({
+      reason: 'resigned_burnout', week: state.career.residencyWeek, triggeredByEventId: 'resign_a', selectedChoiceId: 'quit',
+    });
+  });
+
+  it('never overwrites an already-set gameOver on a later resolution (defense in depth)', () => {
+    const alreadyOver: GameState = {
+      ...residencyState('already-over'),
+      career: { ...residencyState('already-over').career, phase: 'gameover' },
+      gameOver: { reason: 'financial_collapse', week: 5 },
+      weeklyEventQueue: [{ instanceId: poolEvent.id, eventId: poolEvent.id, boundNpcIds: {} }],
+    };
+    const result = resolveEventChoice(alreadyOver, poolEvent, 'choice_a', createScopedRng('x', 'y'));
+    expect(result.state.gameOver?.reason).toBe('financial_collapse');
+    expect(result.state.career.phase).toBe('gameover');
+  });
+});
+
+describe('advanceResidencyWeekWithEvents — crisis selection (§11)', () => {
+  it('queues a crisis event once its resource threshold is crossed, separate from the pool budget', () => {
+    const crisisEvent: EventDefinition = {
+      id: 'crisis_test', title: 'T', description: 'D', category: 'CRISIS', triggerMode: 'crisis', crisisType: 'exhaustion',
+      weight: 1000, choices: [{ id: 'go', text: 'Go' }],
+    };
+    const repo = createEventRepository([crisisEvent]);
+    const state: GameState = {
+      ...residencyState('crisis-queue'),
+      resources: { ...residencyState('crisis-queue').resources, fatigue: 95 },
+    };
+    let sawCrisis = false;
+    for (let week = 1; week <= 40 && !sawCrisis; week++) {
+      const { weekRng, eventsRng } = rngs('crisis-queue', week);
+      const result = advanceResidencyWeekWithEvents(state, weekRng, eventsRng, repo, { ...noQuietConfig, maxEventsPerWeek: 0 });
+      if (result.queuedEventIds.includes('crisis_test')) sawCrisis = true;
+    }
+    expect(sawCrisis).toBe(true);
+  });
+
+  it('a triggerMode:"crisis" event never appears via the normal pool draw', () => {
+    const crisisEvent: EventDefinition = {
+      id: 'crisis_only', title: 'T', description: 'D', category: 'CRISIS', triggerMode: 'crisis', crisisType: 'exhaustion',
+      weight: 1000, choices: [{ id: 'go', text: 'Go' }],
+    };
+    const repo = createEventRepository([crisisEvent]);
+    // Low fatigue — never crisis-eligible — but weight 1000 would dominate
+    // the pool draw if it were mistakenly treated as a pool event.
+    const state = residencyState('never-in-pool');
+    for (let week = 1; week <= 10; week++) {
+      const { weekRng, eventsRng } = rngs('never-in-pool', week);
+      const result = advanceResidencyWeekWithEvents(state, weekRng, eventsRng, repo, noQuietConfig);
+      expect(result.queuedEventIds).not.toContain('crisis_only');
+    }
+  });
 });

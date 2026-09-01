@@ -159,6 +159,12 @@ const OnCallEffectSchema = z.union([
 // "domain:direction[:more]" — e.g. junior:supportive, npc:baris:cooperative.
 const BEHAVIOR_TAG_PATTERN = /^[a-z0-9]+(:[a-z0-9_]+)+$/;
 
+// Phase 9 §51/§52 — mirrors CareerEffect exactly (domain/events/types.ts):
+// the only DSL entry allowed to end a career, and GameOverReason is a
+// closed, explicit list — never an arbitrary string.
+const GAME_OVER_REASONS = ["resigned_burnout", "resigned_career", "financial_collapse", "program_left", "dismissed"] as const;
+const CareerEffectSchema = z.object({ type: z.literal("end_career"), reason: z.enum(GAME_OVER_REASONS) }).strict();
+
 const ChoiceDefinitionSchema = z
   .object({
     id: z.string().min(1),
@@ -179,6 +185,7 @@ const ChoiceDefinitionSchema = z
     followUpEvent: FollowUpRefSchema.optional(),
     npcTransitions: z.array(NpcTransitionEffectSchema).optional(),
     onCallEffects: z.array(OnCallEffectSchema).optional(),
+    careerEffects: z.array(CareerEffectSchema).optional(),
   })
   .strict();
 
@@ -186,6 +193,10 @@ const EVENT_CATEGORIES = [
   "GENERAL", "BRANCH", "HOSPITAL", "NPC", "MOBBING", "ON_CALL",
   "FINANCIAL", "SOCIAL", "HEALTH_SYSTEM", "WORLD", "RARE", "CAREER", "CRISIS",
 ] as const;
+
+// Phase 9 §9/§31 — mirrors CrisisType/CrisisSeverity (domain/events/types.ts).
+const CRISIS_TYPES = ["exhaustion", "burnout", "financial", "career"] as const;
+const CRISIS_SEVERITIES = ["warning", "serious", "critical"] as const;
 
 const EventDefinitionSchema = z
   .object({
@@ -195,7 +206,7 @@ const EventDefinitionSchema = z
     description: z.string().min(1),
     descriptionVariants: z.array(TextVariantSchema).optional(),
     category: z.enum(EVENT_CATEGORIES),
-    triggerMode: z.enum(["pool", "scheduled"]),
+    triggerMode: z.enum(["pool", "scheduled", "crisis"]),
     requirements: RequirementNodeSchema.optional(),
     weight: z.number().nonnegative().optional(),
     cooldownWeeks: z.number().int().nonnegative().optional(),
@@ -207,10 +218,18 @@ const EventDefinitionSchema = z
     once: z.boolean().optional(),
     npcSelectors: z.record(z.string(), NpcSelectorSchema).optional(),
     requiredNpcTemplate: z.string().min(1).optional(),
+    crisisType: z.enum(CRISIS_TYPES).optional(),
+    severity: z.enum(CRISIS_SEVERITIES).optional(),
   })
   .strict()
   .refine((e) => e.triggerMode !== "scheduled" || (!!e.chainId && !!e.chainCheckpoint), {
     message: "scheduled event is missing chainId/chainCheckpoint",
+  })
+  .refine((e) => e.triggerMode !== "crisis" || !!e.crisisType, {
+    message: "crisis event is missing crisisType",
+  })
+  .refine((e) => e.triggerMode === "crisis" || (!e.crisisType && !e.severity), {
+    message: "crisisType/severity set on a non-crisis event — meaningless outside triggerMode:\"crisis\"",
   })
   .refine(
     (e) => {

@@ -5,7 +5,7 @@
 
 import type { NpcTargetRef } from "./npcTargets";
 import type { NpcSelector } from "../npc/selector";
-import type { NpcTransition } from "../state/types";
+import type { GameOverReason, NpcTransition } from "../state/types";
 import type { OnCallEffect } from "../oncall/applyEffects";
 
 export type EventCategory =
@@ -23,7 +23,26 @@ export type EventCategory =
   | "CAREER"
   | "CRISIS";
 
-export type TriggerMode = "pool" | "scheduled";
+// "crisis" (Phase 9 §11) is deliberately a THIRD mode, not a pool event
+// with high weight: it's picked by its own resource/pressure-gated
+// resolver (domain/crisis/selection.ts), never by selectPoolEvents's
+// weighted draw — see docs/event-schema.md §16 for why that separation
+// matters (a crisis must never be "just unlucky", it must track sustained
+// state). A crisis event's later chain checkpoints stay ordinary
+// "scheduled" events, resolved through the exact same followUpEvent/
+// scheduled machinery as any other chain — only the ENTRY point is special.
+export type TriggerMode = "pool" | "scheduled" | "crisis";
+
+// Phase 9 §9 — which pressure signal a crisis event reacts to; read only
+// by the crisis resolver's priority ordering (§12), never by the engine's
+// generic pool/scheduled machinery. Required on every triggerMode:"crisis"
+// event (validated).
+export type CrisisType = "exhaustion" | "burnout" | "financial" | "career";
+
+// Phase 9 §31 — motor/selection-facing only ("Ancak UI'da 'Severity 3'
+// gibi göstermene gerek yok"); optional, defaults to "serious" in the
+// resolver when absent.
+export type CrisisSeverity = "warning" | "serious" | "critical";
 
 export type ComparableValue = string | number | boolean;
 
@@ -107,6 +126,14 @@ export type NpcTransitionEffect = NpcTargetRef & {
   type: NpcTransition["type"];
 };
 
+// Phase 9 §51/§52 — the ONLY way a choice can end the career. A generic,
+// explicit, allow-listed DSL (never an arbitrary GameState.career.phase
+// mutation) so content authors can't special-case a new phase value
+// without a schema change. "end_career" is the only member today; a
+// future "set_phase" (§52) would be added here the same way, not as a
+// bare string field somewhere else.
+export type CareerEffect = { type: "end_career"; reason: GameOverReason };
+
 export interface ChoiceDefinition {
   id: string;
   text: string;
@@ -124,6 +151,11 @@ export interface ChoiceDefinition {
   // resolved before residency starts, which shouldn't happen but stays
   // safe either way) or if a mutation runs out of valid dates/assignments.
   onCallEffects?: OnCallEffect[];
+  // Phase 9 — see CareerEffect above. Always the LAST thing resolveEventChoice
+  // applies for a choice (§25): every other effect on the same choice
+  // still lands (a resignation choice's stress relief is real, not erased
+  // by the career ending), the career just also ends afterward.
+  careerEffects?: CareerEffect[];
 }
 
 export interface EventDefinition {
@@ -156,4 +188,8 @@ export interface EventDefinition {
   // roster (e.g. "baris") — how authored content requires a template
   // character without the engine special-casing a name (§17/§18).
   requiredNpcTemplate?: string;
+  // Phase 9 — required (validated) on every triggerMode:"crisis" event,
+  // meaningless/ignored on any other triggerMode.
+  crisisType?: CrisisType;
+  severity?: CrisisSeverity;
 }

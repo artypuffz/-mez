@@ -17,6 +17,11 @@ import chainSecretary from "../../../data/events/chains/secretary.json";
 import chainFaculty from "../../../data/events/chains/faculty.json";
 import chainJunior from "../../../data/events/chains/junior.json";
 import microChains from "../../../data/events/chains/micro-chains.json";
+import crisisWarnings from "../../../data/events/crisis/warnings.json";
+import crisisExhaustion from "../../../data/events/crisis/exhaustion-spiral.json";
+import crisisBurnout from "../../../data/events/crisis/burnout-resignation.json";
+import crisisFinancial from "../../../data/events/crisis/economic-crisis.json";
+import crisisCareer from "../../../data/events/crisis/career-crisis.json";
 import economy from "../../../data/events/economy/economy.json";
 import economyExpansion from "../../../data/events/economy/economy-expansion.json";
 import general from "../../../data/events/general/general.json";
@@ -55,6 +60,11 @@ const RAW_EVENT_FILES: unknown[] = [
   ...chainFaculty,
   ...chainJunior,
   ...microChains,
+  ...crisisWarnings,
+  ...crisisExhaustion,
+  ...crisisBurnout,
+  ...crisisFinancial,
+  ...crisisCareer,
   ...economy,
   ...economyExpansion,
   ...general,

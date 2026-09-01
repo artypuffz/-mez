@@ -15,6 +15,37 @@ describe('migrateSaveData', () => {
     expect(migrateSaveData(raw)).toEqual(state);
   });
 
+  // Phase 9 §46 — a crisis mid-resolution must round-trip through
+  // save/load byte-for-byte: same queued instance, same bound NPC, same
+  // gameOver-or-not. No reroll on "reload".
+  it('round-trips a current-version save with a queued crisis instance and pending gameOver unchanged', () => {
+    const base = createInitialGameState({
+      name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda',
+    });
+    const state = {
+      ...base,
+      weeklyEventQueue: [{ instanceId: '30:crisis_burnout_01_yeter', eventId: 'crisis_burnout_01_yeter', boundNpcIds: { friend: 'npc_1' } }],
+      resourcePressure: { highStressWeeks: 5, highFatigueWeeks: 3, combinedPressureWeeks: 3, lowPressureWeeks: 0 },
+      financialPressure: { consecutiveNegativeMonths: 2, lowestBalance: -6000 },
+      crisisState: { lastCrisisWeek: 28 },
+    };
+    const raw = JSON.parse(JSON.stringify(state));
+    expect(migrateSaveData(raw)).toEqual(state);
+  });
+
+  it('round-trips a save that already ended in gameOver, without touching the reason', () => {
+    const base = createInitialGameState({
+      name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda',
+    });
+    const state = {
+      ...base,
+      career: { ...base.career, phase: 'gameover' as const },
+      gameOver: { reason: 'financial_collapse' as const, week: 90, triggeredByEventId: 'crisis_financial_03_mali_karar', selectedChoiceId: 'isi_birak' },
+    };
+    const raw = JSON.parse(JSON.stringify(state));
+    expect(migrateSaveData(raw)).toEqual(state);
+  });
+
   it('throws for a save version with no registered migration path', () => {
     const raw = { meta: { saveVersion: 0 } };
     expect(() => migrateSaveData(raw)).toThrow();
@@ -37,7 +68,7 @@ describe('migrateSaveData', () => {
     };
 
     const migrated = migrateSaveData(v1Save);
-    expect(migrated.meta.saveVersion).toBe(6);
+    expect(migrated.meta.saveVersion).toBe(7);
     expect(migrated.tus).toEqual({ step: 'prep', examEventIds: [], examLog: [] });
     expect(migrated.career.residencyStartedAt).toBeUndefined();
     expect(migrated.eventCooldowns).toEqual({});
@@ -46,6 +77,9 @@ describe('migrateSaveData', () => {
     expect(migrated.npcs).toEqual({});
     expect(migrated.onCall).toEqual({ schedule: null });
     expect(migrated.economy).toEqual({ lastProcessedMonthKey: null, lastBreakdown: null });
+    expect(migrated.resourcePressure).toEqual({ highStressWeeks: 0, highFatigueWeeks: 0, combinedPressureWeeks: 0, lowPressureWeeks: 0 });
+    expect(migrated.financialPressure).toEqual({ consecutiveNegativeMonths: 0, lowestBalance: 12000 });
+    expect(migrated.crisisState).toEqual({ lastCrisisWeek: null });
     expect(migrated.character.name).toBe('Ada');
   });
 
@@ -83,7 +117,7 @@ describe('migrateSaveData', () => {
       eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
     };
     const migrated = migrateSaveData(v3Save);
-    expect(migrated.meta.saveVersion).toBe(6);
+    expect(migrated.meta.saveVersion).toBe(7);
     expect(migrated.eventCooldowns).toEqual({});
     expect(migrated.pendingEffects).toEqual([]);
     expect(migrated.weeklyEventQueue).toEqual([]);
@@ -111,7 +145,7 @@ describe('migrateSaveData', () => {
       weeklyEventQueue: ['some_queued_event'],
     };
     const migrated = migrateSaveData(v4Save);
-    expect(migrated.meta.saveVersion).toBe(6);
+    expect(migrated.meta.saveVersion).toBe(7);
     expect(migrated.relationships.baris).toEqual({ trust: 5, friendship: 2, grudge: 1 });
     expect(migrated.npcs).toEqual({});
     expect(migrated.weeklyEventQueue).toEqual([
@@ -164,8 +198,31 @@ describe('migrateSaveData', () => {
       eventCooldowns: {}, pendingEffects: [], weeklyEventQueue: [],
     };
     const migrated = migrateSaveData(v5Save);
-    expect(migrated.meta.saveVersion).toBe(6);
+    expect(migrated.meta.saveVersion).toBe(7);
     expect(migrated.onCall).toEqual({ schedule: null });
     expect(migrated.economy).toEqual({ lastProcessedMonthKey: null, lastBreakdown: null });
+  });
+
+  it('migrates a v6 (Phase 7) save to v7, adding resourcePressure/financialPressure/crisisState with lowestBalance backfilled from current money', () => {
+    const v6Save = {
+      meta: { saveVersion: 6, rngSeed: 'seed', createdAt: '2026-03-15T00:00:00.000Z' },
+      character: { name: 'Ada', age: 26, gender: 'kadın', hometown: 'İzmir', background: 'aile_yaninda' },
+      career: {
+        phase: 'residency', branch: 'ic_hastaliklari', residencyStartedAt: '2026-09-01',
+        residencyWeek: 5, residencyYear: 1, seniorityStage: 'comez',
+      },
+      tus: { step: 'result', examEventIds: [], examLog: [], selectedProgramId: 'baskent_ic' },
+      resources: { stress: 40, fatigue: 30, burnout: 0, money: -3500 },
+      relationships: {}, npcs: {}, flags: {}, pendingEvents: [], activeChains: {},
+      eventHistory: [], behaviorStats: {}, statistics: {}, status: 'active',
+      eventCooldowns: {}, pendingEffects: [], weeklyEventQueue: [],
+      onCall: { schedule: null }, economy: { lastProcessedMonthKey: null, lastBreakdown: null },
+    };
+    const migrated = migrateSaveData(v6Save);
+    expect(migrated.meta.saveVersion).toBe(7);
+    expect(migrated.resourcePressure).toEqual({ highStressWeeks: 0, highFatigueWeeks: 0, combinedPressureWeeks: 0, lowPressureWeeks: 0 });
+    expect(migrated.financialPressure).toEqual({ consecutiveNegativeMonths: 0, lowestBalance: -3500 });
+    expect(migrated.crisisState).toEqual({ lastCrisisWeek: null });
+    expect(migrated.gameOver).toBeUndefined();
   });
 });

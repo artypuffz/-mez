@@ -10,7 +10,7 @@ import { createScopedRng, type SeededRng } from "../rng/seededRng";
 import type { ChoiceDefinition, EventDefinition } from "./types";
 import type { GameState } from "../state/types";
 
-export type ChoiceStrategy = "first" | "random" | "resource_preserving";
+export type ChoiceStrategy = "first" | "random" | "resource_preserving" | "self_preserving_aggressive";
 
 export interface HeadlessSimulationConfig {
   seedCount: number;
@@ -61,6 +61,19 @@ export interface SimulationReport {
     avgFinalBurnout: number;
     fractionRunsHitSaturation: number;
   };
+  // Phase 9 §40 — crisis/game-over matrix.
+  gameOver: {
+    rate: number;
+    reasonCounts: Record<string, number>;
+    avgWeek: number;
+    branchRate: Record<string, { runs: number; gameOvers: number }>;
+  };
+  crisis: {
+    totalTriggered: number;
+    avgPerRun: number;
+    recoveredCount: number;
+    typeCounts: Record<string, number>;
+  };
 }
 
 const SIM_BACKGROUNDS = ["aile_yaninda", "baska_sehirden", "ekonomik_rahat", "kendi_basina"] as const;
@@ -87,23 +100,37 @@ function rngs(seed: string, week: number) {
   };
 }
 
-function resourceCost(choice: ChoiceDefinition): number {
+function mid(v: number | { min: number; max: number } | undefined): number {
+  if (v === undefined) return 0;
+  return typeof v === "number" ? v : (v.min + v.max) / 2;
+}
+
+// §42's "resource_preserving" is resource-blind to careerEffects on
+// purpose — it's a heuristic about not wanting to feel bad this week, not
+// an agent reasoning about employment status, and its own (still
+// meaningfully lower than random) game-over rate is part of what the
+// Phase 9 headless matrix is validating (§41/§6). "self_preserving_aggressive"
+// (§40, optional third strategy) is the one that also actively avoids
+// ending the career — a genuinely different policy, not just a stricter
+// version of the same one.
+function resourceCost(choice: ChoiceDefinition, moneyWeight: number, avoidCareerEnd: boolean): number {
   const effects = choice.immediateEffects;
-  if (!effects) return 0;
-  const mid = (v: number | { min: number; max: number } | undefined) => {
-    if (v === undefined) return 0;
-    return typeof v === "number" ? v : (v.min + v.max) / 2;
-  };
-  // Higher = worse. money is inverted (losing money is a cost too, but
-  // weighted lightly relative to stress/fatigue/burnout, matching how
-  // this heuristic is meant to approximate "protect yourself first").
-  return mid(effects.stress) + mid(effects.fatigue) + mid(effects.burnout) * 1.5 - mid(effects.money) / 2000;
+  const base = effects
+    ? mid(effects.stress) + mid(effects.fatigue) + mid(effects.burnout) * 1.5 - mid(effects.money) / moneyWeight
+    : 0;
+  const careerEndPenalty = avoidCareerEnd && choice.careerEffects?.some((e) => e.type === "end_career") ? 100000 : 0;
+  return base + careerEndPenalty;
 }
 
 function pickChoice(strategy: ChoiceStrategy, visible: ChoiceDefinition[], rng: SeededRng): ChoiceDefinition {
   if (strategy === "random") return rng.pick(visible);
   if (strategy === "resource_preserving") {
-    return [...visible].sort((a, b) => resourceCost(a) - resourceCost(b) || a.id.localeCompare(b.id))[0];
+    return [...visible].sort((a, b) => resourceCost(a, 2000, false) - resourceCost(b, 2000, false) || a.id.localeCompare(b.id))[0];
+  }
+  if (strategy === "self_preserving_aggressive") {
+    // Weighs money 4x more heavily (protecting the paycheck matters, not
+    // just the body) and never voluntarily ends the career.
+    return [...visible].sort((a, b) => resourceCost(a, 500, true) - resourceCost(b, 500, true) || a.id.localeCompare(b.id))[0];
   }
   return visible[0];
 }
@@ -155,6 +182,15 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
   let finalBurnoutSum = 0;
   let saturationRuns = 0;
 
+  let gameOverRuns = 0;
+  let gameOverWeekSum = 0;
+  const gameOverReasonCounts: Record<string, number> = {};
+  const branchRate: Record<string, { runs: number; gameOvers: number }> = {};
+
+  let crisisTotalTriggered = 0;
+  let crisisRecoveredTotal = 0;
+  const crisisTypeCounts: Record<string, number> = {};
+
   for (let i = 0; i < config.seedCount; i++) {
     const seed = `headless-${i}`;
     const programId = config.programIds[i % config.programIds.length];
@@ -167,7 +203,10 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
 
     try {
       let state = buildResidencyState(seed, programId, i);
-      branchDistribution[state.career.branch ?? "?"] = (branchDistribution[state.career.branch ?? "?"] ?? 0) + 1;
+      const branchKey = state.career.branch ?? "?";
+      branchDistribution[branchKey] = (branchDistribution[branchKey] ?? 0) + 1;
+      const branchStats = (branchRate[branchKey] ??= { runs: 0, gameOvers: 0 });
+      branchStats.runs++;
 
       for (let week = 1; week <= config.weeksPerSeed; week++) {
         if (state.career.phase !== "residency") break;
@@ -241,6 +280,18 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
       finalFatigueSum += state!.resources.fatigue;
       finalBurnoutSum += state!.resources.burnout;
       eventSourcedSpendingSum += eventSourcedSpending;
+
+      if (state!.gameOver) {
+        gameOverRuns++;
+        gameOverWeekSum += state!.gameOver.week;
+        gameOverReasonCounts[state!.gameOver.reason] = (gameOverReasonCounts[state!.gameOver.reason] ?? 0) + 1;
+        branchStats.gameOvers++;
+      }
+      crisisTotalTriggered += state!.statistics["crisis:total"] ?? 0;
+      crisisRecoveredTotal += state!.statistics["crisis:recovered"] ?? 0;
+      for (const type of ["exhaustion", "burnout", "financial", "career"]) {
+        crisisTypeCounts[type] = (crisisTypeCounts[type] ?? 0) + (state!.statistics[`crisis:${type}`] ?? 0);
+      }
     } catch (err) {
       crashes.push(`seed=${seed} programId=${programId}: ${(err as Error).message}`);
     }
@@ -283,6 +334,18 @@ export function runHeadlessSimulation(config: HeadlessSimulationConfig): Simulat
       avgFinalFatigue: runCount > 0 ? finalFatigueSum / runCount : 0,
       avgFinalBurnout: runCount > 0 ? finalBurnoutSum / runCount : 0,
       fractionRunsHitSaturation: runCount > 0 ? saturationRuns / runCount : 0,
+    },
+    gameOver: {
+      rate: runCount > 0 ? gameOverRuns / runCount : 0,
+      reasonCounts: gameOverReasonCounts,
+      avgWeek: gameOverRuns > 0 ? gameOverWeekSum / gameOverRuns : 0,
+      branchRate,
+    },
+    crisis: {
+      totalTriggered: crisisTotalTriggered,
+      avgPerRun: runCount > 0 ? crisisTotalTriggered / runCount : 0,
+      recoveredCount: crisisRecoveredTotal,
+      typeCounts: crisisTypeCounts,
     },
   };
 }

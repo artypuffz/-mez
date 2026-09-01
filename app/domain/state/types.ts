@@ -249,7 +249,58 @@ export interface MonthlyEconomyBreakdown {
   net: number;
 }
 
-export const CURRENT_SAVE_VERSION = 6;
+// Phase 9 — sustained-pressure tracking that drives burnout (§3 of the
+// Phase 9 spec). Consecutive-week streaks, not instantaneous readings:
+// burnout is meant to react to a pattern holding for a while, not to any
+// single bad (or good) week. Reset to 0 the moment the underlying
+// condition stops holding — these are streaks, not running totals.
+export interface ResourcePressureState {
+  highStressWeeks: number;
+  highFatigueWeeks: number;
+  combinedPressureWeeks: number;
+  lowPressureWeeks: number;
+}
+
+// Phase 9 §20 — tracked independently of the current money snapshot so a
+// financial crisis can react to "how long has this been bad", not just
+// "is it bad right now this instant".
+export interface FinancialPressureState {
+  consecutiveNegativeMonths: number;
+  lowestBalance: number;
+}
+
+// Phase 9 §30 — a single global cooldown across every crisis type/id, on
+// top of (never instead of) each crisis EventDefinition's own
+// once/cooldownWeeks. Keeps a resolved crisis from being immediately
+// followed by another one the very next week, regardless of which
+// resource is still elevated.
+export interface CrisisEngineState {
+  lastCrisisWeek: number | null;
+}
+
+// Phase 9 §23/§24 — every reason is a real, distinct career-ending
+// outcome; "dismissed" exists in the type but Phase 9 ships no content
+// that uses it (§23: never let RNG alone end a career for the player).
+export type GameOverReason =
+  | "resigned_burnout"
+  | "resigned_career"
+  | "financial_collapse"
+  | "program_left"
+  | "dismissed";
+
+// Phase 9 §24/§25 — set exactly once, by resolveEventChoice applying a
+// `careerEffects: [{type:"end_career", ...}]` DSL entry (see
+// domain/events/types.ts). Never written by a bare resource-threshold
+// check — a crisis only ever creates risk/eligibility, the player's own
+// choice is what actually ends the career.
+export interface GameOverState {
+  reason: GameOverReason;
+  week: number;
+  triggeredByEventId?: string;
+  selectedChoiceId?: string;
+}
+
+export const CURRENT_SAVE_VERSION = 7;
 
 export interface GameState {
   meta: {
@@ -296,6 +347,15 @@ export interface GameState {
     burnout: number;
     money: number;
   };
+
+  // Phase 9 — see ResourcePressureState/FinancialPressureState/
+  // CrisisEngineState above.
+  resourcePressure: ResourcePressureState;
+  financialPressure: FinancialPressureState;
+  crisisState: CrisisEngineState;
+  // Set once the career actually ends (see GameOverState above). Absent
+  // for the entire rest of the game, including every other phase.
+  gameOver?: GameOverState;
 
   relationships: Record<NpcId, RelationshipState>;
 

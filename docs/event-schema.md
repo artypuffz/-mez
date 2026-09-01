@@ -1,4 +1,4 @@
-# ÇÖMEZ — Event Schema & DSL Referansı (v0.5)
+# ÇÖMEZ — Event Schema & DSL Referansı (v0.6)
 
 Bu doküman, event motoru (Faz 5) implementasyonunda kullanılacak resmi
 şemadır. `docs/event-design-bible.md` bu şemanın *neden* bu şekilde
@@ -40,6 +40,36 @@ olduğunu (tasarım gerekçesi, örnekler) anlatır; burası sade referans.
   ulaşılamaz `all` bloğu, geçersiz `requiredNpcTemplate`/`branchIn`,
   `once`+`cooldownWeeks` çakışması) — bunlar şemanın kendisini değil,
   yazım kalitesini denetliyor.
+- **v0.6** (bu doküman, Faz 9) → kriz sistemi + Game Over + kaynak
+  dengeleme sonrası:
+  - `triggerMode`'a üçüncü bir değer eklendi: `"crisis"`. `"pool"`'dan
+    farkı — normal ağırlıklı havuz seçimine (`selectPoolEvents`) hiç
+    girmiyor; kendi ayrı, kaynak/baskı-durumuna bağlı resolver'ı var
+    (`domain/crisis/selection.ts`). `triggerMode:"crisis"` bir event'in
+    `crisisType` alanı zorunlu (`"exhaustion"|"burnout"|"financial"|
+    "career"`), `severity` (`"warning"|"serious"|"critical"`) opsiyonel —
+    ikisi de sadece motor/seçim tarafı için, UI'da sayı olarak
+    gösterilmiyor (§31 tasarım kararı). Bir kriz zincirinin GİRİŞ noktası
+    dışındaki tüm checkpoint'leri (stage2+) sıradan `triggerMode:
+    "scheduled"` olarak kalıyor — mevcut `followUpEvent`/checkpoint
+    çözümleme motorunun aynen kullanılması, kriz-özel yeni bir mekanizma
+    icat edilmemesi anlamına geliyor.
+  - `choice.careerEffects` eklendi — kariyeri bitiren TEK generic DSL:
+    `[{type:"end_career", reason: GameOverReason}]`. `GameOverReason` kapalı
+    bir liste (`resigned_burnout`|`resigned_career`|`financial_collapse`|
+    `program_left`|`dismissed`). Motor bunu her zaman bir choice'ın SON
+    efekti olarak uygular (§25) — asla bir kaynak eşiğinden otomatik
+    üretilmiyor, sadece oyuncunun seçtiği bir choice'tan.
+  - RequirementContext'e iki yeni alan eklendi (yeni bir requirement-node
+    türü **eklenmedi**, mevcut `stat` dot-path leaf'i genişledi):
+    `resourcePressure.{highStressWeeks,highFatigueWeeks,
+    combinedPressureWeeks,lowPressureWeeks}` ve `financialPressure.
+    {consecutiveNegativeMonths,lowestBalance}`.
+  - İçerik-kalitesi/şema doğrulaması (§50) genişledi: geçersiz
+    `crisisType`/`severity`, `triggerMode:"crisis"` dışında set edilmiş
+    `crisisType`/`severity`, geçersiz `careerEffects.reason` artık hata.
+    Kriz zinciri dead-end'leri zaten var olan dangling-`followUpEvent`/
+    fallback kontrolleriyle yakalanıyor — ayrı bir kontrol gerekmedi.
 
 ---
 

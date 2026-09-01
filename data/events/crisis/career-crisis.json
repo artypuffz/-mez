@@ -1,0 +1,98 @@
+[
+  {
+    "id": "crisis_career_01_esik",
+    "title": "EŞİK",
+    "description": "Bugün olan şey, tek başına aslında büyük bir şey değildi. Ama bir sürü küçük şeyin üstüne geldi, ve bir yerde biriken şey artık taşıyor.",
+    "category": "CRISIS",
+    "triggerMode": "crisis",
+    "crisisType": "career",
+    "severity": "serious",
+    "requirements": {
+      "all": [
+        { "stat": "career.week", "gte": 20 },
+        { "any": [
+          { "stat": "behaviorStats.hierarchy:abused_silently", "gte": 4 },
+          { "stat": "behaviorStats.hierarchy:abusive", "gte": 3 },
+          { "stat": "behaviorStats.junior:humiliated", "gte": 3 }
+        ] }
+      ]
+    },
+    "cooldownWeeks": 62,
+    "npcSelectors": { "mentor": { "highestTrustByRole": "senior_resident" } },
+    "chainId": "career_crisis",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "resmi_sikayet",
+        "text": "Resmi bir şikayet hazırla.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "career_crisis_path": "filed_complaint" } },
+        "statistics": { "increment": { "career_complaints_filed": 1 } },
+        "followUpEvent": { "chainId": "career_crisis", "checkpoint": "stage2", "delayWeeks": 2 }
+      },
+      {
+        "id": "mentorle_konus",
+        "text": "Güvendiğin bir kıdemliyle konuş.",
+        "requirements": { "all": [{ "relationship": { "boundNpc": "mentor", "trust": { "gte": 6 } } }] },
+        "immediateEffects": { "stress": -4 },
+        "relationshipEffects": [{ "boundNpc": "mentor", "trust": 2 }],
+        "flags": { "set": { "career_crisis_path": "sought_support" } },
+        "followUpEvent": { "chainId": "career_crisis", "checkpoint": "stage2", "delayWeeks": 2 }
+      },
+      {
+        "id": "sessiz_kal",
+        "text": "Bir şey deme, sessiz kal.",
+        "immediateEffects": { "stress": 4 },
+        "behaviorTags": ["hierarchy:abused_silently"],
+        "flags": { "set": { "career_crisis_path": "stayed_silent" } },
+        "followUpEvent": { "chainId": "career_crisis", "checkpoint": "stage2", "delayWeeks": 2 }
+      }
+    ]
+  },
+  {
+    "id": "crisis_career_02_belirsiz_sonuc",
+    "title": "BELİRSİZ SONUÇ",
+    "description": "Şikayetin ya da konuşman bir sürece girdi. Sonucunun ne olacağını, ne zaman öğreneceğini bilmiyorsun. En azından bir şey yaptın.",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "career_crisis",
+    "chainCheckpoint": "stage2",
+    "priority": 10,
+    "requirements": { "any": [{ "flag": "career_crisis_path", "eq": "filed_complaint" }, { "flag": "career_crisis_path", "eq": "sought_support" }] },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": { "stress": -3 },
+        "statistics": { "increment": { "crisis:total": 1, "crisis:career": 1, "crisis:recovered": 1 } }
+      }
+    ]
+  },
+  {
+    "id": "crisis_career_02_devam_edemem",
+    "title": "DEVAM EDEMEM",
+    "description": "Sessiz kalmak bu kez de işe yaramadı — hiçbir zaman gerçekten işe yaramamıştı. Bir sabah, işe gitmeden önce kendine aynı soruyu sordun: buna gerçekten devam edebilir misin?",
+    "category": "CRISIS",
+    "triggerMode": "scheduled",
+    "chainId": "career_crisis",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "dayanmaya_devam",
+        "text": "Dayanmaya devam et.",
+        "immediateEffects": { "stress": 3 },
+        "statistics": { "increment": { "crisis:total": 1, "crisis:career": 1 } }
+      },
+      {
+        "id": "is_degisikligi",
+        "text": "İş değişikliğini ciddi olarak değerlendir, dilekçeyi hazırla.",
+        "requirements": { "all": [{ "stat": "statistics.crisis:career", "gte": 1 }] },
+        "immediateEffects": { "stress": -8 },
+        "statistics": { "increment": { "crisis:total": 1, "crisis:career_end": 1 } },
+        "careerEffects": [{ "type": "end_career", "reason": "resigned_career" }]
+      }
+    ]
+  }
+]

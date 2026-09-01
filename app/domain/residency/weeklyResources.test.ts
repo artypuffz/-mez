@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { applyWeeklyBurnout, applyWeeklyFatigue, applyWeeklyStress } from './weeklyResources';
+import { applyWeeklyBurnout, applyWeeklyFatigue, applyWeeklyStress, updateResourcePressure } from './weeklyResources';
 import { createSeededRng } from '../rng/seededRng';
 import { getBranchDefinition } from '../config/branches';
 import { getResidencyProgram } from '../config/residencyPrograms';
+import type { ResourcePressureState } from '../state/types';
 
 const branch = getBranchDefinition('ic_hastaliklari');
 const program = getResidencyProgram('baskent_ic');
+
+const ZERO_PRESSURE: ResourcePressureState = {
+  highStressWeeks: 0,
+  highFatigueWeeks: 0,
+  combinedPressureWeeks: 0,
+  lowPressureWeeks: 0,
+};
 
 describe('applyWeeklyFatigue / applyWeeklyStress', () => {
   it('clamp to [0, 100]', () => {
@@ -26,42 +34,97 @@ describe('applyWeeklyFatigue / applyWeeklyStress', () => {
     expect(a).toBe(b);
   });
 
-  it('recovers somewhat once already high, instead of climbing forever', () => {
+  it('pulls back down once already high, instead of climbing forever (§2)', () => {
     const rng = createSeededRng('recovery-check');
-    const atRecoveryThreshold = applyWeeklyFatigue(65, branch, program, rng);
-    // net delta should be small/negative-leaning near the recovery point,
-    // not a runaway climb
-    expect(atRecoveryThreshold - 65).toBeLessThan(5);
+    const atHigh = applyWeeklyFatigue(90, branch, program, rng);
+    // proportional pull at 90 should outweigh typical weekly pressure —
+    // net delta should trend down, not up.
+    expect(atHigh).toBeLessThan(90);
+  });
+
+  it('drains back toward the resting point over many quiet weeks', () => {
+    let fatigue = 95;
+    const seed = 'drain-check';
+    for (let week = 1; week <= 30; week++) {
+      fatigue = applyWeeklyFatigue(fatigue, branch, program, createSeededRng(`${seed}-${week}`));
+    }
+    expect(fatigue).toBeLessThan(60);
   });
 });
 
-describe('applyWeeklyBurnout', () => {
-  it('increases when both stress and fatigue are high', () => {
-    const next = applyWeeklyBurnout({ stress: 75, fatigue: 75, currentBurnout: 10 });
+describe('updateResourcePressure', () => {
+  it('increments streaks while the condition holds, resets the instant it stops', () => {
+    let pressure = ZERO_PRESSURE;
+    pressure = updateResourcePressure(pressure, 65, 65); // both high
+    expect(pressure.combinedPressureWeeks).toBe(1);
+    pressure = updateResourcePressure(pressure, 65, 65);
+    expect(pressure.combinedPressureWeeks).toBe(2);
+    pressure = updateResourcePressure(pressure, 65, 20); // fatigue drops, stress stays high
+    expect(pressure.combinedPressureWeeks).toBe(0);
+    expect(pressure.highStressWeeks).toBe(3); // stress-only streak keeps counting
+    expect(pressure.highFatigueWeeks).toBe(0);
+  });
+
+  it('tracks a separate low-pressure streak for recovery', () => {
+    let pressure = ZERO_PRESSURE;
+    pressure = updateResourcePressure(pressure, 10, 10);
+    pressure = updateResourcePressure(pressure, 10, 10);
+    expect(pressure.lowPressureWeeks).toBe(2);
+    pressure = updateResourcePressure(pressure, 40, 10);
+    expect(pressure.lowPressureWeeks).toBe(0);
+  });
+});
+
+describe('applyWeeklyBurnout (§3 — sustained-pressure driven)', () => {
+  it('does NOT increase from a single bad week', () => {
+    const oneWeekPressure = updateResourcePressure(ZERO_PRESSURE, 75, 75);
+    expect(applyWeeklyBurnout(10, oneWeekPressure)).toBe(10);
+  });
+
+  it('increases moderately once combined pressure has held for the moderate streak length', () => {
+    let pressure = ZERO_PRESSURE;
+    for (let i = 0; i < 4; i++) pressure = updateResourcePressure(pressure, 75, 75);
+    const next = applyWeeklyBurnout(10, pressure);
     expect(next).toBeGreaterThan(10);
   });
 
-  it('does not increase when only one of stress/fatigue is high', () => {
-    const next = applyWeeklyBurnout({ stress: 75, fatigue: 20, currentBurnout: 10 });
-    expect(next).toBeLessThanOrEqual(10);
+  it('increases more once combined pressure has held for the severe streak length', () => {
+    let moderate = ZERO_PRESSURE;
+    for (let i = 0; i < 4; i++) moderate = updateResourcePressure(moderate, 75, 75);
+    let severe = ZERO_PRESSURE;
+    for (let i = 0; i < 8; i++) severe = updateResourcePressure(severe, 75, 75);
+
+    const moderateJump = applyWeeklyBurnout(10, moderate) - 10;
+    const severeJump = applyWeeklyBurnout(10, severe) - 10;
+    expect(severeJump).toBeGreaterThan(moderateJump);
   });
 
-  it('decreases slowly when both stress and fatigue are comfortably low', () => {
-    const next = applyWeeklyBurnout({ stress: 10, fatigue: 10, currentBurnout: 20 });
+  it('does not increase when only one of stress/fatigue is high, regardless of streak length', () => {
+    let pressure = ZERO_PRESSURE;
+    for (let i = 0; i < 8; i++) pressure = updateResourcePressure(pressure, 75, 20);
+    expect(applyWeeklyBurnout(10, pressure)).toBe(10);
+  });
+
+  it('decreases slowly once both resources have stayed comfortably low for a few weeks — not fully irreversible', () => {
+    let pressure = ZERO_PRESSURE;
+    for (let i = 0; i < 3; i++) pressure = updateResourcePressure(pressure, 10, 10);
+    const next = applyWeeklyBurnout(20, pressure);
     expect(next).toBeLessThan(20);
     expect(20 - next).toBeLessThanOrEqual(2); // slow, not a big swing
   });
 
-  it('clamps to [0, 100]', () => {
-    expect(applyWeeklyBurnout({ stress: 90, fatigue: 90, currentBurnout: 100 })).toBeLessThanOrEqual(100);
-    expect(applyWeeklyBurnout({ stress: 5, fatigue: 5, currentBurnout: 0 })).toBeGreaterThanOrEqual(0);
+  it('does not decrease before the low-pressure streak is long enough', () => {
+    const pressure = updateResourcePressure(ZERO_PRESSURE, 10, 10); // only 1 week
+    expect(applyWeeklyBurnout(20, pressure)).toBe(20);
   });
 
-  it('moves noticeably slower than fatigue under sustained high pressure', () => {
-    // one week of high fatigue can add several points; one week of
-    // high stress+fatigue only adds burnoutIncrease (small, by design)
-    const fatigueJump = applyWeeklyFatigue(40, getBranchDefinition('genel_cerrahi'), program, createSeededRng('slow-burnout'));
-    const burnoutJump = applyWeeklyBurnout({ stress: 75, fatigue: 75, currentBurnout: 40 });
-    expect(burnoutJump - 40).toBeLessThan(fatigueJump - 40 || 1);
+  it('clamps to [0, 100]', () => {
+    let severe = ZERO_PRESSURE;
+    for (let i = 0; i < 8; i++) severe = updateResourcePressure(severe, 90, 90);
+    expect(applyWeeklyBurnout(100, severe)).toBeLessThanOrEqual(100);
+
+    let low = ZERO_PRESSURE;
+    for (let i = 0; i < 3; i++) low = updateResourcePressure(low, 5, 5);
+    expect(applyWeeklyBurnout(0, low)).toBeGreaterThanOrEqual(0);
   });
 });

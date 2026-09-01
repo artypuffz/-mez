@@ -19,6 +19,7 @@ import { getVisibleChoices } from "./choices";
 import { resolveText } from "./variants";
 import {
   applyBehaviorTags,
+  applyCareerEffects,
   applyFlags,
   applyNpcTransitionEffects,
   applyRelationshipEffects,
@@ -29,6 +30,7 @@ import {
 import { isOnCooldown, recordTrigger } from "./cooldown";
 import { selectPoolEvents, type PoolSelectionTrace } from "./selection";
 import { applyDuePendingEffects, resolveDuePendingEvents, type ScheduledResolutionTrace } from "./scheduled";
+import { selectCrisisEvent, type CrisisSelectionTrace } from "../crisis/selection";
 import type { EventRepository } from "./repository";
 import type { ChoiceDefinition, EventDefinition } from "./types";
 import { DEFAULT_POOL_SELECTION_CONFIG, type PoolSelectionConfig } from "../config/eventSelection";
@@ -36,6 +38,7 @@ import { DEFAULT_POOL_SELECTION_CONFIG, type PoolSelectionConfig } from "../conf
 export interface WeekEventsTrace {
   scheduled: ScheduledResolutionTrace[];
   pool: PoolSelectionTrace;
+  crisis: CrisisSelectionTrace;
 }
 
 export interface WeeklyEventResolution {
@@ -150,10 +153,18 @@ export function advanceResidencyWeekWithEvents(
         city,
         background: workingState.character.background,
       });
+      const nextMoney = workingState.resources.money + breakdown.net;
       workingState = {
         ...workingState,
         resources: applyResourceDelta(workingState.resources, { money: breakdown.net }),
         economy: { lastProcessedMonthKey: monthKey, lastBreakdown: breakdown },
+        // §20 — tracked off the ACTUAL post-breakdown balance, once per
+        // month (money only moves monthly, same cadence as this block),
+        // never off a mid-month event-driven money change.
+        financialPressure: {
+          consecutiveNegativeMonths: nextMoney < 0 ? workingState.financialPressure.consecutiveNegativeMonths + 1 : 0,
+          lowestBalance: Math.min(workingState.financialPressure.lowestBalance, nextMoney),
+        },
       };
     }
   }
@@ -189,7 +200,23 @@ export function advanceResidencyWeekWithEvents(
     afterScheduled.eventHistory
   );
 
-  const eventCooldowns = poolEvents.reduce(
+  // §11 — crisis selection is a THIRD, separate resolver: it never draws
+  // from poolEvents's weighted budget, and picks at most one event. Uses
+  // the SAME ctx/cooldowns/eventHistory pool events used, so a crisis
+  // event's own `once`/`cooldownWeeks` are respected identically to any
+  // other content — the global cross-type cooldown (§30) is the only part
+  // that's crisis-specific.
+  const { event: crisisEvent, trace: crisisTrace } = selectCrisisEvent(
+    repository,
+    ctx,
+    currentWeek,
+    afterScheduled.crisisState.lastCrisisWeek,
+    afterScheduled.eventCooldowns,
+    afterScheduled.eventHistory,
+    eventsRng
+  );
+
+  const eventCooldowns = [...poolEvents, ...(crisisEvent ? [crisisEvent] : [])].reduce(
     (acc, event) => recordTrigger(acc, event.id, currentWeek),
     afterScheduled.eventCooldowns
   );
@@ -200,19 +227,21 @@ export function advanceResidencyWeekWithEvents(
   const weeklyEventQueue: QueuedEventInstance[] = [
     ...resolvedEvents.map((event) => bindQueuedInstance(event, currentWeek, afterScheduled.npcs, afterScheduled.relationships, eventsRng)),
     ...poolEvents.map((event) => bindQueuedInstance(event, currentWeek, afterScheduled.npcs, afterScheduled.relationships, eventsRng)),
+    ...(crisisEvent ? [bindQueuedInstance(crisisEvent, currentWeek, afterScheduled.npcs, afterScheduled.relationships, eventsRng)] : []),
   ];
 
   const finalState: GameState = {
     ...afterScheduled,
     eventCooldowns,
     weeklyEventQueue,
+    crisisState: crisisEvent ? { lastCrisisWeek: currentWeek } : afterScheduled.crisisState,
   };
 
   return {
     weekAdvance,
     state: finalState,
     queuedEventIds: weeklyEventQueue.map((q) => q.eventId),
-    trace: { scheduled: scheduledTrace, pool: poolTrace },
+    trace: { scheduled: scheduledTrace, pool: poolTrace, crisis: crisisTrace },
     npcTransitions,
   };
 }
@@ -303,6 +332,11 @@ export function resolveEventChoice(
 
   const weeklyEventQueue = state.weeklyEventQueue.filter((q) => q.eventId !== event.id);
 
+  // §25/§51 — always last: every other effect on this choice already
+  // landed above. Never derived from a resource threshold, only from an
+  // explicit authored careerEffects entry on the choice the player picked.
+  const gameOver = applyCareerEffects(choice.careerEffects, currentWeek, event.id, choice.id) ?? state.gameOver;
+
   return {
     state: {
       ...state,
@@ -317,6 +351,8 @@ export function resolveEventChoice(
       pendingEvents: newPendingEvents,
       eventHistory,
       weeklyEventQueue,
+      gameOver,
+      career: gameOver && !state.gameOver ? { ...state.career, phase: "gameover" } : state.career,
     },
     visibleEffects: immediateDelta,
     npcTransitions,

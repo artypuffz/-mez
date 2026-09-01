@@ -6,6 +6,10 @@ export interface EventRepository {
   getPoolEvents(): EventDefinition[];
   getPoolEventsByCategory(category: EventCategory): EventDefinition[];
   getCheckpointCandidates(chainId: string, checkpoint: string): EventDefinition[];
+  // Phase 9 §11 — triggerMode:"crisis" events only. Deliberately separate
+  // from getPoolEvents(): a crisis is never eligible for the normal
+  // weighted pool draw, only for domain/crisis/selection.ts's own resolver.
+  getCrisisEvents(): EventDefinition[];
 }
 
 function checkpointKey(chainId: string, checkpoint: string): string {
@@ -24,6 +28,7 @@ export function createEventRepository(events: EventDefinition[]): EventRepositor
   const byCategory = new Map<EventCategory, EventDefinition[]>();
   const byChainCheckpoint = new Map<string, EventDefinition[]>();
   const pool: EventDefinition[] = [];
+  const crisis: EventDefinition[] = [];
 
   for (const event of sorted) {
     byId.set(event.id, event);
@@ -34,6 +39,10 @@ export function createEventRepository(events: EventDefinition[]): EventRepositor
 
     if (event.triggerMode === "pool") {
       pool.push(event);
+    }
+
+    if (event.triggerMode === "crisis") {
+      crisis.push(event);
     }
 
     // Only "scheduled" events are checkpoint candidates (§4.1) — a "pool"
@@ -54,5 +63,6 @@ export function createEventRepository(events: EventDefinition[]): EventRepositor
     getPoolEvents: () => pool,
     getPoolEventsByCategory: (category) => (byCategory.get(category) ?? []).filter((e) => e.triggerMode === "pool"),
     getCheckpointCandidates: (chainId, checkpoint) => byChainCheckpoint.get(checkpointKey(chainId, checkpoint)) ?? [],
+    getCrisisEvents: () => crisis,
   };
 }

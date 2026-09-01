@@ -24,8 +24,11 @@ export default function EventCard({ event, gameState, disabled, onChoose, boundN
   const description = resolveText(event.description, event.descriptionVariants, ctx);
   const choices = getVisibleChoices(event, ctx);
 
+  const isCrisis = event.triggerMode === 'crisis' || event.category === 'CRISIS';
+
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isCrisis && styles.cardCrisis]}>
+      {isCrisis && <Text style={styles.crisisTag}>KRİTİK HAFTA</Text>}
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
       <View style={styles.choices}>
@@ -47,6 +50,10 @@ export default function EventCard({ event, gameState, disabled, onChoose, boundN
 
 const styles = StyleSheet.create({
   card: { width: '100%', borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 16, gap: 8 },
+  // Phase 9 §34 — a small text tag is enough distinction; deliberately no
+  // red flashing/alarm treatment, matching ÇÖMEZ's deadpan tone.
+  cardCrisis: { borderColor: '#a87438', borderWidth: 1.5 },
+  crisisTag: { fontSize: 11, fontWeight: '700', color: '#a87438', letterSpacing: 0.5 },
   title: { fontSize: 16, fontWeight: '700' },
   description: { fontSize: 14, color: '#333', lineHeight: 20 },
   choices: { gap: 8, marginTop: 8 },

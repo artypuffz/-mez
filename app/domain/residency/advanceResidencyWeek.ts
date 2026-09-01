@@ -2,7 +2,7 @@ import type { GameState, SeniorityStage } from "../state/types";
 import type { SeededRng } from "../rng/seededRng";
 import { getBranchDefinition } from "../config/branches";
 import { getResidencyProgram } from "../config/residencyPrograms";
-import { applyWeeklyBurnout, applyWeeklyFatigue, applyWeeklyStress } from "./weeklyResources";
+import { applyWeeklyBurnout, applyWeeklyFatigue, applyWeeklyStress, updateResourcePressure } from "./weeklyResources";
 import { getResidencyYear } from "./residencyYear";
 import { getSeniorityStage } from "./seniority";
 import { getResidencyCalendar } from "./calendar";
@@ -50,16 +50,14 @@ export function advanceResidencyWeek(state: GameState, rng: SeededRng): WeekAdva
   const previousWeek = state.career.residencyWeek;
   const nextWeek = previousWeek + 1;
 
-  // Deterministic order: fatigue -> stress -> burnout. Burnout reads
-  // THIS week's already-ticked fatigue/stress (not last week's stale
-  // values), so it reacts to the week it's being computed for.
+  // Deterministic order: fatigue -> stress -> resourcePressure (streak
+  // bookkeeping) -> burnout. Burnout/pressure read THIS week's
+  // already-ticked fatigue/stress (not last week's stale values), so they
+  // react to the week being computed for.
   const nextFatigue = applyWeeklyFatigue(state.resources.fatigue, branch, program, rng);
   const nextStress = applyWeeklyStress(state.resources.stress, branch, program, rng);
-  const nextBurnout = applyWeeklyBurnout({
-    stress: nextStress,
-    fatigue: nextFatigue,
-    currentBurnout: state.resources.burnout,
-  });
+  const nextResourcePressure = updateResourcePressure(state.resourcePressure, nextStress, nextFatigue);
+  const nextBurnout = applyWeeklyBurnout(state.resources.burnout, nextResourcePressure);
 
   const previousCalendar = getResidencyCalendar(state.career.residencyStartedAt, previousWeek);
   const nextCalendar = getResidencyCalendar(state.career.residencyStartedAt, nextWeek);
@@ -85,6 +83,7 @@ export function advanceResidencyWeek(state: GameState, rng: SeededRng): WeekAdva
       burnout: nextBurnout,
       // money is untouched this phase — Phase 7 ticks it.
     },
+    resourcePressure: nextResourcePressure,
   };
 
   const transitions: WeekAdvanceTransitions = {};
