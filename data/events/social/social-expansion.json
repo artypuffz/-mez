@@ -1,0 +1,135 @@
+[
+  {
+    "id": "soc_003_memleket_ozlemi",
+    "title": "MEMLEKET ARAMASI",
+    "description": "Annen yine 'ne zaman geleceksin' diye sordu. Bu şehre geleli bir yıl oldu, hâlâ tam olarak 'buralı' hissetmiyorsun.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "flag": "relocated", "eq": true }] },
+    "choices": [
+      {
+        "id": "uzun_telefon",
+        "text": "Uzun bir telefon görüşmesi yap.",
+        "immediateEffects": { "stress": -4, "fatigue": 1 }
+      },
+      {
+        "id": "kisa_gec",
+        "text": "Kısa tut, işin var de.",
+        "immediateEffects": { "stress": 2 }
+      }
+    ]
+  },
+  {
+    "id": "soc_004_aile_evlilik_baskisi",
+    "title": "AİLE SOFRASINDA",
+    "description": "Aileyle akşam yemeğinde konu yine evliliğe geldi. Aynı evde/şehirde olmak, bu soruların sıklığını azaltmıyor; tam tersi.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "flag": "lives_with_family", "eq": true }] },
+    "choices": [
+      {
+        "id": "espriyle_gecistir",
+        "text": "Espriyle geçiştir.",
+        "immediateEffects": { "stress": 2 }
+      },
+      {
+        "id": "ciddi_konus",
+        "text": "Konuyu ciddi şekilde ele al.",
+        "immediateEffects": { "stress": 4 }
+      }
+    ]
+  },
+  {
+    "id": "soc_005_kendi_basina_yalnizlik",
+    "title": "BOŞ DAİRE",
+    "description": "Zor bir günün sonunda eve döndün. Anlatacak kimse yok, dinleyecek kimse yok. Kendi başına geçinmenin bir bedeli de bu.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "flag": "self_sufficient", "eq": true }] },
+    "choices": [
+      {
+        "id": "arkadasi_ara",
+        "text": "Geç saatte olsa bir arkadaşını ara.",
+        "immediateEffects": { "stress": -4 }
+      },
+      {
+        "id": "sessizce_otur",
+        "text": "Sessizce otur, kendinle kal.",
+        "immediateEffects": { "stress": 2, "burnout": 1 }
+      }
+    ]
+  },
+  {
+    "id": "soc_006_ekonomik_rahat_suclulugu",
+    "title": "AYNI MASADA FARKLI DERTLER",
+    "description": "Bir akranın bu ay kirasını nasıl ödeyeceğinden bahsediyor. Sen aynı dertle boğuşmuyorsun; bunu söylemek de garip, söylememek de.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "flag": "financially_comfortable", "eq": true }, { "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "sessizce_dinle",
+        "text": "Sessizce dinle, konuyu değiştirme.",
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 2 }]
+      },
+      {
+        "id": "yemek_ismarla",
+        "text": "O gün yemeği sen ısmarla, laf etmeden.",
+        "immediateEffects": { "money": -600 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 5 }]
+      }
+    ]
+  },
+  {
+    "id": "soc_007_istanbul_yol_yorgunlugu",
+    "title": "İKİ SAATLİK YOL",
+    "description": "Bu şehirde ulaşım, iş kadar yorucu bir mesai gibi. Bugün servise gidiş dönüş toplam iki saatini yolda geçirdin, hiçbirinde oturacak yer bulamadan.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.city", "eq": "istanbul" }] },
+    "choices": [
+      {
+        "id": "taksiye_gec",
+        "text": "Bu hafta birkaç gün taksiyle git.",
+        "immediateEffects": { "money": -1200, "fatigue": -3 }
+      },
+      {
+        "id": "dayan",
+        "text": "Toplu taşımaya dayan.",
+        "immediateEffects": { "fatigue": 3 }
+      }
+    ]
+  },
+  {
+    "id": "soc_008_kucuk_sehir_sosyal_cevre",
+    "title": "HERKES BİRBİRİNİ TANIYOR",
+    "description": "Bu şehirde sosyal çevre küçük; hastanedeki bir olay, akşam gittiğin kafede bile konuşuluyor. Bu bazen rahatlatıcı, bazen bunaltıcı.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.city", "in": ["eskisehir", "bursa"] }] },
+    "choices": [
+      {
+        "id": "tanidikliktan_keyif_al",
+        "text": "Bu yakınlıktan keyif al.",
+        "immediateEffects": { "stress": -3 }
+      },
+      {
+        "id": "mesafeni_koru",
+        "text": "Bilinçli olarak mesafeni koru.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  }
+]

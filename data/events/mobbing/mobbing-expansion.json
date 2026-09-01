@@ -1,0 +1,188 @@
+[
+  {
+    "id": "mob_003_ben_comezken",
+    "title": "'BEN ÇÖMEZKEN...'",
+    "description": "Fazladan bir işi neden sana verdiklerini sorduğunda kıdemli, 'ben çömezken çok daha fazlasını yapardım' dedi. Bu cümle bir açıklama değil, bir kapanış oldu.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "in": ["comez", "orta"] }] },
+    "choices": [
+      {
+        "id": "kabullen",
+        "text": "Bir şey söylemeden kabullen.",
+        "immediateEffects": { "stress": 4 },
+        "behaviorTags": ["hierarchy:abused_silently"]
+      },
+      {
+        "id": "karsi_cikan_soru",
+        "text": "'O zaman neden şimdi farklı' diye sor.",
+        "immediateEffects": { "stress": 5 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -4 }]
+      }
+    ]
+  },
+  {
+    "id": "mob_004_baskasinin_hatasi",
+    "title": "SENİN ADIN YAZILI",
+    "description": "Bir hata bulundu. Dosyada son işlem senin adına kayıtlı çünkü nöbet devrini sen aldın, hatayı yapan sen değilsin. Kimse bunu açıklığa kavuşturmak istemiyor.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "gercek_faili_belirle",
+        "text": "Kayıtları göstererek gerçek sorumluyu netleştir.",
+        "immediateEffects": { "stress": 5 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "grudge": 3 }]
+      },
+      {
+        "id": "sessizce_ustlen",
+        "text": "Tartışmaya değmez, sessizce üstlen.",
+        "immediateEffects": { "stress": 6 },
+        "behaviorTags": ["hierarchy:abused_silently"]
+      }
+    ]
+  },
+  {
+    "id": "mob_005_toplantida_elestiri",
+    "title": "HERKESİN ÖNÜNDE",
+    "description": "Sabah toplantısında sunduğun bir bulgu, hoca tarafından herkesin önünde sert bir dille eleştirildi. İçerik haklı olabilir; ton, gerekli değildi.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 18,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 12 }] },
+    "choices": [
+      {
+        "id": "sakin_cevap_ver",
+        "text": "Sakince, savunmadan cevap ver.",
+        "immediateEffects": { "stress": 5 }
+      },
+      {
+        "id": "susup_gec",
+        "text": "Bir şey demeden geç.",
+        "immediateEffects": { "stress": 7 },
+        "behaviorTags": ["hierarchy:abused_silently"]
+      }
+    ]
+  },
+  {
+    "id": "mob_006_basari_sahiplenme",
+    "title": "SENİN FİKRİN, BAŞKASININ SUNUMU",
+    "description": "Geçen hafta önerdiğin bir iyileştirme, bugünkü toplantıda kıdemli tarafından kendi fikriymiş gibi sunuldu. Odadaki hiç kimse bunu fark etmedi, ya da fark edip söylemedi.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "sonradan_belirt",
+        "text": "Toplantı sonrası hocaya durumu ilet.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -5 }]
+      },
+      {
+        "id": "birak_gitsin",
+        "text": "Bırak gitsin, enerjine değmez.",
+        "immediateEffects": { "stress": 2 }
+      }
+    ]
+  },
+  {
+    "id": "mob_007_son_dakika_gorev",
+    "title": "CUMA 17.45",
+    "description": "Haftayı bitirmeye 15 dakika kala kıdemli sana ek bir görev verdi. 'Uzun sürmez' dedi, uzun sürmeyeceğini gösteren hiçbir işaret yok.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 14,
+    "choices": [
+      {
+        "id": "hemen_yap",
+        "text": "Hemen yap, planlarını ertele.",
+        "immediateEffects": { "fatigue": 6, "stress": 4 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": 3 }]
+      },
+      {
+        "id": "pazartesiye_birak",
+        "text": "'Pazartesi ilk iş yaparım' de.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -3 }]
+      }
+    ]
+  },
+  {
+    "id": "mob_008_gece_mesaji",
+    "title": "GECE 23.50",
+    "description": "Kıdemliden gece geç saatte bir mesaj geldi: yarınki işle ilgili bir soru, cevabı acil değil ama mesajın kendisi bir beklenti taşıyor gibi.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 12,
+    "choices": [
+      {
+        "id": "hemen_cevapla",
+        "text": "Hemen cevap yaz.",
+        "immediateEffects": { "fatigue": 2, "stress": 2 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": 2 }]
+      },
+      {
+        "id": "sabaha_birak",
+        "text": "Sabaha kadar cevap verme.",
+        "immediateEffects": { "stress": -1 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -2 }]
+      }
+    ]
+  },
+  {
+    "id": "mob_009_akademik_angarya",
+    "title": "GÖNÜLLÜLÜK ESASINA DAYALI",
+    "description": "Bölüm başkanı bir sunumun 'gönüllülük esasına dayalı' olduğunu söyledi. Gönüllü olmayanların isim listesi ayrıca tutuluyor gibi bir his var.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "gonullu_ol",
+        "text": "Gönüllü ol, riske girme.",
+        "immediateEffects": { "fatigue": 3, "stress": 2 },
+        "behaviorTags": ["hierarchy:complicit"]
+      },
+      {
+        "id": "gecistir",
+        "text": "Sessizce geçiştir, adını yazdırma.",
+        "immediateEffects": { "stress": 3 }
+      }
+    ]
+  },
+  {
+    "id": "mob_010_isi_asagi_devretme",
+    "title": "ÖĞRETİCİ DENEYİM",
+    "description": "Kıdemli, kendi sorumluluğundaki sıkıcı bir işi 'senin için öğretici olur' diyerek sana devretti. Öğretici kısmı belirsiz, sıkıcı kısmı çok net.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "in": ["comez", "orta"] }] },
+    "choices": [
+      {
+        "id": "isi_ustlen",
+        "text": "İşi üstlen, ses çıkarma.",
+        "immediateEffects": { "fatigue": 4, "stress": 2 }
+      },
+      {
+        "id": "gercekten_ogretici_mi",
+        "text": "'Bu gerçekten öğretici mi' diye sor.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -3 }]
+      }
+    ]
+  }
+]

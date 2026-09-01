@@ -1,0 +1,175 @@
+[
+  {
+    "id": "bur_001_imza_eksik",
+    "title": "EKSİK İMZA",
+    "description": "Evrak hazır, tek eksiği bir imza. İmza sahibi bu hafta izinde. Vekili kim olduğu belli değil.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 14,
+    "choices": [
+      {
+        "id": "vekili_bul",
+        "text": "Vekilini bulmak için birkaç birim dolaş.",
+        "immediateEffects": { "fatigue": 3, "stress": 2 }
+      },
+      {
+        "id": "izinliyi_ara",
+        "text": "İzindeki kişiyi arayıp rahatsız et.",
+        "immediateEffects": { "stress": 1 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": -2 }]
+      }
+    ]
+  },
+  {
+    "id": "bur_002_eski_yeni_form",
+    "title": "FORMUN İKİ VERSİYONU",
+    "description": "Doldurduğun form eski versiyonmuş. Yeni versiyon aynı bilgileri farklı sırada istiyor. İkisi arasındaki fark, üç ay önce yayınlanan ama kimsenin okumadığı bir genelgeyle açıklanmış.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 14,
+    "choices": [
+      {
+        "id": "yeniden_doldur",
+        "text": "Yeni formu baştan doldur.",
+        "immediateEffects": { "fatigue": 2, "stress": 2 }
+      },
+      {
+        "id": "eskiyi_israrla_savun",
+        "text": "Eski formun neden yeterli olduğunu ısrarla savun.",
+        "immediateEffects": { "stress": 4 }
+      }
+    ]
+  },
+  {
+    "id": "bur_003_kayip_kase",
+    "title": "KAŞE NEREDE",
+    "description": "Belgenin onaylanması için gereken kaşe, ilgili birimin masasında değil. 'Başka bir arkadaşta olabilir' dediler, hangi arkadaş belirtilmedi.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 16,
+    "choices": [
+      {
+        "id": "kaseyi_ara",
+        "text": "Kaşeyi bulana kadar sor sor dolaş.",
+        "immediateEffects": { "fatigue": 3, "stress": 3 }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Yarına bırak.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "bur_004_baska_binaya_tasima",
+    "title": "DİĞER BİNA",
+    "description": "Belgenin bir kopyasının elden, on dakika yürüyerek gidilen başka bir binaya teslim edilmesi gerekiyor. Dijital gönderim seçeneği teorik olarak var ama kimse kullanmıyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 12,
+    "choices": [
+      {
+        "id": "kendin_goetuer",
+        "text": "Kendin götür.",
+        "immediateEffects": { "fatigue": 3 }
+      },
+      {
+        "id": "dijital_dene",
+        "text": "Dijital gönderimi dene, riske gir.",
+        "immediateEffects": { "stress": 2 },
+        "flags": { "set": { "bur_dijital_denendi": true } }
+      }
+    ]
+  },
+  {
+    "id": "bur_005_toner_bitti",
+    "title": "TONER BİTTİ",
+    "description": "Serviste toner bitti. Yedek stok 'sipariş süreci devam ediyor' durumunda, üç haftadır. Yazdırman gereken belge acil.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 16,
+    "choices": [
+      {
+        "id": "baska_yerde_yazdir",
+        "text": "Başka bir birimde yazdır.",
+        "immediateEffects": { "fatigue": 2 }
+      },
+      {
+        "id": "cebinden_toner_al",
+        "text": "Cebinden toner satın al.",
+        "immediateEffects": { "money": -1200 }
+      }
+    ]
+  },
+  {
+    "id": "bur_006_eimza_sistemi_coktu",
+    "title": "E-İMZA ÇÖKTÜ",
+    "description": "Elektronik imza sistemi bu sabahtan beri çalışmıyor. Islak imza için ilgili herkesin aynı anda aynı odada olması gerekiyor; bu asla olmuyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 8 }] },
+    "choices": [
+      {
+        "id": "islak_imza_pesinde_kos",
+        "text": "Islak imza için herkesin peşinden koş.",
+        "immediateEffects": { "fatigue": 4, "stress": 3 }
+      },
+      {
+        "id": "sistemin_duzelmesini_bekle",
+        "text": "Sistemin düzelmesini bekle, iş bekler.",
+        "immediateEffects": { "stress": 5 }
+      }
+    ]
+  },
+  {
+    "id": "bur_007_ayni_belge_iki_kez",
+    "title": "AYNI BELGE İKİ KEZ",
+    "description": "Az önce teslim ettiğin belgenin bir kopyasını, bu kez farklı bir birime, farklı bir dosyada tekrar teslim etmen isteniyor. İçerik birebir aynı.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 16,
+    "choices": [
+      {
+        "id": "sessizce_tekrar_hazirla",
+        "text": "Sessizce tekrar hazırla, teslim et.",
+        "immediateEffects": { "fatigue": 2, "stress": 2 }
+      },
+      {
+        "id": "nedenini_sor",
+        "text": "Neden iki kez gerektiğini sor.",
+        "immediateEffects": { "stress": 3 }
+      }
+    ]
+  },
+  {
+    "id": "bur_008_yanlis_dosya_no",
+    "title": "YANLIŞ DOSYA NUMARASI",
+    "description": "Bir hastanın dosya numarası sistemde yanlış girilmiş, yıllar önce. Şimdi düzeltmek istiyorsun ama düzeltme işlemi için ayrı bir form, o formun için de ayrı bir onay gerekiyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "duzeltme_surecini_baslat",
+        "text": "Düzeltme sürecini başlat.",
+        "immediateEffects": { "fatigue": 3, "stress": 2 },
+        "flags": { "set": { "bur_dosya_duzeltme_baslatildi": true } }
+      },
+      {
+        "id": "boyle_kalsin",
+        "text": "Şimdilik böyle kalsın, kimseyi ilgilendirmiyor.",
+        "immediateEffects": { "stress": -1 }
+      }
+    ]
+  }
+]

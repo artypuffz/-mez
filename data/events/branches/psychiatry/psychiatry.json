@@ -1,0 +1,231 @@
+[
+  {
+    "id": "psy_001_uzun_gorusme",
+    "title": "GÖRÜŞME ODASI",
+    "description": "Planlanan görüşme 30 dakikaydı. 90. dakikadasın. Dışarıda bekleyen üç hasta daha var, birinin refakatçisi kapıyı iki kez araladı.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 8,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "psikiyatri"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "gorusmeyi_uzat",
+        "text": "Görüşmeyi doğal bitiş noktasına kadar sürdür.",
+        "immediateEffects": {
+          "fatigue": 6,
+          "stress": 4
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hasta_generic",
+            "trust": 6
+          }
+        ]
+      },
+      {
+        "id": "nazikce_kes",
+        "text": "Nazikçe sonlandır, devam randevusu ver.",
+        "immediateEffects": {
+          "stress": 5
+        }
+      },
+      {
+        "id": "sekreteri_gonder",
+        "text": "Sekreteri gönderip diğerlerini beklemesini söyle.",
+        "immediateEffects": {
+          "stress": 3
+        },
+        "relationshipEffects": [
+          {
+            "npc": "sekreter_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "psy_002_supervizyon_iptali",
+    "title": "SÜPERVİZYON",
+    "description": "Haftalık süpervizyon randevun bu hafta da iptal oldu. Hocanın asistanı 'başka zaman bakılır' dedi. Bu, art arda dördüncü iptal. Vaka notların bilgisayarında sessizce birikiyor.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "psikiyatri"
+          ]
+        },
+        {
+          "stat": "career.week",
+          "gte": 10
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "resmi_talep",
+        "text": "Bölüm sekreterliğine resmi olarak yeni bir tarih talep et.",
+        "immediateEffects": {
+          "stress": 3
+        },
+        "flags": {
+          "set": {
+            "psy_supervizyon_takipte": true
+          }
+        }
+      },
+      {
+        "id": "sessizce_bekle",
+        "text": "Sessizce bir sonraki haftayı bekle.",
+        "immediateEffects": {
+          "stress": 5,
+          "burnout": 2
+        }
+      },
+      {
+        "id": "baska_hocaya_git",
+        "text": "Başka bir öğretim üyesinden yardım iste.",
+        "immediateEffects": {
+          "stress": 4
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          },
+          {
+            "npc": "hoca_ikinci_generic",
+            "trust": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "psy_003_yatak_yonlendirme",
+    "title": "YATAKLI SERVİSE SEVK",
+    "description": "Acil bir başvuru yataklı psikiyatri servisine yönlendirilmesi gereken düzeyde. Uygun yatak başka bir hastanede, oraya sevk için üç ayrı formun ıslak imzalı olması gerekiyor.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 14,
+    "requirements": { "all": [{ "branchIn": ["psikiyatri"] }, { "stat": "career.week", "gte": 8 }] },
+    "choices": [
+      {
+        "id": "sureci_bizzat_takip_et",
+        "text": "Formları bizzat elden takip et.",
+        "immediateEffects": { "fatigue": 5, "stress": 4 }
+      },
+      {
+        "id": "sekreterlige_devret",
+        "text": "Süreci sekreterliğe devret, işine dön.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "sekreter_generic", "trust": -1 }]
+      }
+    ]
+  },
+  {
+    "id": "psy_004_grup_terapisi_hazirlik",
+    "title": "GRUP TERAPİSİ",
+    "description": "Bu haftaki grup terapisi oturumunu sen yönetiyorsun. Hazırlık için ayrılan resmi bir zaman yok; ya mesai dışında hazırlanacaksın ya da doğaçlama gideceksin.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "branchIn": ["psikiyatri"] }, { "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "aksam_hazirlan",
+        "text": "Akşam eve iş götürüp hazırlan.",
+        "immediateEffects": { "fatigue": 4, "stress": 2 }
+      },
+      {
+        "id": "dogaclama_git",
+        "text": "Tecrübene güvenip doğaçlama git.",
+        "immediateEffects": { "stress": 5 }
+      }
+    ]
+  },
+  {
+    "id": "psy_005_vaka_sunumu",
+    "title": "AYLIK VAKA SUNUMU",
+    "description": "Aylık vaka sunumu sırası sende. Salon dolu; sunumun uzunluğu ve derinliği, orada bulunmayanlar tarafından bile sonradan konuşuluyor.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "branchIn": ["psikiyatri"] }, { "stat": "career.week", "gte": 20 }] },
+    "choices": [
+      {
+        "id": "detayli_hazirlan",
+        "text": "Hafta boyunca detaylı hazırlan.",
+        "immediateEffects": { "fatigue": 6 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": 5 }]
+      },
+      {
+        "id": "standart_gec",
+        "text": "Standart bir sunumla geç.",
+        "immediateEffects": { "stress": 2 }
+      }
+    ]
+  },
+  {
+    "id": "psy_006_bilgi_talebi_siniri",
+    "title": "AİLENİN BİLGİ TALEBİ",
+    "description": "Bir hastanın ailesi tedavisi hakkında ayrıntılı bilgi istiyor. Hasta reşit ve rızası olmadan paylaşılamayacağını biliyorsun; aile bunu 'gizlemek' olarak algılıyor.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "branchIn": ["psikiyatri"] }, { "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "siniri_acikla",
+        "text": "Gizlilik sınırını sakince açıkla.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "hasta_generic", "trust": 3 }]
+      },
+      {
+        "id": "hocaya_yonlendir",
+        "text": "Konuşmayı hocana yönlendir.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "psy_007_damgalanma_taniklik",
+    "title": "BEKLEME SALONUNDA BİR CÜMLE",
+    "description": "Bekleme salonunda bir hasta yakını, yüksek sesle 'buraya gelen zaten delidir' dedi. Hasta bunu duydu. Odaya girdiğinde hiçbir şey söylemedi ama bir şey değişmişti.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "branchIn": ["psikiyatri"] }, { "stat": "career.week", "gte": 12 }] },
+    "choices": [
+      {
+        "id": "gorusmede_ele_al",
+        "text": "Görüşmede bunu nazikçe ele al.",
+        "immediateEffects": { "stress": 3 },
+        "relationshipEffects": [{ "npc": "hasta_generic", "trust": 6 }]
+      },
+      {
+        "id": "gundeme_getirme",
+        "text": "Planlanan gündeme sadık kal, değinme.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  }
+]

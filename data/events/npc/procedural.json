@@ -1,0 +1,215 @@
+[
+  {
+    "id": "npc_proc_001_kin_tutan_kidemli",
+    "title": "ESKİ BİR HESAP",
+    "description": "Bir kıdemli asistan, aylar önce yaşanan küçük bir anlaşmazlığı hâlâ unutmamış gibi davranıyor. Bugün senden istediği şeyde bu, fazladan bir sertlik olarak kendini gösteriyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "npcSelectors": { "primary": { "highestGrudgeByRole": "senior_resident" } },
+    "choices": [
+      {
+        "id": "acikca_konus",
+        "text": "Meseleyi açıkça konuşmayı öner.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 3, "grudge": -5 }]
+      },
+      {
+        "id": "gormezden_gel",
+        "text": "Görmezden gel, zamanla geçer diye düşün.",
+        "immediateEffects": { "stress": 2 }
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_002_guvensiz_hoca",
+    "title": "GÜVENMEYEN GÖZ",
+    "description": "Bir öğretim üyesi senin işini her seferinde iki kez kontrol ediyor. Belli ki sana güvenmiyor; sebebi ne senin ne de onun net olarak söylediği bir şey.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 20 }] },
+    "npcSelectors": { "primary": { "lowestTrustByRole": "faculty" } },
+    "choices": [
+      {
+        "id": "guveni_kazanmaya_calis",
+        "text": "Tutarlı davranarak güveni kazanmaya çalış.",
+        "immediateEffects": { "stress": 3 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 4 }]
+      },
+      {
+        "id": "umursama",
+        "text": "Umursama, herkesin güvenini kazanmak zorunda değilsin.",
+        "immediateEffects": { "stress": -1 }
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_003_hemsire_ile_rutin",
+    "title": "SABAH RUTİNİ",
+    "description": "Servisteki bir hemşireyle sabah rutini artık bir örüntüye oturmuş: sen gelmeden önce dosyaları hazırlıyor, sen de karşılığında ilaç onaylarını hızlı imzalıyorsun. Söylenmemiş bir anlaşma.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "npcSelectors": { "primary": { "randomActiveByRole": "nurse" } },
+    "choices": [
+      {
+        "id": "anlasmayi_surdur",
+        "text": "Anlaşmayı olduğu gibi sürdür.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 3 }]
+      },
+      {
+        "id": "her_seyi_kendin_kontrol_et",
+        "text": "Bu sefer her şeyi kendin baştan kontrol et.",
+        "immediateEffects": { "fatigue": 2 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -1 }]
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_004_yakin_akran",
+    "title": "EN YAKIN AKRANIN",
+    "description": "Bir akran asistanla aranız diğerlerinden farklı; iş dışında da birkaç kez görüştünüz. Bugün sana zor bir şeyi anlattı, tavsiye değil, sadece dinlenmek istiyor gibi.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "npcSelectors": { "primary": { "highestTrustByRole": "peer_resident" } },
+    "choices": [
+      {
+        "id": "sadece_dinle",
+        "text": "Sadece dinle, tavsiye verme.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 4, "friendship": 6 }]
+      },
+      {
+        "id": "cozum_onerileri_sun",
+        "text": "Çözüm önerileri sunmaya çalış.",
+        "relationshipEffects": [{ "boundNpc": "primary", "friendship": 1 }]
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_005_supheci_hemsire",
+    "title": "İKİ KEZ KONTROL",
+    "description": "Bir hemşire, yazdığın bir ilaç dozunu telefon açıp doğrulamadan uygulamıyor. Prosedür olarak doğru; ama tonundan, senin için özel bir istisna yaptığını hissediyorsun.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 8 }] },
+    "npcSelectors": { "primary": { "lowestTrustByRole": "nurse" } },
+    "choices": [
+      {
+        "id": "sabirla_dogrula",
+        "text": "Sabırla her seferinde doğrula.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 3 }]
+      },
+      {
+        "id": "rahatsizligini_belli_et",
+        "text": "Rahatsızlığını belli et.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -2 }]
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_006_gergin_hemsire",
+    "title": "GERGİN BİR NÖBET",
+    "description": "Bir hemşireyle geçen ay yaşanan bir gerginlik hâlâ havada asılı duruyor. Bu nöbette aynı vardiyayı paylaşıyorsunuz; konuşmalar gerekenden kısa.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "onCall.currentMonthTotalShifts", "gte": 1 }] },
+    "npcSelectors": { "primary": { "highestGrudgeByRole": "nurse" } },
+    "choices": [
+      {
+        "id": "ozur_dile",
+        "text": "Gerekiyorsa özür dile, meseleyi kapat.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "boundNpc": "primary", "grudge": -6, "trust": 3 }]
+      },
+      {
+        "id": "profesyonel_mesafe",
+        "text": "Sadece profesyonel mesafede kal.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_007_kidemli_ile_sohbet",
+    "title": "ASANSÖR SOHBETİ",
+    "description": "Bir kıdemli asistanla asansörde beklenmedik bir sohbet başladı. İş dışı, sıradan, birkaç katlık bir konuşma. Bazen ilişkiler böyle küçük anlarda şekilleniyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 18,
+    "npcSelectors": { "primary": { "randomActiveByRole": "senior_resident" } },
+    "choices": [
+      {
+        "id": "sohbete_katil",
+        "text": "Sohbete gerçekten katıl.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 3, "friendship": 3 }]
+      },
+      {
+        "id": "kisa_kes",
+        "text": "Kısa cevaplarla geç.",
+        "relationshipEffects": [{ "boundNpc": "primary", "friendship": -1 }]
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_008_ilk_mentorluk",
+    "title": "İLK KEZ SEN GÖSTERİYORSUN",
+    "description": "Yeni gelen bir çömez, servis işleyişini senden öğreniyor. Sen de bir zamanlar aynı yerde durmuştun; şimdi anlatan taraf sensin.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "orta" }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "kendi_deneyimini_paylas",
+        "text": "Kendi ilk yılından örnekler vererek anlat.",
+        "immediateEffects": { "fatigue": 1 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 5 }],
+        "behaviorTags": ["junior:supportive"]
+      },
+      {
+        "id": "gerekli_kadar_anlat",
+        "text": "Sadece gerekli kadarını anlat.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 1 }]
+      }
+    ]
+  },
+  {
+    "id": "npc_proc_009_orta_kidem_gorus_ayrisi",
+    "title": "SENİNLE AYNI FİKİRDE DEĞİL",
+    "description": "Bir vaka üzerine bir akranınla görüş ayrılığına düştünüz. İkiniz de orta kıdemdesiniz; kimse otomatik olarak haklı değil bu sefer.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "orta" }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "peer_resident" } },
+    "choices": [
+      {
+        "id": "gorusunu_savun",
+        "text": "Görüşünü net şekilde savun.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -1 }],
+        "immediateEffects": { "stress": 2 }
+      },
+      {
+        "id": "orta_yol_bul",
+        "text": "Orta bir yol bulmaya çalış.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 3 }]
+      }
+    ]
+  }
+]

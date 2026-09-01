@@ -3,6 +3,7 @@ import { generateInitialClinic } from './generation';
 import { createSeededRng } from '../rng/seededRng';
 import { getResidencyProgram } from '../config/residencyPrograms';
 import { DEFAULT_CLINIC_COMPOSITION } from '../config/clinicComposition';
+import { NPC_TEMPLATES } from './templates';
 
 const program = getResidencyProgram('baskent_ic');
 
@@ -33,12 +34,18 @@ describe('generateInitialClinic', () => {
 
   it('respects each role composition range (plus the authored template extras)', () => {
     const { npcs } = generateInitialClinic(program, createSeededRng('composition-check'));
+    // Every authored template (Barış senior_resident, Zeynep secretary,
+    // Erhan faculty, Deniz junior_resident — see domain/npc/templates.ts)
+    // adds one NPC on top of the procedural roll for its role, so the
+    // composition range alone is a lower/upper bound on the PROCEDURAL
+    // count only — allow +1 per role that has a template.
+    const templateBonusByRole: Record<string, number> = {};
+    for (const template of NPC_TEMPLATES) {
+      templateBonusByRole[template.role] = (templateBonusByRole[template.role] ?? 0) + 1;
+    }
     for (const [role, range] of Object.entries(DEFAULT_CLINIC_COMPOSITION)) {
       const count = npcs.filter((n) => n.role === role).length;
-      // senior_resident also gets the authored "baris" template on top of
-      // the procedural roll — the composition range alone is a lower/upper
-      // bound on the PROCEDURAL count, so allow +1 for that one role.
-      const templateBonus = role === 'senior_resident' ? 1 : 0;
+      const templateBonus = templateBonusByRole[role] ?? 0;
       expect(count).toBeGreaterThanOrEqual(range.min);
       expect(count).toBeLessThanOrEqual(range.max + templateBonus);
     }

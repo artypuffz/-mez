@@ -46,6 +46,9 @@
     "triggerMode": "pool",
     "weight": 6,
     "cooldownWeeks": 24,
+    "requirements": {
+      "all": [{ "flag": "has_partner", "eq": true }]
+    },
     "choices": [
       {
         "id": "guzel_hediye",
@@ -86,6 +89,51 @@
             "trust": -6
           }
         ]
+      }
+    ]
+  },
+  {
+    "id": "econ_002_kira_kesildi",
+    "title": "KART EKSTRESİ",
+    "description": "Bu ayki kart ekstresinde kira ödemesinin normalden yüksek çekildiğini fark ettin. Bankayı aramak mı, sineye çekmek mi?",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 16,
+    "requirements": {
+      "all": [{ "flag": "lives_with_family", "neq": true }]
+    },
+    "choices": [
+      {
+        "id": "bankayi_ara",
+        "text": "Bankayı ara, uğraş.",
+        "immediateEffects": { "stress": 3, "money": 400 }
+      },
+      {
+        "id": "sinede_cek",
+        "text": "Uğraşacak vaktin yok, sineye çek.",
+        "immediateEffects": { "money": -400 }
+      }
+    ]
+  },
+  {
+    "id": "econ_003_beklenmedik_masraf",
+    "title": "BEKLENMEDİK MASRAF",
+    "description": "Telefon ekranı çatladı. Tam da bu ay olacaktı.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 3,
+    "cooldownWeeks": 20,
+    "choices": [
+      {
+        "id": "hemen_tamir_ettir",
+        "text": "Hemen tamir ettir.",
+        "immediateEffects": { "money": -3500, "stress": -2 }
+      },
+      {
+        "id": "idare_et",
+        "text": "Çatlakla idare et.",
+        "immediateEffects": { "stress": 2 }
       }
     ]
   }

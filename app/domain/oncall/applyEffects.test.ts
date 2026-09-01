@@ -53,4 +53,36 @@ describe('applyOnCallEffects', () => {
     const result = applyOnCallEffects(schedule, [{ type: 'remove_player_shift', count: 999 }], createSeededRng('r'));
     expect(result!.player.totalShifts).toBe(0);
   });
+
+  it('transfer_player_shift_to_npc moves an existing player shift onto the resolved npc (fixed id)', () => {
+    const schedule = testSchedule();
+    const before = schedule.player.totalShifts;
+    const result = applyOnCallEffects(schedule, [{ type: 'transfer_player_shift_to_npc', target: { npc: 'npc_1' } }], createSeededRng('r'));
+    expect(result!.player.totalShifts).toBe(before - 1);
+    expect(result!.assignments.some((a) => a.assignedNpcId === 'npc_1' && a.source === 'swap')).toBe(true);
+  });
+
+  it('transfer_player_shift_to_npc resolves a boundNpc target against the passed boundNpcIds', () => {
+    const schedule = testSchedule();
+    const result = applyOnCallEffects(
+      schedule,
+      [{ type: 'transfer_player_shift_to_npc', target: { boundNpc: 'primary' } }],
+      createSeededRng('r'),
+      { primary: 'npc_bound' }
+    );
+    expect(result!.assignments.some((a) => a.assignedNpcId === 'npc_bound')).toBe(true);
+  });
+
+  it('transfer_player_shift_to_npc is a no-op if the target cannot be resolved', () => {
+    const schedule = testSchedule();
+    const result = applyOnCallEffects(schedule, [{ type: 'transfer_player_shift_to_npc', target: { boundNpc: 'missing' } }], createSeededRng('r'));
+    expect(result).toEqual(schedule);
+  });
+
+  it('transfer_player_shift_to_npc is a no-op if the player has no shifts left', () => {
+    const schedule = testSchedule();
+    const emptied = applyOnCallEffects(schedule, [{ type: 'remove_player_shift', count: 999 }], createSeededRng('r'))!;
+    const result = applyOnCallEffects(emptied, [{ type: 'transfer_player_shift_to_npc', target: { npc: 'npc_1' } }], createSeededRng('r'));
+    expect(result).toEqual(emptied);
+  });
 });

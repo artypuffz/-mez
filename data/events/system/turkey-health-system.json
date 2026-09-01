@@ -1,0 +1,230 @@
+[
+  {
+    "id": "hs_003_zorunlu_guvenlik_egitimi",
+    "title": "ZORUNLU EĞİTİM",
+    "description": "Tüm personele zorunlu bir 'çalışan güvenliği' eğitimi geldi. Eğitim, mesai saatleri dışında, katılım zorunlu ama ek ücretsiz. Sunum 47 slayt.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "katil",
+        "text": "Katıl, sonuna kadar otur.",
+        "immediateEffects": { "fatigue": 3, "stress": 1 }
+      },
+      {
+        "id": "imza_atip_cik",
+        "text": "İmzayı at, ilk fırsatta çık.",
+        "immediateEffects": { "stress": 1 },
+        "flags": { "set": { "hs_egitim_yarim_kaldi": true } }
+      }
+    ]
+  },
+  {
+    "id": "hs_004_yeni_form_11_sayfa",
+    "title": "YENİ FORM",
+    "description": "Son dönemdeki dava haberlerinden sonra klinikte yeni bir aydınlatılmış onam formu kullanılmaya başlandı. Form 11 sayfa. Hastaların çoğu üçüncü sayfada soru sormaya başlıyor.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 6 }] },
+    "choices": [
+      {
+        "id": "sabirla_aciklayarak_gec",
+        "text": "Sabırla, madde madde açıklayarak ilerle.",
+        "immediateEffects": { "fatigue": 3, "stress": 2 },
+        "relationshipEffects": [{ "npc": "hasta_generic", "trust": 4 }]
+      },
+      {
+        "id": "hizli_imzalat",
+        "text": "Özetle geç, imzayı al.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "hs_005_performans_puani",
+    "title": "PERFORMANS PUANI",
+    "description": "Bu ayki performans puanların yayınlandı. Sayı, emeğini hiçbir şekilde yansıtmıyormuş gibi hissettiriyor; yine de o sayı bordronda bir yere dokunuyor.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 12 }] },
+    "choices": [
+      {
+        "id": "itiraz_dilekcesi",
+        "text": "İtiraz dilekçesi ver.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "hs_performans_itiraz": true } }
+      },
+      {
+        "id": "kabullen",
+        "text": "Kabullen, tartışmaya değmez.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "hs_006_randevu_yogunlugu",
+    "title": "GÜNLÜK RANDEVU SAYISI",
+    "description": "Poliklinik randevu sayısına resmi bir üst sınır yok. Bu ay ortalama günlük sayı yine arttı. Sistem yeni randevu almaya devam ediyor, senin gün 24 saat değil.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "sureleri_kisalt",
+        "text": "Görüşme sürelerini kısaltarak yetiştir.",
+        "immediateEffects": { "stress": 5 }
+      },
+      {
+        "id": "sirayi_asma",
+        "text": "Süreni koru, sırayı taşır.",
+        "immediateEffects": { "fatigue": 6, "stress": 2 }
+      }
+    ]
+  },
+  {
+    "id": "hs_007_ulusal_sistem_coktu",
+    "title": "ULUSAL SİSTEM ÇÖKTÜ",
+    "description": "Ülke çapında sağlık kayıt sistemi bu sabahtan beri erişilemez durumda. Haberlerde 'planlı bakım' deniyor, kimse ne zaman biteceğini bilmiyor. Reçeteler kağıda yazılıyor, tıpkı on yıl önceki gibi.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 8 }] },
+    "choices": [
+      {
+        "id": "kagide_gec",
+        "text": "Kağıt sisteme geç, devam et.",
+        "immediateEffects": { "fatigue": 6, "stress": 4 }
+      },
+      {
+        "id": "sikayet_et",
+        "text": "İdareye durumu resmi olarak ilet.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "hs_ulusal_cokme_bildirildi": true } }
+      }
+    ]
+  },
+  {
+    "id": "hs_008_gece_yalniz_hissetme",
+    "title": "GECE NÖBETİNDE YALNIZ",
+    "description": "Gece nöbetinde güvenlik görevlisi sayısı ikiden bire indi, 'bütçe' gerekçesiyle. Koridorlar her zamankinden daha sessiz, bu sessizlik seni her zamankinden daha tetikte tutuyor.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "onCall.currentMonthTotalShifts", "gte": 1 }] },
+    "choices": [
+      {
+        "id": "durumu_bildir",
+        "text": "Durumu resmi olarak bildir.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "hs_guvenlik_sikayeti": true } }
+      },
+      {
+        "id": "tedbirli_devam_et",
+        "text": "Kendi tedbirlerini alarak devam et.",
+        "immediateEffects": { "stress": 5, "fatigue": 2 }
+      }
+    ]
+  },
+  {
+    "id": "hs_009_izin_fiilen_kullanilamiyor",
+    "title": "KAĞIT ÜZERİNDE İZİN",
+    "description": "Yıllık izin hakkın var, kağıt üzerinde. Fiilen kullanmaya kalktığında servis 'personel yetersiz' diyor. Bu cümle her seferinde aynı, hangi ay olursa olsun.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 20 }] },
+    "choices": [
+      {
+        "id": "israrla_talep_et",
+        "text": "İzin hakkını ısrarla talep et.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "kidemli_generic", "trust": -2 }]
+      },
+      {
+        "id": "erteler",
+        "text": "Bir kez daha ertele.",
+        "immediateEffects": { "stress": 3, "burnout": 2 }
+      }
+    ]
+  },
+  {
+    "id": "hs_010_dava_sonrasi_atmosfer",
+    "title": "SERVİSTEKİ YENİ HAVA",
+    "description": "Ülke çapında konuşulan bir malpraktis davasının haberleri bu hafta her yerde. Serviste kimse doğrudan konuşmuyor ama herkes birden daha fazla not tutmaya, her adımı belgelemeye başladı.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "sen_de_uy",
+        "text": "Sen de daha fazla belgelemeye başla.",
+        "immediateEffects": { "fatigue": 3, "stress": 3 },
+        "flags": { "set": { "hs_defansif_dokumantasyon": true } }
+      },
+      {
+        "id": "eskisi_gibi_devam_et",
+        "text": "Alışkanlıklarını değiştirme.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "hs_011_bakanlik_genelgesi",
+    "title": "BAKANLIK GENELGESİ",
+    "description": "Yeni bir bakanlık genelgesi, asistan hekimlere ek bir raporlama görevi getirdi. Görevin amacı genelgede iki cümleyle açıklanmış, uygulaması hiç açıklanmamış.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 20 }] },
+    "choices": [
+      {
+        "id": "uygulamayi_kendin_kurgula",
+        "text": "Uygulamayı kendi başına kurgula.",
+        "immediateEffects": { "fatigue": 3, "stress": 3 }
+      },
+      {
+        "id": "asgari_duzeyde_uy",
+        "text": "Asgari düzeyde uy, fazla emek harcama.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "hs_012_beyaz_kod_tatbikati",
+    "title": "BEYAZ KOD TATBİKATI",
+    "description": "Duyurulmamış bir 'beyaz kod' (çalışana yönelik şiddet alarmı) tatbikatı yapıldı. Alarm çaldığında üç kişi nereye gideceğini bilemedi, ikisi tatbikat olduğunu anlamadı.",
+    "category": "HEALTH_SYSTEM",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 40,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "prosedueru_ogren",
+        "text": "Tatbikat sonrası prosedürü gerçekten öğren.",
+        "immediateEffects": { "stress": 1 },
+        "flags": { "set": { "hs_beyaz_kod_ogrenildi": true } }
+      },
+      {
+        "id": "unut_git",
+        "text": "Unut git, muhtemelen bir daha olmaz.",
+        "immediateEffects": {}
+      }
+    ]
+  }
+]

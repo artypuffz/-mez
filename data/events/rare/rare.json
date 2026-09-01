@@ -1,0 +1,163 @@
+[
+  {
+    "id": "rare_001_kongre_yurtdisi",
+    "title": "BEKLENMEYEN ÇAĞRI",
+    "description": "Bölüm başkanı seni odasına çağırdı. Yurtdışı bir kongreye bildiri kabul edilmiş, gidecek kişi olarak seni önermiş. Bu cümleyi üç kere tekrar ettirdin çünkü kulağına inanamadın.",
+    "category": "RARE",
+    "triggerMode": "pool",
+    "weight": 1,
+    "once": true,
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "gte": 20
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kabul_et",
+        "text": "Hemen kabul et.",
+        "immediateEffects": {
+          "stress": -15,
+          "money": -6000
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 15
+          }
+        ],
+        "flags": {
+          "set": {
+            "rare_yurtdisi_kongre": true
+          }
+        }
+      },
+      {
+        "id": "dusunmek_istedim",
+        "text": "'Düşünmem lazım' de.",
+        "immediateEffects": {
+          "stress": 5
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rare_002_hastane_kedisi",
+    "title": "TOPLANTIDA MİSAFİR",
+    "description": "Hastane bahçesinde yıllardır yaşayan kedi, açık kalan bir kapıdan servis toplantısına girdi. Masanın altına yerleşti. Kimse çıkarmaya çalışmadı, sanki bu daha önce de olmuş gibi.",
+    "category": "RARE",
+    "triggerMode": "pool",
+    "weight": 1,
+    "cooldownWeeks": 60,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 4 }] },
+    "choices": [
+      {
+        "id": "sessizce_izle",
+        "text": "Sessizce izle, toplantıya devam et.",
+        "immediateEffects": { "stress": -3 }
+      },
+      {
+        "id": "disari_cikar",
+        "text": "Kaldırıp dışarı çıkar.",
+        "immediateEffects": { "stress": -1 },
+        "relationshipEffects": [{ "npc": "hemsire_generic", "trust": 2 }]
+      }
+    ]
+  },
+  {
+    "id": "rare_003_uc_yazici",
+    "title": "ÜÇ YAZICI, TEK GÜN",
+    "description": "Serviste üç yazıcı var. Bugün üçü de aynı anda bozuldu. Teknik servis 'bu istatistiksel olarak ilginç' dedi, tamir etmeden önce.",
+    "category": "RARE",
+    "triggerMode": "pool",
+    "weight": 1,
+    "cooldownWeeks": 60,
+    "choices": [
+      {
+        "id": "elle_yaz",
+        "text": "Gerekli belgeleri elle doldur.",
+        "immediateEffects": { "fatigue": 4, "stress": 2 }
+      },
+      {
+        "id": "baska_katta_yazdir",
+        "text": "Başka kata gidip yazdır.",
+        "immediateEffects": { "fatigue": 2 }
+      }
+    ]
+  },
+  {
+    "id": "rare_004_yanlis_grup",
+    "title": "YANLIŞ GRUP",
+    "description": "Servis WhatsApp grubuna yazmak istediğin mesajı, telefonun otomatik tamamlamasıyla yanlışlıkla aile grubuna gönderdin. Mesaj: 'bugünkü hoca resmen dayanılmaz'.",
+    "category": "RARE",
+    "triggerMode": "pool",
+    "weight": 1,
+    "cooldownWeeks": 60,
+    "choices": [
+      {
+        "id": "hemen_sil",
+        "text": "Hemen silmeye çalış.",
+        "immediateEffects": { "stress": 5 }
+      },
+      {
+        "id": "aciklama_yaz",
+        "text": "Ailene açıklama yazmayı dene.",
+        "immediateEffects": { "stress": 3 }
+      }
+    ]
+  },
+  {
+    "id": "rare_005_eski_gelenek",
+    "title": "YILLARDIR KONUŞULMAYAN GELENEK",
+    "description": "Kıdemli asistanlardan biri, bölümde yıllardır sürdürülen tuhaf bir geleneği anlattı: her yılın son asistanı, servis panosuna kendi el yazısıyla bir not bırakırmış. Kimse bunun ne zaman başladığını bilmiyor.",
+    "category": "RARE",
+    "triggerMode": "pool",
+    "weight": 1,
+    "cooldownWeeks": 80,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 30 }] },
+    "choices": [
+      {
+        "id": "gelenegi_surdur",
+        "text": "Geleneği öğren, ileride sürdürmeye karar ver.",
+        "immediateEffects": { "stress": -2 },
+        "flags": { "set": { "rare_gelenek_ogrenildi": true } }
+      },
+      {
+        "id": "tuhaf_bul",
+        "text": "Tuhaf bulup unut.",
+        "immediateEffects": {}
+      }
+    ]
+  },
+  {
+    "id": "rare_006_beklenmedik_tesekkur",
+    "title": "YILLAR SONRA TEŞEKKÜR",
+    "description": "Hastanenin girişinde biri seni durdurdu. Yıllar önce baktığın bir hastanın yakınıymış. Adını hâlâ hatırlıyor olması seni şaşırttı; sen onu hiç hatırlamıyorsun.",
+    "category": "RARE",
+    "triggerMode": "pool",
+    "weight": 1,
+    "cooldownWeeks": 80,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 40 }] },
+    "choices": [
+      {
+        "id": "sohbet_et",
+        "text": "Durup birkaç dakika sohbet et.",
+        "immediateEffects": { "stress": -5 }
+      },
+      {
+        "id": "kisa_kes",
+        "text": "Teşekkürü kabul edip yoluna devam et.",
+        "immediateEffects": { "stress": -2 }
+      }
+    ]
+  }
+]

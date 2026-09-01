@@ -1,0 +1,1150 @@
+[
+  {
+    "id": "mc_shiftswap_01",
+    "title": "GEÇEN AYIN BORCU",
+    "description": "Bir akran asistan geçen ay senin için nöbet değiştirdiğini hatırlattı. Şimdi sırası kendisinde ama bu hafta onun da işi çıkmış. Sözünü tutmanı bekliyor.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 40,
+    "chainId": "mc_shiftswap",
+    "chainCheckpoint": "stage1",
+    "npcSelectors": {
+      "primary": {
+        "randomActiveByRole": "peer_resident"
+      }
+    },
+    "choices": [
+      {
+        "id": "sozunu_tut",
+        "text": "Sözünü tut, nöbeti al.",
+        "immediateEffects": {
+          "fatigue": 3
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": 6
+          }
+        ],
+        "onCallEffects": [
+          {
+            "type": "add_player_shift",
+            "count": 1
+          }
+        ],
+        "behaviorTags": [
+          "colleague:loyal"
+        ],
+        "flags": {
+          "set": {
+            "mc_shiftswap_path": "kept"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_shiftswap",
+          "checkpoint": "stage2",
+          "delayWeeks": 3
+        }
+      },
+      {
+        "id": "bu_sefer_olmaz",
+        "text": "'Bu sefer olmaz' de.",
+        "immediateEffects": {
+          "stress": 2
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": -4
+          }
+        ],
+        "behaviorTags": [
+          "colleague:self_preserving"
+        ],
+        "flags": {
+          "set": {
+            "mc_shiftswap_path": "declined"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_shiftswap",
+          "checkpoint": "stage2",
+          "delayWeeks": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_shiftswap_02_kept",
+    "title": "BORÇ ÖDENDİ",
+    "description": "Aynı asistan sana kahve ısmarladı. Konuşmadan uzattı, sen de konuşmadan aldın. Bazı şeyler böyle kapanır.",
+    "category": "SOCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_shiftswap",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_shiftswap_path",
+          "eq": "kept"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": -1
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_shiftswap_02_declined",
+    "title": "SESSİZLİK",
+    "description": "O günden sonra o asistan sana sadece işle ilgili konuşuyor. Kısa, gerekli, mesafeli. Sen de aynı şekilde davranmaya başladın.",
+    "category": "SOCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_shiftswap",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_shiftswap_path",
+          "eq": "declined"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {}
+      }
+    ]
+  },
+  {
+    "id": "mc_mealcard_01",
+    "title": "KAYIP YEMEK KARTI",
+    "description": "Hastane yemekhanesi kartın okutulmuyor. Görevli 'sistemde pasif görünüyorsunuz' dedi, nedenini kendisi de bilmiyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 30,
+    "chainId": "mc_mealcard",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "idareyle_ugras",
+        "text": "İdareyle uğraş, düzelttir.",
+        "immediateEffects": {
+          "stress": 3
+        },
+        "flags": {
+          "set": {
+            "mc_mealcard_path": "chased"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_mealcard",
+          "checkpoint": "stage2",
+          "delayWeeks": 2
+        }
+      },
+      {
+        "id": "cebinden_ye",
+        "text": "Bu hafta cebinden ye, sonra uğraşırsın.",
+        "immediateEffects": {
+          "money": -600
+        },
+        "flags": {
+          "set": {
+            "mc_mealcard_path": "paid"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_mealcard",
+          "checkpoint": "stage2",
+          "delayWeeks": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_mealcard_02_chased",
+    "title": "KART DÜZELDİ",
+    "description": "İki hafta, üç kat, bir imza sonra kart yeniden çalışıyor. Görevli sebebini hâlâ açıklayamadı.",
+    "category": "GENERAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_mealcard",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_mealcard_path",
+          "eq": "chased"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": -2
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_mealcard_02_paid",
+    "title": "KART KENDİLİĞİNDEN DÜZELDİ",
+    "description": "Uğraşmadığın kart, uğraşmadan düzeldi. Bu sistemin sana özel bir mesajı olabilir, ya da hiçbir şey olmayabilir.",
+    "category": "GENERAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_mealcard",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_mealcard_path",
+          "eq": "paid"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {}
+      }
+    ]
+  },
+  {
+    "id": "mc_poster_01",
+    "title": "POSTER TEKLİFİ",
+    "description": "Hoca bir kongre posteri için veri toplamanı istedi. Ekstra iş, ama özgeçmişte bir satır.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 60,
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "gte": 15
+        }
+      ]
+    },
+    "chainId": "mc_poster",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "kabul_et",
+        "text": "Kabul et.",
+        "immediateEffects": {
+          "fatigue": 4
+        },
+        "flags": {
+          "set": {
+            "mc_poster_path": "started"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_poster",
+          "checkpoint": "stage2",
+          "delayWeeks": 5
+        }
+      },
+      {
+        "id": "reddet",
+        "text": "Vaktin yok, reddet.",
+        "immediateEffects": {
+          "stress": -1
+        },
+        "flags": {
+          "set": {
+            "mc_poster_path": "declined"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_poster_02",
+    "title": "VERİ TOPLAMA HAFTASI",
+    "description": "Poster için gereken veriler dağınık dosyalarda. Bir kısmı elle taranmış, bir kısmı kayıp. Bu iş tahmininden uzun sürüyor.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "mc_poster",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_poster_path",
+          "eq": "started"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "gece_calis",
+        "text": "Geceleri de çalış, işi zamanında bitir.",
+        "immediateEffects": {
+          "fatigue": 6,
+          "stress": 3
+        },
+        "flags": {
+          "set": {
+            "mc_poster_effort": "high"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_poster",
+          "checkpoint": "stage3",
+          "delayWeeks": 3
+        }
+      },
+      {
+        "id": "asgari_yeter",
+        "text": "Asgari düzeyde tamamla, hoca ne isterse desin.",
+        "immediateEffects": {
+          "fatigue": 2
+        },
+        "flags": {
+          "set": {
+            "mc_poster_effort": "low"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_poster",
+          "checkpoint": "stage3",
+          "delayWeeks": 3
+        }
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "mc_poster_03_high",
+    "title": "POSTER KABUL EDİLDİ",
+    "description": "Poster kongreye kabul edildi. Hoca sunumda ismini üçüncü sırada yazdı. İlk iki isim posteri hiç görmemişti.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "mc_poster",
+    "chainCheckpoint": "stage3",
+    "priority": 6,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_poster_effort",
+          "eq": "high"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "sirayi_sorgula",
+        "text": "İsim sırasını nazikçe sorgula.",
+        "immediateEffects": {
+          "stress": 3
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ],
+        "statistics": {
+          "increment": {
+            "mc_poster_questioned_order": 1
+          }
+        }
+      },
+      {
+        "id": "kabullen",
+        "text": "Bir şey deme, en azından ismin var.",
+        "immediateEffects": {
+          "stress": -1
+        },
+        "behaviorTags": [
+          "hierarchy:abused_silently"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mc_poster_03_low",
+    "title": "POSTER GERİ ÇEVRİLDİ",
+    "description": "Poster kongre tarafından reddedildi. Hoca bunu sana söylerken senin adını hiç anmadı, sanki iş hiç sende değilmiş gibi.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "mc_poster",
+    "chainCheckpoint": "stage3",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_moving_01",
+    "title": "EV SAHİBİ ARADI",
+    "description": "Ev sahibi kontratı yenilemek istemiyor, evi satacakmış. Bir ay içinde çıkman gerekiyor.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "once": true,
+    "requirements": {
+      "all": [
+        {
+          "flag": "lives_with_family",
+          "neq": true
+        },
+        {
+          "stat": "career.week",
+          "gte": 12
+        }
+      ]
+    },
+    "chainId": "mc_moving",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "hemen_ara",
+        "text": "Hemen ev aramaya başla.",
+        "immediateEffects": {
+          "stress": 4,
+          "fatigue": 2
+        },
+        "flags": {
+          "set": {
+            "mc_moving_path": "early"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_moving",
+          "checkpoint": "stage2",
+          "delayWeeks": 3
+        }
+      },
+      {
+        "id": "erteleyerek_calis",
+        "text": "Nöbetler bitince bakarsın, şimdilik ertele.",
+        "immediateEffects": {
+          "stress": 2
+        },
+        "flags": {
+          "set": {
+            "mc_moving_path": "late"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_moving",
+          "checkpoint": "stage2",
+          "delayWeeks": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_moving_02_early",
+    "title": "YENİ EV",
+    "description": "Uygun bir ev buldun, taşınma sakin geçti. Depozito hesabını görene kadar.",
+    "category": "FINANCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_moving",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_moving_path",
+          "eq": "early"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Depozitoyu öde.",
+        "immediateEffects": {
+          "money": -12000,
+          "stress": -2
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_moving_02_late",
+    "title": "SON DAKİKA TAŞINMA",
+    "description": "İki gün önce bulduğun ilk evi, koşullarını sorgulamadan tuttun. Nöbet haftasında eşyalarını taşıdın.",
+    "category": "FINANCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_moving",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "money": -15000,
+          "fatigue": 8,
+          "stress": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_whatsapp_01",
+    "title": "GRUBA EKLENDİN",
+    "description": "Servis WhatsApp grubuna eklendin. İlk mesaj gece 23.40'ta geldi: 'yarın kim erken gelebilir'.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 60,
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "lte": 20
+        }
+      ]
+    },
+    "chainId": "mc_whatsapp",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "hemen_cevapla",
+        "text": "Hemen cevap yaz.",
+        "immediateEffects": {
+          "stress": 1
+        },
+        "flags": {
+          "set": {
+            "mc_whatsapp_path": "responsive"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_whatsapp",
+          "checkpoint": "stage2",
+          "delayWeeks": 2
+        }
+      },
+      {
+        "id": "sabaha_birak",
+        "text": "Görmezden gel, sabah bakarsın.",
+        "immediateEffects": {
+          "stress": -1
+        },
+        "flags": {
+          "set": {
+            "mc_whatsapp_path": "quiet"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_whatsapp",
+          "checkpoint": "stage2",
+          "delayWeeks": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_whatsapp_02_responsive",
+    "title": "GRUBUN GÜVENİLİRİ",
+    "description": "Artık her gece mesajlara ilk sen cevap veriyorsun. Grup bunu fark etti; artık her şey önce senden soruluyor.",
+    "category": "SOCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_whatsapp",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_whatsapp_path",
+          "eq": "responsive"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam_et",
+        "text": "Bu rolü kabullen.",
+        "immediateEffects": {
+          "fatigue": 2
+        },
+        "behaviorTags": [
+          "colleague:loyal"
+        ]
+      },
+      {
+        "id": "geri_cekil",
+        "text": "Bilinçli olarak geri çekil, bildirimleri sustur.",
+        "immediateEffects": {
+          "stress": -2
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_whatsapp_02_quiet",
+    "title": "GRUP SENSİZ DEVAM EDİYOR",
+    "description": "Grup mesajlarını okumadan geçiştirmeyi öğrendin. Ara sıra önemli bir şeyi kaçırıyorsun ama akşamların sana kalıyor.",
+    "category": "SOCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_whatsapp",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {}
+      }
+    ]
+  },
+  {
+    "id": "mc_congress_01",
+    "title": "KONGRE DUYURUSU",
+    "description": "Branşının yıllık kongresi bu yıl senin şehrinde değil. Katılmak istiyorsan izin, ulaşım ve konaklama senin sorunun.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 50,
+    "requirements": {
+      "all": [
+        {
+          "stat": "career.week",
+          "gte": 25
+        }
+      ]
+    },
+    "chainId": "mc_congress",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "katilmaya_karar_ver",
+        "text": "Katılmaya karar ver.",
+        "immediateEffects": {
+          "money": -2500
+        },
+        "flags": {
+          "set": {
+            "mc_congress_path": "going"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_congress",
+          "checkpoint": "stage2",
+          "delayWeeks": 4
+        }
+      },
+      {
+        "id": "vazgec",
+        "text": "Bu yıl vazgeç.",
+        "immediateEffects": {
+          "stress": -1
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_congress_02",
+    "title": "İZİN FORMU",
+    "description": "Kongre izni için formu doldurdun. Bölüm başkanı 'servis kim bakacak' diye sordu, cevabı sen de bilmiyorsun.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "mc_congress",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_congress_path",
+          "eq": "going"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "israrci_ol",
+        "text": "İzin hakkın olduğunu vurgula.",
+        "immediateEffects": {
+          "stress": 3
+        },
+        "flags": {
+          "set": {
+            "mc_congress_permission": "insisted"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_congress",
+          "checkpoint": "stage3",
+          "delayWeeks": 5
+        }
+      },
+      {
+        "id": "yumusak_yaklas",
+        "text": "Nöbetini birine devrederek karşılık öner.",
+        "onCallEffects": [
+          {
+            "type": "transfer_player_shift_to_npc",
+            "target": {
+              "npc": "kidemli_generic"
+            }
+          }
+        ],
+        "flags": {
+          "set": {
+            "mc_congress_permission": "traded"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_congress",
+          "checkpoint": "stage3",
+          "delayWeeks": 5
+        }
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "mc_congress_03",
+    "title": "KONGRE DÖNÜŞÜ",
+    "description": "Kongreden döndün. Üç gün servisten uzak kalmak, sandığından daha çok iyi gelmiş.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "mc_congress",
+    "chainCheckpoint": "stage3",
+    "priority": 5,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": -6,
+          "fatigue": -3
+        }
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "mc_nursetrust_01",
+    "title": "GECE VARDİYASINDA YARDIM",
+    "description": "Gece vardiyasında bir hemşire, senin fark etmeden atladığın bir tetkik sonucunu sessizce önüne bıraktı. Kimseye bir şey söylemedi.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 50,
+    "chainId": "mc_nursetrust",
+    "chainCheckpoint": "stage1",
+    "npcSelectors": {
+      "primary": {
+        "randomActiveByRole": "nurse"
+      }
+    },
+    "choices": [
+      {
+        "id": "tesekkur_et",
+        "text": "Açıkça teşekkür et.",
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": 6,
+            "friendship": 3
+          }
+        ],
+        "flags": {
+          "set": {
+            "mc_nursetrust_path": "thanked"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_nursetrust",
+          "checkpoint": "stage2",
+          "delayWeeks": 6
+        }
+      },
+      {
+        "id": "farkedilmeden_gec",
+        "text": "Fark etmemiş gibi davran, mahcup olma.",
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": 1
+          }
+        ],
+        "followUpEvent": {
+          "chainId": "mc_nursetrust",
+          "checkpoint": "stage2",
+          "delayWeeks": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_nursetrust_02",
+    "title": "ARTIK BİLDİRİYOR",
+    "description": "Aynı hemşire artık senin servisindeki ufak tehlikeleri ilk sana haber veriyor, üstündekilere değil. Bu bir güven, ama aynı zamanda bir yük.",
+    "category": "NPC",
+    "triggerMode": "scheduled",
+    "chainId": "mc_nursetrust",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "npcSelectors": {
+      "primary": {
+        "highestTrustByRole": "nurse"
+      }
+    },
+    "choices": [
+      {
+        "id": "sorumlulugu_al",
+        "text": "Sorumluluğu üstlen, her seferinde sen ilgilen.",
+        "immediateEffects": {
+          "fatigue": 3
+        },
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": 5
+          }
+        ],
+        "behaviorTags": [
+          "colleague:loyal"
+        ]
+      },
+      {
+        "id": "resmi_kanala_yonlendir",
+        "text": "Bundan sonra resmi kanaldan bildirmesini iste.",
+        "relationshipEffects": [
+          {
+            "boundNpc": "primary",
+            "trust": -3
+          }
+        ],
+        "immediateEffects": {
+          "stress": -1
+        }
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "mc_landlord_01",
+    "title": "KİRA ZAMMI",
+    "description": "Ev sahibi kirayı piyasa üstünde bir zamla artırmak istiyor. Kontrat teknik olarak buna izin vermiyor, ama itiraz etmenin de bir bedeli olabilir.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 60,
+    "requirements": {
+      "all": [
+        {
+          "flag": "lives_with_family",
+          "neq": true
+        },
+        {
+          "stat": "career.week",
+          "gte": 30
+        }
+      ]
+    },
+    "chainId": "mc_landlord",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "itiraz_et",
+        "text": "Kontrata dayanarak itiraz et.",
+        "immediateEffects": {
+          "stress": 4
+        },
+        "flags": {
+          "set": {
+            "mc_landlord_path": "objected"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_landlord",
+          "checkpoint": "stage2",
+          "delayWeeks": 3
+        }
+      },
+      {
+        "id": "kabul_et",
+        "text": "Tartışmaya vaktin yok, kabul et.",
+        "immediateEffects": {},
+        "flags": {
+          "set": {
+            "mc_landlord_path": "accepted"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_landlord",
+          "checkpoint": "stage2",
+          "delayWeeks": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_landlord_02_objected",
+    "title": "ORTA YOL",
+    "description": "Ev sahibi zammı biraz düşürdü. Sana 'bu kadar uğraşmasan da olurdu' dedi, sanki asıl tuhaf olan sen istemişsin gibi.",
+    "category": "FINANCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_landlord",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_landlord_path",
+          "eq": "objected"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "money": -2000
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_landlord_02_accepted",
+    "title": "TAM ZAM",
+    "description": "Zam olduğu gibi geçti. Aylık bütçen bir gecede küçüldü, sen bunu fark etmeye bile vakit bulamadan.",
+    "category": "FINANCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_landlord",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "money": -4500,
+          "stress": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_partner_01",
+    "title": "TANIDIK BİR İSİM",
+    "description": "Son birkaç aydır aynı çevrede sürekli karşına çıkan biri var. Bu sefer o, sana mesaj attı.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 3,
+    "once": true,
+    "requirements": {
+      "all": [
+        {
+          "flag": "has_partner",
+          "neq": true
+        },
+        {
+          "stat": "career.week",
+          "gte": 8
+        }
+      ]
+    },
+    "chainId": "mc_partner",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "cevap_yaz",
+        "text": "Cevap yaz, bir şeyler planla.",
+        "immediateEffects": {
+          "stress": -1
+        },
+        "flags": {
+          "set": {
+            "mc_partner_path": "pursuing"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_partner",
+          "checkpoint": "stage2",
+          "delayWeeks": 3
+        }
+      },
+      {
+        "id": "simdi_sirasi_degil",
+        "text": "Şu an vaktin yok, nazikçe geçiştir.",
+        "immediateEffects": {},
+        "flags": {
+          "set": {
+            "mc_partner_path": "declined"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_partner_02",
+    "title": "İLK BULUŞMA",
+    "description": "Buluşma, iki kere ertelendikten sonra gerçekleşti. Sen nöbetten çıkmış haldeydin, o bunu anlayışla karşıladı. Bu iyi bir işaret olabilir.",
+    "category": "SOCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_partner",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_partner_path",
+          "eq": "pursuing"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "iliskiyi_baslat",
+        "text": "İlişkiyi resmi olarak başlat.",
+        "immediateEffects": {
+          "stress": -4
+        },
+        "flags": {
+          "set": {
+            "has_partner": true
+          }
+        },
+        "relationshipEffects": [
+          {
+            "npc": "sevgili_generic",
+            "trust": 10,
+            "friendship": 10
+          }
+        ]
+      },
+      {
+        "id": "arkadas_kal",
+        "text": "Şimdilik arkadaş kalmayı öner.",
+        "immediateEffects": {}
+      }
+    ],
+    "isFallback": true
+  },
+  {
+    "id": "mc_reunion_01",
+    "title": "ÜNİVERSİTE GRUBU",
+    "description": "Eski üniversite arkadaşların bu hafta sonu buluşuyor. Grup mesajında senin adın da geçti: 'o zaten gelemez herhalde'.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 30,
+    "chainId": "mc_reunion",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "katilmaya_calis",
+        "text": "Katılmaya çalış, yorgun da olsan git.",
+        "immediateEffects": {
+          "fatigue": 3,
+          "stress": -3,
+          "money": -1200
+        },
+        "flags": {
+          "set": {
+            "mc_reunion_path": "attended"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_reunion",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      },
+      {
+        "id": "katilma",
+        "text": "Katılma, dinlen.",
+        "immediateEffects": {
+          "fatigue": -3
+        },
+        "flags": {
+          "set": {
+            "mc_reunion_path": "skipped"
+          }
+        },
+        "followUpEvent": {
+          "chainId": "mc_reunion",
+          "checkpoint": "stage2",
+          "delayWeeks": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_reunion_02_attended",
+    "title": "İYİ Kİ GİTMİŞSİN",
+    "description": "Gece geç saatte eve döndün ama gitmiş olmak iyi hissettirdi. Yarın sabah nöbet olduğunu unutmuşsun.",
+    "category": "SOCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_reunion",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "requirements": {
+      "all": [
+        {
+          "flag": "mc_reunion_path",
+          "eq": "attended"
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "fatigue": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "mc_reunion_02_skipped",
+    "title": "GRUP FOTOĞRAFI",
+    "description": "Grup fotoğrafında sen yoksun. Kimse bir şey söylemedi ama fotoğraf, sanki bunu senin için not ediyormuş gibi duruyor.",
+    "category": "SOCIAL",
+    "triggerMode": "scheduled",
+    "chainId": "mc_reunion",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {
+          "stress": 1
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,119 @@
+[
+  {
+    "id": "econ_004_bilgisayar_bozuldu",
+    "title": "BİLGİSAYAR ÇÖKTÜ",
+    "description": "Kişisel bilgisayarın açılmıyor. Üzerinde yarım kalmış bir sunum, bazı notlar ve hiç yedeklemediğin birkaç dosya var.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 40,
+    "choices": [
+      {
+        "id": "tamir_ettir",
+        "text": "Tamire götür.",
+        "immediateEffects": { "money": -4500, "stress": -1 }
+      },
+      {
+        "id": "yenisini_al",
+        "text": "Yenisini al.",
+        "immediateEffects": { "money": -22000, "stress": -3 }
+      },
+      {
+        "id": "idare_et",
+        "text": "Ödünç bilgisayarla idare et.",
+        "immediateEffects": { "stress": 4 }
+      }
+    ]
+  },
+  {
+    "id": "econ_005_karti_ekstresi_sasirtti",
+    "title": "EKSTRE",
+    "description": "Bu ayki kredi kartı ekstresi tahmin ettiğinden yüksek geldi. Faiz kalemi, geçen ay minimum ödeme yapmanın bedeli.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "choices": [
+      {
+        "id": "tamamini_ode",
+        "text": "Borcun tamamını kapat.",
+        "immediateEffects": { "money": -5000, "stress": -2 }
+      },
+      {
+        "id": "yine_minimum",
+        "text": "Yine minimum ödeme yap.",
+        "immediateEffects": { "stress": 2 },
+        "flags": { "set": { "econ_kredi_karti_borcu": true } }
+      }
+    ]
+  },
+  {
+    "id": "econ_006_ozel_sigorta_zam",
+    "title": "SİGORTA PRİM ZAMMI",
+    "description": "Özel sağlık sigortan yenilenme zamanı geldi. Prim, geçen yıla göre belirgin şekilde arttı. Aynı kapsam için.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 50,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 20 }] },
+    "choices": [
+      {
+        "id": "yenile",
+        "text": "Yenile, ödemeyi yap.",
+        "immediateEffects": { "money": -6000 }
+      },
+      {
+        "id": "iptal_et",
+        "text": "İptal et, devlet sistemine güven.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "econ_ozel_sigorta_iptal": true } }
+      }
+    ]
+  },
+  {
+    "id": "econ_007_vergi_iadesi",
+    "title": "BEKLENMEDİK İADE",
+    "description": "Geçen yılki bir vergi kalemi hatalı hesaplanmış; hesabına beklenmedik bir iade yattı. Küçük ama gerçek bir sürpriz.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 3,
+    "cooldownWeeks": 60,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 30 }] },
+    "choices": [
+      {
+        "id": "biriktir",
+        "text": "Biriktir, dokunma.",
+        "immediateEffects": { "money": 3500, "stress": -3 }
+      },
+      {
+        "id": "kendine_bir_sey_al",
+        "text": "Kendine küçük bir şey al.",
+        "immediateEffects": { "money": 1500, "stress": -5 }
+      }
+    ]
+  },
+  {
+    "id": "econ_008_arkadas_borc_istiyor",
+    "title": "BORÇ RİCASI",
+    "description": "Yakın bir arkadaşın senden borç istedi. Miktar küçük değil. Geri ödeme konusunda net bir tarih vermedi, sen de sormadın.",
+    "category": "FINANCIAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 40,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "choices": [
+      {
+        "id": "borc_ver",
+        "text": "Borç ver, sormadan.",
+        "immediateEffects": { "money": -5000, "stress": 2 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 6 }]
+      },
+      {
+        "id": "kibarca_reddet",
+        "text": "Kibarca reddet, kendi durumunu açıkla.",
+        "immediateEffects": { "stress": 3 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": -2 }]
+      }
+    ]
+  }
+]

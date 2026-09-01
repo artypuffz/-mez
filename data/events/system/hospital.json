@@ -68,5 +68,30 @@
         ]
       }
     ]
+  },
+  {
+    "id": "hosp_004_personel_eksikligi",
+    "title": "SERVİSTE EKSİK KADRO",
+    "description": "Bu ay servisteki asistan sayısı gözle görülür şekilde azaldı. Kimse resmi bir açıklama yapmıyor, ama iş bölünecek yer bulamıyor.",
+    "category": "HOSPITAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 12,
+    "requirements": {
+      "all": [{ "stat": "onCall.staffingLoad", "gte": 50 }]
+    },
+    "choices": [
+      {
+        "id": "sikayet_et",
+        "text": "Durumu bölüm başkanına ilet.",
+        "immediateEffects": { "stress": 3 },
+        "flags": { "set": { "reported_staffing_shortage": true } }
+      },
+      {
+        "id": "sessizce_devam_et",
+        "text": "Bir şey demeden devam et.",
+        "immediateEffects": { "fatigue": 4, "stress": 4 }
+      }
+    ]
   }
 ]

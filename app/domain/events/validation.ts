@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { EventDefinition, RequirementNode } from "./types";
+import { NPC_TEMPLATES } from "../npc/templates";
+import { BRANCH_DEFINITIONS } from "../config/branches";
 
 function collectFlagReferences(node: RequirementNode | undefined, out: Set<string>): void {
   if (!node) return;
@@ -143,6 +145,15 @@ const DelayedEffectEntrySchema = z
 const OnCallEffectSchema = z.union([
   z.object({ type: z.literal("add_player_shift"), count: z.number().int().positive(), shiftType: z.enum(["weekday", "weekend"]).optional() }).strict(),
   z.object({ type: z.literal("remove_player_shift"), count: z.number().int().positive() }).strict(),
+  z
+    .object({
+      type: z.literal("transfer_player_shift_to_npc"),
+      target: z
+        .object({ npc: z.string().min(1).optional(), boundNpc: z.string().min(1).optional() })
+        .strict()
+        .refine((t) => (t.npc ? 1 : 0) + (t.boundNpc ? 1 : 0) === 1, { message: "exactly one of npc/boundNpc must be set" }),
+    })
+    .strict(),
 ]);
 
 // "domain:direction[:more]" — e.g. junior:supportive, npc:baris:cooperative.
@@ -333,6 +344,136 @@ export function validateEventContent(rawEvents: unknown[], externallySetFlags: s
           });
         }
       }
+    }
+  }
+
+  // Phase 8 §38 — content-authoring-quality checks, all warnings (none of
+  // these are structurally broken, just worth a human's attention as the
+  // content pool grows).
+
+  // Exact-duplicate title across different events — a real near-copy
+  // smell (§1's "aynı eventin neredeyse birebir kopyası" rule).
+  const titleOwners = new Map<string, string[]>();
+  for (const e of events) {
+    const owners = titleOwners.get(e.title) ?? [];
+    owners.push(e.id);
+    titleOwners.set(e.title, owners);
+  }
+  for (const [title, owners] of titleOwners) {
+    if (owners.length > 1) {
+      issues.push({ severity: "warning", message: `title "${title}" is reused verbatim by ${owners.length} events: ${owners.join(", ")}` });
+    }
+  }
+
+  const MAX_DESCRIPTION_LENGTH = 600;
+  const MAX_CHOICE_TEXT_LENGTH = 90;
+  for (const e of events) {
+    if (e.description.length > MAX_DESCRIPTION_LENGTH) {
+      issues.push({ severity: "warning", eventId: e.id, message: `description is ${e.description.length} chars — long for a mobile event (§35 guidance)` });
+    }
+    for (const c of e.choices) {
+      if (c.text.length > MAX_CHOICE_TEXT_LENGTH) {
+        issues.push({ severity: "warning", eventId: e.id, message: `choice "${c.id}" text is ${c.text.length} chars — long for a single-line choice (§35 guidance)` });
+      }
+    }
+  }
+
+  // Two choices on the same event with byte-identical immediateEffects
+  // read as "no real choice" to a player, even if hidden consequences
+  // differ (§4's trade-off rule).
+  for (const e of events) {
+    const byEffect = new Map<string, string[]>();
+    for (const c of e.choices) {
+      const key = JSON.stringify(c.immediateEffects ?? {});
+      const ids = byEffect.get(key) ?? [];
+      ids.push(c.id);
+      byEffect.set(key, ids);
+    }
+    for (const [key, ids] of byEffect) {
+      if (ids.length > 1 && key !== "{}") {
+        issues.push({ severity: "warning", eventId: e.id, message: `choices ${ids.join(", ")} have identical visible (immediateEffects) outcomes` });
+      }
+    }
+  }
+
+  // A requirement that demands the same stat/flag equal two different
+  // literal values simultaneously (within the same `all` block) can
+  // never pass — a copy-paste requirement bug, not a design choice.
+  function findConflictingEq(node: RequirementNode | undefined): string[] {
+    const conflicts: string[] = [];
+    function walk(n: RequirementNode | undefined): void {
+      if (!n) return;
+      if ("all" in n) {
+        const eqByKey = new Map<string, unknown>();
+        for (const child of n.all) {
+          if ("stat" in child && child.eq !== undefined) {
+            const key = `stat:${child.stat}`;
+            if (eqByKey.has(key) && eqByKey.get(key) !== child.eq) {
+              conflicts.push(`${key} requires both "${eqByKey.get(key)}" and "${child.eq}" at once`);
+            }
+            eqByKey.set(key, child.eq);
+          }
+          if ("flag" in child && child.eq !== undefined) {
+            const key = `flag:${child.flag}`;
+            if (eqByKey.has(key) && eqByKey.get(key) !== child.eq) {
+              conflicts.push(`${key} requires both "${eqByKey.get(key)}" and "${child.eq}" at once`);
+            }
+            eqByKey.set(key, child.eq);
+          }
+          walk(child);
+        }
+      } else if ("any" in n) {
+        for (const child of n.any) walk(child);
+      }
+    }
+    walk(node);
+    return conflicts;
+  }
+  for (const e of events) {
+    for (const conflict of findConflictingEq(e.requirements)) {
+      issues.push({ severity: "warning", eventId: e.id, message: `unreachable requirement — ${conflict}` });
+    }
+    for (const c of e.choices) {
+      for (const conflict of findConflictingEq(c.requirements)) {
+        issues.push({ severity: "warning", eventId: e.id, message: `choice "${c.id}" has an unreachable requirement — ${conflict}` });
+      }
+    }
+  }
+
+  // requiredNpcTemplate must name a real authored template.
+  const knownTemplateIds = new Set(NPC_TEMPLATES.map((t) => t.templateId));
+  for (const e of events) {
+    if (e.requiredNpcTemplate && !knownTemplateIds.has(e.requiredNpcTemplate)) {
+      issues.push({ severity: "error", eventId: e.id, message: `requiredNpcTemplate "${e.requiredNpcTemplate}" does not match any authored NpcTemplate` });
+    }
+  }
+
+  // branchIn must reference a real branch id — a typo'd branch id would
+  // otherwise silently mean "never eligible for any branch".
+  const knownBranchIds = new Set(BRANCH_DEFINITIONS.map((b) => b.id));
+  function collectBranchIds(node: RequirementNode | undefined, out: Set<string>): void {
+    if (!node) return;
+    if ("all" in node) { for (const c of node.all) collectBranchIds(c, out); return; }
+    if ("any" in node) { for (const c of node.any) collectBranchIds(c, out); return; }
+    if ("branchIn" in node) { for (const id of node.branchIn) out.add(id); }
+  }
+  for (const e of events) {
+    const branchIds = new Set<string>();
+    collectBranchIds(e.requirements, branchIds);
+    for (const c of e.choices) collectBranchIds(c.requirements, branchIds);
+    for (const id of branchIds) {
+      if (!knownBranchIds.has(id)) {
+        issues.push({ severity: "error", eventId: e.id, message: `branchIn references unknown branch id "${id}"` });
+      }
+    }
+  }
+
+  // once:true makes cooldownWeeks meaningless (the event never becomes
+  // eligible again regardless) — almost certainly a leftover from before
+  // the event was migrated to `once`.
+  for (const e of events) {
+    if (e.once && e.cooldownWeeks !== undefined) {
+      issues.push({ severity: "warning", eventId: e.id, message: `has both once:true and cooldownWeeks:${e.cooldownWeeks} — cooldownWeeks is unreachable dead config once "once" is set` });
     }
   }
 

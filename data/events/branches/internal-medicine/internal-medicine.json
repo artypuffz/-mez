@@ -1,0 +1,233 @@
+[
+  {
+    "id": "im_001_polyklinik_yigilmasi",
+    "title": "POLİKLİNİK",
+    "description": "Bugün polikliniğin randevu sayısı 80. Sen tek başınasın çünkü kıdemli 'bir işim çıktı' dedi. Bekleme salonunda insanlar senin adını yanlış telaffuz ederek çağırıyor.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 12,
+    "cooldownWeeks": 8,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "ic_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hepsine_bak",
+        "text": "Hepsine tek tek bak, geç kalsa da olsun.",
+        "immediateEffects": {
+          "fatigue": 14,
+          "stress": 10
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hasta_generic",
+            "trust": 5
+          }
+        ]
+      },
+      {
+        "id": "hizli_gec",
+        "text": "Süreleri kısaltıp hepsini yetiştirmeye çalış.",
+        "immediateEffects": {
+          "fatigue": 10,
+          "stress": 12
+        }
+      },
+      {
+        "id": "kidemliyi_ara",
+        "text": "Kıdemliyi arayıp gelmesini iste.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "kidemli_generic_im",
+            "trust": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "im_002_konsultasyon_savasi",
+    "title": "KONSÜLTASYON",
+    "description": "Cerrahi servisten bir hasta için konsültasyon istendi. Sen gidip değerlendirdin, hastanın asıl sorunu senin dalınla ilgili değil. Cerrahi asistanı 'siz bakın artık' diyor, sen 'bu sizin hastanız' diyorsun. Bu diyalog telefon üzerinden üçüncü kez yaşanıyor.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "ic_hastaliklari"
+          ]
+        },
+        {
+          "stat": "career.week",
+          "gte": 8
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hastayi_devral",
+        "text": "Tartışmayı bitirmek için hastayı fiilen devral.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "cerrahi_asistan_generic",
+            "trust": 6
+          }
+        ]
+      },
+      {
+        "id": "hocaya_birak",
+        "text": "Kararı kendi hocana bırak.",
+        "immediateEffects": {
+          "stress": 4
+        }
+      },
+      {
+        "id": "yazili_not_dus",
+        "text": "Dosyaya net bir konsültasyon notu düş, sorumluluğu netleştir.",
+        "immediateEffects": {
+          "stress": 3,
+          "fatigue": 2
+        },
+        "flags": {
+          "set": {
+            "im_temiz_dokumantasyon": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "im_003_epikriz_yigilmasi",
+    "title": "EPİKRİZ YIĞINI",
+    "description": "Taburcu olan hastaların epikrizleri iki haftadır birikiyor. İdare 'geciken epikriz sayısı raporlanacak' diye bir yazı göndermiş, imzası tanıdık değil.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 12,
+    "requirements": { "all": [{ "branchIn": ["ic_hastaliklari"] }, { "stat": "career.week", "gte": 5 }] },
+    "choices": [
+      {
+        "id": "hafta_sonu_bitir",
+        "text": "Hafta sonu gelip hepsini bitir.",
+        "immediateEffects": { "fatigue": 8, "stress": 2 }
+      },
+      {
+        "id": "gunluk_pay_et",
+        "text": "Her gün birkaç tanesini ekleyerek yavaş yavaş kapat.",
+        "immediateEffects": { "stress": 4 },
+        "flags": { "set": { "im_epikriz_gecikmesi": true } }
+      }
+    ]
+  },
+  {
+    "id": "im_004_konsey_sunumu",
+    "title": "VAKA KONSEYİ",
+    "description": "Haftalık dahiliye konseyinde sunum sırası sende. Salon dolu ama çoğu kişi telefonuna bakıyor. Hoca ilk sorudan sonra dinlemeye başlıyor genelde.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "branchIn": ["ic_hastaliklari"] }, { "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "detayli_hazirlan",
+        "text": "Gece geç saate kadar hazırlan.",
+        "immediateEffects": { "fatigue": 6, "stress": 3 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": 4 }]
+      },
+      {
+        "id": "asgari_hazirlan",
+        "text": "Yeterince hazırlan, fazla vakit harcama.",
+        "immediateEffects": { "stress": 2 }
+      }
+    ]
+  },
+  {
+    "id": "im_005_hasta_yakini_israri",
+    "title": "BEKLEME SALONUNDA",
+    "description": "Bir hasta yakını ısrarla seni görmek istiyor. Aynı anda iki farklı hastanın acil işi de sende. Israrı haklı olabilir, ama sıra sende değil.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "branchIn": ["ic_hastaliklari"] }] },
+    "choices": [
+      {
+        "id": "hemen_ayir",
+        "text": "İşini bölüp beş dakika ayır.",
+        "immediateEffects": { "stress": 5, "fatigue": 3 },
+        "relationshipEffects": [{ "npc": "hasta_generic", "trust": 5 }]
+      },
+      {
+        "id": "sirayi_koru",
+        "text": "Nazikçe sırasını bekletmesini iste.",
+        "immediateEffects": { "stress": 3 },
+        "relationshipEffects": [{ "npc": "hasta_generic", "trust": -3 }]
+      }
+    ]
+  },
+  {
+    "id": "im_006_stajyer_egitimi",
+    "title": "STAJYER SANA DEVREDİLDİ",
+    "description": "Bu dönemki intörn grubu sana verildi. Onlara servis işleyişini öğretmek de artık senin işin, ayrı bir zaman bloğu olmadan.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "branchIn": ["ic_hastaliklari"] }, { "stat": "career.seniorityStage", "in": ["orta", "kidemli"] }] },
+    "choices": [
+      {
+        "id": "vakit_ayirarak_ogret",
+        "text": "Vakit ayırarak gerçekten öğret.",
+        "immediateEffects": { "fatigue": 5 },
+        "behaviorTags": ["junior:supportive"],
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 5 }]
+      },
+      {
+        "id": "kendi_haline_birak",
+        "text": "Gözlemlesinler yeter, kendi işine devam et.",
+        "immediateEffects": { "stress": -2 },
+        "behaviorTags": ["junior:exploitative"]
+      }
+    ]
+  },
+  {
+    "id": "im_007_yatak_sikintisi",
+    "title": "YATAK YOK",
+    "description": "Serviste boş yatak kalmadı. Acilden yeni bir hasta bekliyor, idare 'bir şekilde yer bulun' diyor, bir şekilde diye bir prosedür yok.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 14,
+    "requirements": { "all": [{ "branchIn": ["ic_hastaliklari"] }, { "stat": "career.week", "gte": 12 }] },
+    "choices": [
+      {
+        "id": "taburculugu_hizlandir",
+        "text": "Taburcu edilebilecek bir hastanın sürecini hızlandır.",
+        "immediateEffects": { "stress": 6 }
+      },
+      {
+        "id": "idareye_yonlendir",
+        "text": "Sorunu idareye yönlendir, kendi işine bak.",
+        "immediateEffects": { "stress": 2 },
+        "flags": { "set": { "im_yatak_sorunu_yonlendirildi": true } }
+      }
+    ]
+  }
+]

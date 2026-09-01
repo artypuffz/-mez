@@ -1,0 +1,167 @@
+[
+  {
+    "id": "chain_deniz_01_yeni_geldi",
+    "title": "YENİ ÇÖMEZ",
+    "description": "Deniz, servisin en yeni asistanı, koridorda hangi kapının nereye açıldığını bilmeden duruyor. Sana tanıdık geliyor, ama sebebini şu an düşünecek vaktin yok.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 6,
+    "once": true,
+    "requiredNpcTemplate": "deniz_comez",
+    "requirements": { "all": [{ "stat": "career.week", "gte": 20 }] },
+    "chainId": "deniz",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "yardim_et",
+        "text": "Durup yardım et, kısaca yönlendir.",
+        "relationshipEffects": [{ "npc": "deniz_comez", "trust": 6 }],
+        "behaviorTags": ["junior:supportive"],
+        "flags": { "set": { "deniz_first_impression": "supportive" } },
+        "followUpEvent": { "chainId": "deniz", "checkpoint": "stage2", "delayWeeks": 30 }
+      },
+      {
+        "id": "kendi_isine_bak",
+        "text": "Kendi işine bak, geç git.",
+        "relationshipEffects": [{ "npc": "deniz_comez", "trust": -1 }],
+        "flags": { "set": { "deniz_first_impression": "distant" } },
+        "followUpEvent": { "chainId": "deniz", "checkpoint": "stage2", "delayWeeks": 30 }
+      }
+    ]
+  },
+  {
+    "id": "chain_deniz_02_yuk_farkindaligi",
+    "title": "DENİZ'İN AYI",
+    "description": "Bu ay nöbet listesine bakıyorsun. Deniz, kimsenin resmi bir açıklama yapmadığı şekilde en yoğun aya yazılmış. Kimse bir şey söylemiyor çünkü bu 'her zaman böyle olur'.",
+    "category": "MOBBING",
+    "triggerMode": "scheduled",
+    "chainId": "deniz",
+    "chainCheckpoint": "stage2",
+    "priority": 10,
+    "isFallback": true,
+    "descriptionVariants": [
+      {
+        "requirements": { "stat": "behaviorStats.junior:exploitative", "gte": 2 },
+        "text": "Bu ay nöbet listesine bakıyorsun. Deniz, kimsenin resmi bir açıklama yapmadığı şekilde en yoğun aya yazılmış. Sana bunu daha önce de birine yaptığını fark ediyorsun."
+      }
+    ],
+    "choices": [
+      {
+        "id": "nobetini_hafiflet",
+        "text": "Kendi nöbetlerinden birini üstlenerek yükünü hafiflet.",
+        "immediateEffects": { "fatigue": 3 },
+        "relationshipEffects": [{ "npc": "deniz_comez", "trust": 8 }],
+        "onCallEffects": [{ "type": "add_player_shift", "count": 1 }],
+        "behaviorTags": ["junior:supportive", "hierarchy:protective"],
+        "flags": { "set": { "deniz_path": "protected" } },
+        "followUpEvent": { "chainId": "deniz", "checkpoint": "stage3", "delayWeeks": 20 }
+      },
+      {
+        "id": "sistem_boyle_isliyor",
+        "text": "'Sistem böyle işliyor' de, karışma.",
+        "relationshipEffects": [{ "npc": "deniz_comez", "trust": -4 }],
+        "behaviorTags": ["junior:exploitative"],
+        "flags": { "set": { "deniz_path": "ignored" } },
+        "followUpEvent": { "chainId": "deniz", "checkpoint": "stage3", "delayWeeks": 20 }
+      }
+    ]
+  },
+  {
+    "id": "chain_deniz_03_guven",
+    "title": "DENİZ SANA GELDİ",
+    "description": "Deniz, kapını çalıp içeri girdi. 'Sana danışabilir miyim' dedi, cümlenin geri kalanını bekletti. Az kişiye bu şekilde sorulur.",
+    "category": "NPC",
+    "triggerMode": "scheduled",
+    "chainId": "deniz",
+    "chainCheckpoint": "stage3",
+    "priority": 10,
+    "requirements": { "all": [{ "relationship": { "npc": "deniz_comez", "trust": { "gte": 15 } } }] },
+    "choices": [
+      {
+        "id": "vakit_ayir",
+        "text": "İşini bırak, vakit ayır.",
+        "immediateEffects": { "fatigue": 1 },
+        "relationshipEffects": [{ "npc": "deniz_comez", "trust": 3, "friendship": 5 }],
+        "flags": { "set": { "deniz_outcome": "trusted" } },
+        "followUpEvent": { "chainId": "deniz", "checkpoint": "stage4", "delayWeeks": 15 }
+      },
+      {
+        "id": "kisa_tut",
+        "text": "Kısa tut, sonra devam edersin.",
+        "relationshipEffects": [{ "npc": "deniz_comez", "friendship": -1 }],
+        "flags": { "set": { "deniz_outcome": "trusted" } },
+        "followUpEvent": { "chainId": "deniz", "checkpoint": "stage4", "delayWeeks": 15 }
+      }
+    ]
+  },
+  {
+    "id": "chain_deniz_03_mesafe",
+    "title": "DENİZ ARTIK SORMUYOR",
+    "description": "Deniz artık senden bir şey istemiyor. İşini tek başına, sessizce hallediyor — senin gölgende değil, senden tamamen bağımsız büyümüş.",
+    "category": "NPC",
+    "triggerMode": "scheduled",
+    "chainId": "deniz",
+    "chainCheckpoint": "stage3",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {},
+        "flags": { "set": { "deniz_outcome": "independent" } },
+        "followUpEvent": { "chainId": "deniz", "checkpoint": "stage4", "delayWeeks": 15 }
+      }
+    ]
+  },
+  {
+    "id": "chain_deniz_04_dongu_kirildi",
+    "title": "DÖNGÜ",
+    "description": "Deniz'in asistanlığı bitmeye yaklaşıyor. Sana teşekkür etmek için uğradı — bunu yapan pek olmamıştı. 'İlk yılımda böyle biri olsaydı' dedi, cümlesini tamamlamadan.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "deniz",
+    "chainCheckpoint": "stage4",
+    "priority": 10,
+    "requirements": { "all": [{ "flag": "deniz_path", "eq": "protected" }, { "flag": "deniz_outcome", "eq": "trusted" }] },
+    "descriptionVariants": [
+      {
+        "requirements": { "flag": "chain_baris_cycle_outcome", "eq": "repeated_the_cycle" },
+        "text": "Deniz'in asistanlığı bitmeye yaklaşıyor. Sana teşekkür etmek için uğradı. Yıllar önce, kendi ilk yılında sana yapılmayan bir şeyi, bu sefer sen yaptın. Cümleyi tamamlamana gerek kalmadı."
+      }
+    ],
+    "choices": [
+      {
+        "id": "kabul_et",
+        "text": "Teşekkürü kabul et.",
+        "immediateEffects": { "stress": -3 },
+        "statistics": { "increment": { "junior_cycle_broken": 1 } },
+        "behaviorTags": ["hierarchy:protective"]
+      },
+      {
+        "id": "gecistir",
+        "text": "'Sen zaten hakkını verdin' diyerek geçiştir.",
+        "immediateEffects": { "stress": -1 }
+      }
+    ]
+  },
+  {
+    "id": "chain_deniz_04_dongu_devam",
+    "title": "SESSİZ AYRILIŞ",
+    "description": "Deniz'in asistanlığı bitti. Vedalaşmadan, sıradan bir hafta sonu gibi ayrıldı. Onun hakkında hatırladığın en net şey, senden hiçbir şey istemediği.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "deniz",
+    "chainCheckpoint": "stage4",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": {},
+        "statistics": { "increment": { "junior_cycle_continued": 1 } }
+      }
+    ]
+  }
+]

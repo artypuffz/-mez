@@ -1,4 +1,4 @@
-# ÇÖMEZ — Event Schema & DSL Referansı (v0.4)
+# ÇÖMEZ — Event Schema & DSL Referansı (v0.5)
 
 Bu doküman, event motoru (Faz 5) implementasyonunda kullanılacak resmi
 şemadır. `docs/event-design-bible.md` bu şemanın *neden* bu şekilde
@@ -29,6 +29,17 @@ olduğunu (tasarım gerekçesi, örnekler) anlatır; burası sade referans.
   okuyabiliyor — yeni bir requirement-node türü **eklenmedi**, sadece
   RequirementContext'e yeni alanlar eklendi (§14). Motor nöbet/ekonomi
   sisteminin anlamını bilmiyor, yalnızca bu state'i okuyor/yazıyor.
+- **v0.5** (bu doküman, Faz 8) → içerik genişlemesi + event ekosistemi
+  sonrası: `choice.onCallEffects`'e `transfer_player_shift_to_npc` eklendi
+  (§14.2) — bir nöbeti oyuncudan `npcSelectors`'dan çözülen bir NPC'ye
+  devreden tek yönlü mutasyon (tersi yok: NPC'ler player-centric schedule
+  modelinde kendi ayrı assignment kaydını tutmuyor). Yeni bir requirement-
+  node türü **eklenmedi**. Ayrıca içerik-kalitesi doğrulama katmanına
+  (§38) yeni, sadece-uyarı/hata üreten statik kontroller eklendi (yinelenen
+  başlık, aşırı uzun metin, seçenekler arası görünür-etki aynılığı,
+  ulaşılamaz `all` bloğu, geçersiz `requiredNpcTemplate`/`branchIn`,
+  `once`+`cooldownWeeks` çakışması) — bunlar şemanın kendisini değil,
+  yazım kalitesini denetliyor.
 
 ---
 
@@ -397,8 +408,16 @@ alanını ekledi. Şema tarafında hiçbir yeni `LeafCondition` türü yok.
 ```ts
 type OnCallEffect =
   | { type: "add_player_shift"; count: number; shiftType?: "weekday" | "weekend" }
-  | { type: "remove_player_shift"; count: number };
+  | { type: "remove_player_shift"; count: number }
+  | { type: "transfer_player_shift_to_npc"; target: NpcTargetRef };
 ```
+
+`transfer_player_shift_to_npc` (YENİ, Faz 8, §13/§14) — oyuncunun ELİNDEKİ
+bir nöbeti bir NPC'ye devreder ("kıdemli olunca nöbet dağıtma gücü", §30
+power-reversal). Tersi (bir NPC'nin nöbetini oyuncuya devretme) ayrı bir
+effect türü olarak yok — bu şema NPC'lerin kendi assignment'larını hiç
+tutmuyor (player-centric schedule, bkz. Faz 7 raporu §3), o yüzden
+anlatısal olarak aynı şey zaten `add_player_shift`.
 
 `resolveEventChoice`, seçimin `onCallEffects`'ini
 `domain/oncall/applyEffects.ts`'teki `applyOnCallEffects`'e devrediyor —

@@ -109,4 +109,82 @@ describe('validateEventContent', () => {
         .length
     ).toBeGreaterThan(0);
   });
+
+  // Phase 8 §38 — content-authoring-quality checks (all warnings).
+  describe('content quality warnings (§38)', () => {
+    it('warns on an exact-duplicate title across different events', () => {
+      const { issues } = validateEventContent([baseEvent({ id: 'a' }), baseEvent({ id: 'b' })]);
+      expect(issues.some((i) => i.severity === 'warning' && i.message.includes('is reused verbatim'))).toBe(true);
+    });
+
+    it('does not warn on distinct titles', () => {
+      const { issues } = validateEventContent([baseEvent({ id: 'a', title: 'X' }), baseEvent({ id: 'b', title: 'Y' })]);
+      expect(issues.some((i) => i.message.includes('is reused verbatim'))).toBe(false);
+    });
+
+    it('warns on an overly long description', () => {
+      const { issues } = validateEventContent([baseEvent({ description: 'x'.repeat(700) })]);
+      expect(issues.some((i) => i.severity === 'warning' && i.message.includes('long for a mobile event'))).toBe(true);
+    });
+
+    it('warns on an overly long choice text', () => {
+      const { issues } = validateEventContent([baseEvent({ choices: [{ id: 'a', text: 'x'.repeat(120) }] })]);
+      expect(issues.some((i) => i.severity === 'warning' && i.message.includes('single-line choice'))).toBe(true);
+    });
+
+    it('warns when two choices share byte-identical immediateEffects', () => {
+      const event = baseEvent({
+        choices: [
+          { id: 'a', text: 'A', immediateEffects: { stress: 5 } },
+          { id: 'b', text: 'B', immediateEffects: { stress: 5 } },
+        ],
+      });
+      const { issues } = validateEventContent([event]);
+      expect(issues.some((i) => i.severity === 'warning' && i.message.includes('identical visible'))).toBe(true);
+    });
+
+    it('does not warn when both choices simply have no immediateEffects', () => {
+      const event = baseEvent({ choices: [{ id: 'a', text: 'A' }, { id: 'b', text: 'B' }] });
+      const { issues } = validateEventContent([event]);
+      expect(issues.some((i) => i.message.includes('identical visible'))).toBe(false);
+    });
+
+    it('warns on a requirement that demands the same stat equal two different values at once', () => {
+      const event = baseEvent({
+        requirements: { all: [{ stat: 'career.seniorityStage', eq: 'orta' }, { stat: 'career.seniorityStage', eq: 'kidemli' }] },
+      });
+      const { issues } = validateEventContent([event]);
+      expect(issues.some((i) => i.severity === 'warning' && i.message.includes('unreachable requirement'))).toBe(true);
+    });
+
+    it('errors on a requiredNpcTemplate that does not match any authored template', () => {
+      const errors = errorsFor([baseEvent({ requiredNpcTemplate: 'not_a_real_template' })]);
+      expect(errors.some((e) => e.message.includes('does not match any authored NpcTemplate'))).toBe(true);
+    });
+
+    it('does not error on a requiredNpcTemplate that IS a real authored template', () => {
+      const errors = errorsFor([baseEvent({ requiredNpcTemplate: 'baris' })]);
+      expect(errors.some((e) => e.message.includes('does not match any authored NpcTemplate'))).toBe(false);
+    });
+
+    it('errors on a branchIn referencing an unknown branch id', () => {
+      const errors = errorsFor([baseEvent({ requirements: { branchIn: ['not_a_real_branch'] } })]);
+      expect(errors.some((e) => e.message.includes('unknown branch id'))).toBe(true);
+    });
+
+    it('does not error on a branchIn referencing a real branch id', () => {
+      const errors = errorsFor([baseEvent({ requirements: { branchIn: ['ic_hastaliklari'] } })]);
+      expect(errors.some((e) => e.message.includes('unknown branch id'))).toBe(false);
+    });
+
+    it('warns on once:true combined with a cooldownWeeks', () => {
+      const { issues } = validateEventContent([baseEvent({ once: true, cooldownWeeks: 20 })]);
+      expect(issues.some((i) => i.severity === 'warning' && i.message.includes('unreachable dead config'))).toBe(true);
+    });
+
+    it('does not warn when once:true has no cooldownWeeks', () => {
+      const { issues } = validateEventContent([baseEvent({ once: true })]);
+      expect(issues.some((i) => i.message.includes('unreachable dead config'))).toBe(false);
+    });
+  });
 });

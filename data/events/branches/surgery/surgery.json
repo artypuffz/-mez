@@ -1,0 +1,225 @@
+[
+  {
+    "id": "gs_001_uzayan_ameliyat",
+    "title": "AMELİYATHANE",
+    "description": "Planlanan ameliyat 2 saat sürecekti. 6 saattir masadasın. Ekip değişti, sen değişmedin. Ameliyathanenin saatine bakmaktan vazgeçtin.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 12,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "genel_cerrahi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "sonuna_kadar_kal",
+        "text": "Sonuna kadar masada kal.",
+        "immediateEffects": {
+          "fatigue": 18,
+          "stress": 8
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 6
+          }
+        ]
+      },
+      {
+        "id": "degisim_iste",
+        "text": "Bir sonraki asistanla değişmeyi öner.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 5
+        },
+        "relationshipEffects": [
+          {
+            "npc": "asistan_generic",
+            "trust": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gs_002_nobet_sonrasi_ameliyat",
+    "title": "SABAH 08.00",
+    "description": "Gece boyunca üç acil ameliyata girdin. Nöbet bitti ama bugünkü elektif ameliyat listesi de sana ait. Kimse bu listeyi değiştirmeyi düşünmedi çünkü 'zaten oradasın'.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 8,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "genel_cerrahi"
+          ]
+        },
+        {
+          "stat": "career.week",
+          "gte": 6
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "devam_et",
+        "text": "Kahve iç, listeye devam et.",
+        "immediateEffects": {
+          "fatigue": 20,
+          "stress": 10,
+          "burnout": 3
+        }
+      },
+      {
+        "id": "izin_iste",
+        "text": "Kıdemliden birkaç saat izin iste.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "kidemli_generic_gs",
+            "trust": -2
+          }
+        ]
+      },
+      {
+        "id": "sessizce_gec",
+        "text": "Hiçbir şey söylemeden listeyi başka bir asistana devret.",
+        "immediateEffects": {
+          "stress": 8
+        },
+        "relationshipEffects": [
+          {
+            "npc": "asistan_generic",
+            "grudge": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gs_003_liste_degisikligi",
+    "title": "SON DAKİKA LİSTE DEĞİŞİKLİĞİ",
+    "description": "Bugünkü ameliyat listesi sabah 06.30'da yeniden düzenlendi. Planladığın gün artık yok; yerine üç saat sonra biteceğini sandığın gün var.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "branchIn": ["genel_cerrahi"] }] },
+    "choices": [
+      {
+        "id": "plani_iptal_et",
+        "text": "Günün planını sessizce iptal et.",
+        "immediateEffects": { "stress": 4 }
+      },
+      {
+        "id": "degisiklige_itiraz",
+        "text": "Değişikliğin nedenini sor.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "kidemli_generic_gs", "trust": -2 }]
+      }
+    ]
+  },
+  {
+    "id": "gs_004_masa_sirasi",
+    "title": "MASADA KİM YAPACAK",
+    "description": "Ameliyatın kritik adımına yaklaşılıyor. Sen mi, senden bir kıdem üstteki mi yapacak, açıkça konuşulmadı. Hoca 'birileri karar versin' der gibi bakıyor.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 14,
+    "requirements": { "all": [{ "branchIn": ["genel_cerrahi"] }, { "stat": "career.week", "gte": 20 }] },
+    "choices": [
+      {
+        "id": "adimi_iste",
+        "text": "Adımı kendin istediğini belirt.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "kidemli_generic_gs", "trust": -1 }],
+        "statistics": { "increment": { "gs_masa_talebi": 1 } }
+      },
+      {
+        "id": "kidemliye_birak",
+        "text": "Sessizce kıdemliye bırak.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "gs_005_malzeme_eksikligi",
+    "title": "SET EKSİK",
+    "description": "Ameliyathanede gereken cerrahi set eksik çıktı. Sterilizasyon biriminden yenisi bir saat sürüyor. Hasta masada, ekip bekliyor.",
+    "category": "HOSPITAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "branchIn": ["genel_cerrahi"] }, { "stat": "career.week", "gte": 8 }] },
+    "choices": [
+      {
+        "id": "sterilizasyonu_takip_et",
+        "text": "Sterilizasyon birimine bizzat git, süreci takip et.",
+        "immediateEffects": { "fatigue": 3, "stress": 3 }
+      },
+      {
+        "id": "bekle",
+        "text": "Bekle, birinin hallettiğini varsay.",
+        "immediateEffects": { "stress": 5 }
+      }
+    ]
+  },
+  {
+    "id": "gs_006_morbidite_sunumu",
+    "title": "MORBİDİTE-MORTALİTE TOPLANTISI",
+    "description": "Geçen ay yaşanan bir komplikasyon bu haftaki toplantıda konuşulacak. Sunumu sen yapacaksın; olay sende geçmedi ama dosya sana devredildi diye sunum da sana kaldı.",
+    "category": "BRANCH",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "branchIn": ["genel_cerrahi"] }, { "stat": "career.week", "gte": 25 }] },
+    "choices": [
+      {
+        "id": "objektif_sun",
+        "text": "Olguyu olduğu gibi, savunmasız sun.",
+        "immediateEffects": { "stress": 6 },
+        "behaviorTags": ["hierarchy:complicit"]
+      },
+      {
+        "id": "kendi_payini_koru",
+        "text": "Sunumda kendi sorumluluğunu net biçimde ayır.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": -2 }]
+      }
+    ]
+  },
+  {
+    "id": "gs_007_nobet_devri_eksik",
+    "title": "DEVİR NOTU EKSİK",
+    "description": "Sabah nöbeti devraldın. Gece nöbetçisi acele çıktığı için devir notu yarım kalmış. Bir hastanın gece ne olduğunu tam bilmiyorsun.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 12,
+    "requirements": { "all": [{ "branchIn": ["genel_cerrahi"] }] },
+    "choices": [
+      {
+        "id": "gece_nobetciyi_ara",
+        "text": "Gece nöbetçisini arayıp uyandır.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": -1 }]
+      },
+      {
+        "id": "dosyadan_cikar",
+        "text": "Dosyadan kendi başına çıkarmaya çalış.",
+        "immediateEffects": { "fatigue": 3, "stress": 5 }
+      }
+    ]
+  }
+]

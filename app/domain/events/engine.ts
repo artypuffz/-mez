@@ -259,7 +259,7 @@ export function resolveEventChoice(
   const resources = applyResourceDelta(state.resources, immediateDelta);
   const relationships = applyRelationshipEffects(state.relationships, choice.relationshipEffects, boundNpcIds);
   const { npcs, transitions: npcTransitions } = applyNpcTransitionEffects(state.npcs, choice.npcTransitions, boundNpcIds, currentWeek);
-  const onCallSchedule = applyOnCallEffects(state.onCall.schedule, choice.onCallEffects, rng);
+  const onCallSchedule = applyOnCallEffects(state.onCall.schedule, choice.onCallEffects, rng, boundNpcIds);
   const flags = applyFlags(state.flags, choice.flags);
   const statistics = applyStatistics(state.statistics, choice.statistics);
   const behaviorStats = applyBehaviorTags(state.behaviorStats, choice.behaviorTags);

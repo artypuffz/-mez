@@ -1,0 +1,168 @@
+[
+  {
+    "id": "chain_hoca_01_teklif",
+    "title": "PROJE TEKLİFİ",
+    "description": "Doç. Dr. Erhan Kaya bir araştırma projesi için ortak arıyor. İlgini çekiyor ama proje kendi vaktinden çalacağı açık; bunu söylemiyor, sen zaten biliyorsun.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 5,
+    "once": true,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 15 }] },
+    "requiredNpcTemplate": "hoca_erhan",
+    "chainId": "hoca",
+    "chainCheckpoint": "stage1",
+    "choices": [
+      {
+        "id": "kabul_et",
+        "text": "Kabul et.",
+        "immediateEffects": { "fatigue": 2 },
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": 4 }],
+        "flags": { "set": { "hoca_path": "joined" } },
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage2", "delayWeeks": 15 }
+      },
+      {
+        "id": "reddet",
+        "text": "Nazikçe reddet.",
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": -2 }],
+        "flags": { "set": { "hoca_path": "declined" } },
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage2", "delayWeeks": 15 }
+      }
+    ]
+  },
+  {
+    "id": "chain_hoca_02_yuk",
+    "title": "PROJE SENİ YİYOR",
+    "description": "Hoca'nın projesi tahmin ettiğinden büyük çıktı. Her hafta yeni bir 'küçük ek iş' geliyor; hiçbiri gerçekten küçük değil.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "hoca",
+    "chainCheckpoint": "stage2",
+    "priority": 10,
+    "requirements": { "all": [{ "flag": "hoca_path", "eq": "joined" }] },
+    "choices": [
+      {
+        "id": "fazla_mesai",
+        "text": "Ekstra vakit ayır, hepsini yetiştir.",
+        "immediateEffects": { "fatigue": 6, "stress": 3 },
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": 5 }],
+        "behaviorTags": ["hierarchy:complicit"],
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage3", "delayWeeks": 15 }
+      },
+      {
+        "id": "sinir_koy",
+        "text": "Nazikçe bir sınır koy: 'Bu hafta bu kadarını yapabilirim.'",
+        "immediateEffects": { "stress": -2 },
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": -3 }],
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage3", "delayWeeks": 15 }
+      }
+    ]
+  },
+  {
+    "id": "chain_hoca_02_disarida",
+    "title": "PROJE BAŞKASINA GİTTİ",
+    "description": "Hoca projeyi başka bir asistana verdi. O asistan şimdi seninle daha az konuşuyor, sanki aranızda bir yarış varmış ve sen kaybetmişsin gibi — oysa hiç yarışmamıştın.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "hoca",
+    "chainCheckpoint": "stage2",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "devam",
+        "text": "Devam et.",
+        "immediateEffects": { "stress": 2 },
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage3", "delayWeeks": 15 }
+      }
+    ]
+  },
+  {
+    "id": "chain_hoca_03_referans",
+    "title": "İSİM ADİL SIRALANDI",
+    "description": "Hoca seni bir kongre için önerdi. Bildiri üstünde isim sırası bu kez adil: emeğin nerede geçtiyse orada duruyor.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "hoca",
+    "chainCheckpoint": "stage3",
+    "priority": 10,
+    "requirements": { "all": [{ "relationship": { "npc": "hoca_erhan", "trust": { "gte": 5 } } }] },
+    "choices": [
+      {
+        "id": "kabul_et",
+        "text": "Fırsatı değerlendir.",
+        "immediateEffects": { "money": -2000, "stress": -3 },
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": 3 }],
+        "flags": { "set": { "hoca_outcome": "credited" } },
+        "statistics": { "increment": { "career_opportunities_taken": 1 } },
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage4", "delayWeeks": 20 }
+      }
+    ]
+  },
+  {
+    "id": "chain_hoca_03_goz_ardi",
+    "title": "GÖZ ARDI",
+    "description": "Hoca kongreye başka birini götürdü. Sana sorulmadı; 'sen zaten meşgulsün' denildi, sanki bu senin adına verilmiş bir iyilikmiş gibi.",
+    "category": "MOBBING",
+    "triggerMode": "scheduled",
+    "chainId": "hoca",
+    "chainCheckpoint": "stage3",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      {
+        "id": "sessiz_kal",
+        "text": "Bir şey deme.",
+        "immediateEffects": { "stress": 4 },
+        "behaviorTags": ["hierarchy:abused_silently"],
+        "flags": { "set": { "hoca_outcome": "overlooked" } },
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage4", "delayWeeks": 20 }
+      },
+      {
+        "id": "sorgula",
+        "text": "Nazikçe nedenini sor.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": -4 }],
+        "flags": { "set": { "hoca_outcome": "overlooked" } },
+        "followUpEvent": { "chainId": "hoca", "checkpoint": "stage4", "delayWeeks": 20 }
+      }
+    ]
+  },
+  {
+    "id": "chain_hoca_04_yakinlik",
+    "title": "AKADEMİK YAKINLIK",
+    "description": "Hoca artık seni kendi ekibinden sayıyor. Bu bir ayrıcalık; aynı zamanda gelecekte reddedemeyeceğin bir dizi 'küçük rica'nın da başlangıcı.",
+    "category": "CAREER",
+    "triggerMode": "scheduled",
+    "chainId": "hoca",
+    "chainCheckpoint": "stage4",
+    "priority": 10,
+    "requirements": { "all": [{ "flag": "hoca_outcome", "eq": "credited" }] },
+    "choices": [
+      {
+        "id": "iliskiyi_surdur",
+        "text": "İlişkiyi olduğu gibi sürdür.",
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": 2 }]
+      },
+      {
+        "id": "mesafeyi_koru",
+        "text": "Bundan sonra biraz mesafe koy.",
+        "immediateEffects": { "stress": -1 },
+        "relationshipEffects": [{ "npc": "hoca_erhan", "trust": -2 }]
+      }
+    ]
+  },
+  {
+    "id": "chain_hoca_04_kapanis",
+    "title": "AYNI KORİDOR",
+    "description": "Hoca'yla artık sadece koridorda karşılaşıyorsunuz. Ne dostça ne düşmanca, sadece iki kişi aynı binada çalışıyor.",
+    "category": "GENERAL",
+    "triggerMode": "scheduled",
+    "chainId": "hoca",
+    "chainCheckpoint": "stage4",
+    "priority": 5,
+    "isFallback": true,
+    "choices": [
+      { "id": "devam", "text": "Devam et.", "immediateEffects": {} }
+    ]
+  }
+]

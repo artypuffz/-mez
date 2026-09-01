@@ -1,0 +1,209 @@
+[
+  {
+    "id": "pr_001_nobet_listesini_sen_yapiyorsun",
+    "title": "LİSTEYİ SEN HAZIRLIYORSUN",
+    "description": "Bu ay nöbet listesini hazırlama sırası sende. Bayram haftasını birine yazman gerekiyor. Kendi adını oraya yazmamak, listede başka birinin adının olması demek.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "kendine_yaz",
+        "text": "Bayram haftasını kendine yaz, adil olduğunu düşün.",
+        "immediateEffects": { "fatigue": 2 },
+        "onCallEffects": [{ "type": "add_player_shift", "count": 1, "shiftType": "weekend" }],
+        "behaviorTags": ["hierarchy:protective"]
+      },
+      {
+        "id": "junior_a_yaz",
+        "text": "'Ben kıdemliyim' diyerek juniora yaz.",
+        "onCallEffects": [{ "type": "transfer_player_shift_to_npc", "target": { "boundNpc": "primary" } }],
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -6, "grudge": 5 }],
+        "behaviorTags": ["hierarchy:abusive"]
+      }
+    ]
+  },
+  {
+    "id": "pr_002_gorev_dagitimi",
+    "title": "GÖREVLERİ SEN DAĞITIYORSUN",
+    "description": "Bugünkü sıkıcı, uzun sürecek işlerden biri dağıtılacak. İki asistan var, ikisi de senden görev bekliyor.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "adil_pay",
+        "text": "İşi ikiye adil böl.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 4 }],
+        "behaviorTags": ["hierarchy:protective"]
+      },
+      {
+        "id": "sivisan_pay",
+        "text": "Ağır kısmı juniora ver, kolay kısmı kendine ayır.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -4, "grudge": 3 }],
+        "behaviorTags": ["hierarchy:abusive", "junior:exploitative"]
+      }
+    ]
+  },
+  {
+    "id": "pr_003_junior_hatasini_sahiplenme",
+    "title": "JUNIOR'IN HATASI",
+    "description": "Bir junior küçük ama fark edilebilir bir hata yaptı. Hoca sana soruyor: 'Bu nasıl oldu?' Cevabı sen veriyorsun, junior yanında duruyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "in": ["orta", "kidemli"] }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "sahiplen",
+        "text": "'Benim gözetimimdeydi, benim sorumluluğum' de.",
+        "immediateEffects": { "stress": 4 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 8 }, { "npc": "hoca_generic", "trust": -2 }],
+        "behaviorTags": ["hierarchy:protective"]
+      },
+      {
+        "id": "juniora_birak",
+        "text": "Açıklamayı juniorun kendisinin yapmasını bekle.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -5 }],
+        "behaviorTags": ["junior:exploitative"]
+      }
+    ]
+  },
+  {
+    "id": "pr_004_sunumu_devretme",
+    "title": "SUNUMU DEVRETME FIRSATI",
+    "description": "Haftalık sunum sırası sende ama bu hafta gerçekten vaktin yok. Bir junior'a devredebilirsin — onun için bir fırsat olabilir, ya da hazır olmadığı bir yük.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "firsat_olarak_sun",
+        "text": "Destekleyerek devret, hazırlanmasına yardım et.",
+        "immediateEffects": { "fatigue": 2 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 6 }],
+        "behaviorTags": ["hierarchy:protective", "junior:supportive"]
+      },
+      {
+        "id": "sessizce_devret",
+        "text": "Sessizce devret, hazırlığı ona bırak.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -2 }],
+        "behaviorTags": ["junior:exploitative"]
+      }
+    ]
+  },
+  {
+    "id": "pr_005_izin_isteyen_junior",
+    "title": "JUNIOR İZİN İSTİYOR",
+    "description": "Bir junior senden acil bir izin istiyor, ailevi bir sebep var. Servis zaten dar kadroyla çalışıyor. Onayı sen veriyorsun.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "onayla",
+        "text": "Onayla, kendi işini yeniden düzenle.",
+        "immediateEffects": { "fatigue": 3 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 8 }],
+        "behaviorTags": ["hierarchy:protective"]
+      },
+      {
+        "id": "reddet",
+        "text": "'Şu an uygun değil' de.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -8, "grudge": 4 }],
+        "behaviorTags": ["hierarchy:abusive"]
+      }
+    ]
+  },
+  {
+    "id": "pr_006_comezden_soru",
+    "title": "SAF BİR SORU",
+    "description": "Yeni bir çömez, sana herkesin bildiğini varsaydığı bir şeyi sordu. Soru senin için çok basit; onun için ilk kez soruyor olması normal.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 14,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "in": ["orta", "kidemli"] }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "sabirla_anlat",
+        "text": "Sabırla, baştan anlat.",
+        "immediateEffects": { "fatigue": 1 },
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 5 }],
+        "behaviorTags": ["junior:supportive"]
+      },
+      {
+        "id": "kucumseyerek_cevapla",
+        "text": "'Bunu bilmiyor musun' tonuyla cevapla.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -4, "grudge": 2 }],
+        "behaviorTags": ["hierarchy:abusive"]
+      }
+    ]
+  },
+  {
+    "id": "pr_007_angaryayi_asagi_aktar",
+    "title": "ANGARYA SANA GELDİ",
+    "description": "Sana verilen sıkıcı bir angarya işi var. Bunu aynen sana yapıldığı gibi bir juniora aktarabilirsin, ya da kendi üstlenip döngüyü burada durdurabilirsin.",
+    "category": "MOBBING",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 18,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "choices": [
+      {
+        "id": "kendin_yap",
+        "text": "Kendin yap, kimseye aktarma.",
+        "immediateEffects": { "fatigue": 5, "stress": 2 },
+        "behaviorTags": ["hierarchy:protective"],
+        "statistics": { "increment": { "power_reversal_broke_cycle": 1 } }
+      },
+      {
+        "id": "juniora_aktar",
+        "text": "Sana yapıldığı gibi juniora aktar.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -3, "grudge": 3 }],
+        "behaviorTags": ["junior:exploitative"],
+        "statistics": { "increment": { "power_reversal_repeated_cycle": 1 } }
+      }
+    ]
+  },
+  {
+    "id": "pr_008_servis_karari",
+    "title": "SERVİS DÜZENİ KARARI",
+    "description": "Servisin günlük iş akışında bir değişiklik önerisi geldi: bazı işler daha erken saate alınacak. Karar artık senin masanda.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "choices": [
+      {
+        "id": "ekibe_danis",
+        "text": "Kararı vermeden önce ekibe danış.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": 4 }]
+      },
+      {
+        "id": "tek_basina_karar_ver",
+        "text": "Tartışmadan tek başına karar ver.",
+        "immediateEffects": { "stress": -1 },
+        "relationshipEffects": [{ "npc": "asistan_generic", "trust": -3 }]
+      }
+    ]
+  }
+]

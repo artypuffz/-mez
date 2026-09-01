@@ -1,0 +1,222 @@
+[
+  {
+    "id": "gen_006_servis_telefonu",
+    "title": "SERVİS TELEFONU",
+    "description": "Servis telefonu son bir saatte on iki kez çaldı. Sekizi seni ilgilendirmiyordu. Telefonu her açışında bir sonraki cümlenin ne olacağını artık tahmin edebiliyorsun.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "choices": [
+      {
+        "id": "hepsine_bak",
+        "text": "Her aramaya sabırla cevap ver.",
+        "immediateEffects": { "fatigue": 4, "stress": 3 }
+      },
+      {
+        "id": "ilgisizleri_yonlendir",
+        "text": "Seni ilgilendirmeyenleri doğru kişiye yönlendir.",
+        "immediateEffects": { "stress": 2 }
+      }
+    ]
+  },
+  {
+    "id": "gen_007_ogun_atlama",
+    "title": "ÖĞLE ARASI",
+    "description": "Saat 15.40. Bugün henüz bir şey yemedin. Kantin 15.30'da kapanıyor. Bu ayki üçüncü kez.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 8,
+    "choices": [
+      {
+        "id": "atistirmalikla_gec",
+        "text": "Makineden bir şey al, geç.",
+        "immediateEffects": { "fatigue": 2, "money": -150 }
+      },
+      {
+        "id": "boyle_devam",
+        "text": "Aç kal, akşamı bekle.",
+        "immediateEffects": { "fatigue": 5, "stress": 3 }
+      }
+    ]
+  },
+  {
+    "id": "gen_008_soyunma_dolabi",
+    "title": "SOYUNMA ODASI",
+    "description": "Dolabın kilidi bir haftadır bozuk. Bugün içindeki birkaç eşyan kayboldu. Kimse bir şey görmemiş.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "choices": [
+      {
+        "id": "sikayet_dilekcesi",
+        "text": "İdareye resmi şikayet dilekçesi ver.",
+        "immediateEffects": { "stress": 2 },
+        "flags": { "set": { "gen_dolap_sikayeti": true } }
+      },
+      {
+        "id": "kendi_kilidini_al",
+        "text": "Kendi asma kilidini takıp geç.",
+        "immediateEffects": { "money": -300 }
+      }
+    ]
+  },
+  {
+    "id": "gen_009_yeni_genelge",
+    "title": "YENİ GENELGE",
+    "description": "Bugün panoya asılan genelge, üç ay önceki genelgeyi iptal ediyor. O da altı ay önceki başka bir genelgeyi iptal etmişti. Hangisi geçerli, kimse tam olarak bilmiyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 6 }] },
+    "choices": [
+      {
+        "id": "dikkatlice_oku",
+        "text": "Genelgeyi dikkatle oku, notlarını al.",
+        "immediateEffects": { "fatigue": 1, "stress": 1 }
+      },
+      {
+        "id": "sonra_bakarim",
+        "text": "'Sonra bakarım' diyip geç.",
+        "immediateEffects": {}
+      }
+    ]
+  },
+  {
+    "id": "gen_010_dogum_gunu_kutlamasi",
+    "title": "SERVİSTE PASTA",
+    "description": "Bir hemşirenin doğum günü. Küçük bir pasta, plastik çatallar, beş dakikalık bir mola. Servis bu beş dakika boyunca garip bir şekilde sessiz ve normal görünüyor.",
+    "category": "SOCIAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "choices": [
+      {
+        "id": "katil",
+        "text": "Katıl, birkaç dakika ayır.",
+        "immediateEffects": { "stress": -3 },
+        "relationshipEffects": [{ "npc": "hemsire_generic", "trust": 3 }]
+      },
+      {
+        "id": "isine_devam",
+        "text": "İşine devam et, sonra tebrik edersin.",
+        "immediateEffects": {}
+      }
+    ]
+  },
+  {
+    "id": "gen_011_forma_degisikligi",
+    "title": "YENİ FORMA YÖNETMELİĞİ",
+    "description": "Hastane yönetimi asistan formalarının rengini değiştirdi. Eski formalar 'geçiş süreci' boyunca kullanılabilirmiş. Geçiş sürecinin ne zaman biteceği belirtilmemiş.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 40,
+    "requirements": { "all": [{ "stat": "career.week", "gte": 10 }] },
+    "choices": [
+      {
+        "id": "yeni_forma_al",
+        "text": "Yeni formayı hemen al.",
+        "immediateEffects": { "money": -900 }
+      },
+      {
+        "id": "eskiyi_giymeye_devam",
+        "text": "Eskisini giymeye devam et.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  },
+  {
+    "id": "gen_012_powernap_firsati",
+    "title": "ON BEŞ DAKİKA",
+    "description": "Nöbet arasında beklenmedik bir boşluk çıktı: on beş dakika, hiçbir şey olmuyor. Nöbet odasındaki koltuk seni çağırıyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 7,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "stat": "onCall.currentMonthTotalShifts", "gte": 1 }] },
+    "choices": [
+      {
+        "id": "uyu",
+        "text": "Gözlerini kapat, uyu.",
+        "immediateEffects": { "fatigue": -8 }
+      },
+      {
+        "id": "dosya_bak",
+        "text": "Bu vakti geride kalan dosyalara ayır.",
+        "immediateEffects": { "stress": -2 }
+      }
+    ]
+  },
+  {
+    "id": "gen_013_toplu_tasima_gecikmesi",
+    "title": "SEFER İPTALİ",
+    "description": "Sabah servisine yetişeceğin otobüs seferi iptal edildi, bir sonraki 40 dakika sonra. Vizite yetişip yetişemeyeceğini hesaplıyorsun.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 10,
+    "requirements": { "all": [{ "flag": "lives_with_family", "neq": true }] },
+    "choices": [
+      {
+        "id": "taksiye_bin",
+        "text": "Taksiye binip yetişmeye çalış.",
+        "immediateEffects": { "money": -350, "stress": -1 }
+      },
+      {
+        "id": "gec_kal",
+        "text": "Bekle, geç kal.",
+        "immediateEffects": { "stress": 4 }
+      }
+    ]
+  },
+  {
+    "id": "gen_014_ortada_kalmislik",
+    "title": "NE ÇÖMEZ NE KIDEMLİ",
+    "description": "Artık çömez sayılmıyorsun ama kararları hâlâ başkaları veriyor. Bu ara dönem, bazı günler hafiflik gibi, bazı günler belirsizlik gibi hissettiriyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 30,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "orta" }] },
+    "choices": [
+      {
+        "id": "sorumluluk_iste",
+        "text": "Daha fazla sorumluluk istediğini belirt.",
+        "immediateEffects": { "stress": 2 },
+        "statistics": { "increment": { "orta_sorumluluk_istedi": 1 } }
+      },
+      {
+        "id": "akisina_birak",
+        "text": "Akışına bırak, acele etme.",
+        "immediateEffects": { "stress": -1 }
+      }
+    ]
+  },
+  {
+    "id": "gen_015_ilk_fikir_soruldu",
+    "title": "SANA SORULDU",
+    "description": "Bir servis kararı alınırken hoca ilk kez doğrudan sana ne düşündüğünü sordu. Küçük bir şey ama daha önce hiç olmamıştı.",
+    "category": "CAREER",
+    "triggerMode": "pool",
+    "weight": 4,
+    "once": true,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "orta" }] },
+    "choices": [
+      {
+        "id": "net_fikir_soyle",
+        "text": "Net bir fikir söyle.",
+        "immediateEffects": { "stress": 2 },
+        "relationshipEffects": [{ "npc": "hoca_generic", "trust": 4 }]
+      },
+      {
+        "id": "temkinli_kal",
+        "text": "Temkinli bir cevap ver.",
+        "immediateEffects": { "stress": 1 }
+      }
+    ]
+  }
+]

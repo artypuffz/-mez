@@ -1,0 +1,166 @@
+[
+  {
+    "id": "oncall_003_kidemli_nobet_devri",
+    "title": "KIDEMLİ NÖBETİNİ DEVREDİYOR",
+    "description": "Bir kıdemli asistan, kendi nöbetlerinden birini 'sana iyi bir deneyim olur' diyerek devretmek istiyor. Deneyim kısmı doğru olabilir; seçim şansının olup olmadığı ayrı bir mesele.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "in": ["comez", "orta"] }] },
+    "npcSelectors": { "primary": { "randomActiveByRole": "senior_resident" } },
+    "choices": [
+      {
+        "id": "kabul_et",
+        "text": "Kabul et, itiraz etme.",
+        "onCallEffects": [{ "type": "add_player_shift", "count": 1 }],
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": 2 }]
+      },
+      {
+        "id": "secim_hakki_oldugunu_hatirlat",
+        "text": "Bunun bir seçim olduğunu nazikçe hatırlat.",
+        "relationshipEffects": [{ "boundNpc": "primary", "trust": -4 }],
+        "immediateEffects": { "stress": 3 }
+      }
+    ]
+  },
+  {
+    "id": "oncall_004_son_dakika_eksiklik",
+    "title": "SON DAKİKA EKSİKLİK",
+    "description": "Bu geceki nöbetçilerden biri hastalandı, yerine bakacak kimse yok. Sekreterya seni aradı; telefon açık kaldığı sürece bu senin sorunun.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 12,
+    "choices": [
+      {
+        "id": "nobeti_devral",
+        "text": "Nöbeti devral.",
+        "onCallEffects": [{ "type": "add_player_shift", "count": 1 }],
+        "immediateEffects": { "money": 900 }
+      },
+      {
+        "id": "baskasini_bulmaya_calis",
+        "text": "Başka birini bulmaya çalış.",
+        "immediateEffects": { "stress": 4 }
+      }
+    ]
+  },
+  {
+    "id": "oncall_005_hafta_sonu_plani",
+    "title": "HAFTA SONU PLANI ÇAKIŞTI",
+    "description": "Aylardır planladığın bir hafta sonu var. Nöbet listesi yayınlandı: tam o hafta sonu senin. Değişmesi imkânsız değil, ama biri senin yerine geçmeli.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 6,
+    "cooldownWeeks": 16,
+    "requirements": { "all": [{ "stat": "onCall.weekendShiftCount", "gte": 1 }] },
+    "choices": [
+      {
+        "id": "degisim_ara",
+        "text": "Değişecek birini aramaya başla.",
+        "immediateEffects": { "stress": 4 },
+        "onCallEffects": [{ "type": "remove_player_shift", "count": 1 }, { "type": "add_player_shift", "count": 1, "shiftType": "weekday" }]
+      },
+      {
+        "id": "plani_iptal_et",
+        "text": "Planı iptal et, nöbeti tut.",
+        "immediateEffects": { "stress": 5 }
+      }
+    ]
+  },
+  {
+    "id": "oncall_006_ust_uste_nobet",
+    "title": "İKİ GÜN ÜST ÜSTE",
+    "description": "Liste hatası mı yoksa kasıt mı bilmiyorsun ama iki nöbetin üst üste düşmüş. Bu ayın geri kalanı zaten yoğun; itiraz etsen de bu haftaki gerçeklik değişmeyecek.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "onCall.currentMonthTotalShifts", "gte": 4 }] },
+    "choices": [
+      {
+        "id": "dayan",
+        "text": "Dayan, ikisini de tut.",
+        "immediateEffects": { "fatigue": 14, "stress": 6, "burnout": 2 }
+      },
+      {
+        "id": "hata_bildir",
+        "text": "Bunun bir hata olup olmadığını sor, ama yine de tut.",
+        "immediateEffects": { "fatigue": 12, "stress": 4 },
+        "flags": { "set": { "oncall_uste_uste_bildirildi": true } }
+      }
+    ]
+  },
+  {
+    "id": "oncall_007_liste_yogun_yorumu",
+    "title": "BU AYKİ LİSTE",
+    "description": "Bu ayki nöbet listesine bir daha bakıyorsun. Geçen aya göre biraz daha yoğun görünüyor. Kimse bir açıklama yapmadı; belki de gerek yok.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "cooldownWeeks": 20,
+    "requirements": { "all": [{ "stat": "onCall.currentMonthTotalShifts", "gte": 8 }] },
+    "choices": [
+      {
+        "id": "kabullen",
+        "text": "Bir şey demeden kabullen.",
+        "immediateEffects": { "stress": 2 }
+      },
+      {
+        "id": "not_al",
+        "text": "İleride sormak üzere not al.",
+        "immediateEffects": {},
+        "flags": { "set": { "oncall_yogunluk_not_alindi": true } }
+      }
+    ]
+  },
+  {
+    "id": "oncall_008_erteleme_talebi",
+    "title": "ERTELEME TALEBİ",
+    "description": "Bir sınavın var, nöbetle aynı güne denk geldi. Sekreterliğe erteleme talebinde bulunabilirsin ama bunun onaylanacağının garantisi yok.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 5,
+    "cooldownWeeks": 24,
+    "requirements": { "all": [{ "stat": "onCall.currentMonthTotalShifts", "gte": 2 }] },
+    "choices": [
+      {
+        "id": "resmi_talep",
+        "text": "Resmi talep dilekçesi ver.",
+        "immediateEffects": { "stress": 2 },
+        "onCallEffects": [{ "type": "remove_player_shift", "count": 1 }, { "type": "add_player_shift", "count": 1 }]
+      },
+      {
+        "id": "vazgec",
+        "text": "Uğraşmaya değmez, vazgeç.",
+        "immediateEffects": { "stress": 3 }
+      }
+    ]
+  },
+  {
+    "id": "oncall_009_ilk_liste_kararin",
+    "title": "İLK KEZ SEN HAZIRLIYORSUN",
+    "description": "Kıdemli olduktan sonra ilk kez nöbet listesini sen hazırlıyorsun. Boş bir tablo önünde, geçmişte kendine yapılanları hatırlıyorsun.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 4,
+    "once": true,
+    "requirements": { "all": [{ "stat": "career.seniorityStage", "eq": "kidemli" }] },
+    "choices": [
+      {
+        "id": "dengeli_dagit",
+        "text": "Listeyi olabildiğince dengeli dağıt.",
+        "immediateEffects": { "fatigue": 2 },
+        "behaviorTags": ["hierarchy:protective"],
+        "flags": { "set": { "oncall_ilk_liste_dengeli": true } }
+      },
+      {
+        "id": "eski_aliskanlik",
+        "text": "Eski alışkanlığa uy, kıdemsizler daha çok yazılsın.",
+        "behaviorTags": ["hierarchy:abusive"],
+        "flags": { "set": { "oncall_ilk_liste_dengesiz": true } }
+      }
+    ]
+  }
+]
