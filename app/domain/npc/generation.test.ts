@@ -70,4 +70,28 @@ describe('generateInitialClinic', () => {
       expect(npc.hospitalId).toBe(program.hospitalId);
     }
   });
+
+  // Android Device QA Hotfix 1, Issue 1 (root cause) — every authored
+  // template's stored identity.gender must match NpcTemplate.gender, NOT
+  // a throwaway random name's gender that got discarded in favor of the
+  // authored `name`. This is the real end-to-end path (spawnNpc via
+  // generateInitialClinic), not just the avatar module in isolation.
+  it('authored NPCs get their identity.gender from NpcTemplate.gender, not an unrelated random draw', () => {
+    for (let i = 0; i < 15; i++) {
+      const { npcs } = generateInitialClinic(program, createSeededRng(`gender-check-${i}`));
+      const byTemplate = Object.fromEntries(npcs.filter((n) => n.templateId).map((n) => [n.templateId, n]));
+      expect(byTemplate.baris?.identity.gender).toBe('erkek');
+      expect(byTemplate.zeynep_sekreter?.identity.gender).toBe('kadın');
+      expect(byTemplate.hoca_erhan?.identity.gender).toBe('erkek');
+      expect(byTemplate.deniz_comez?.identity.gender).toBe('kadın');
+    }
+  });
+
+  it('every procedurally generated (non-templated) npc has some real, valid Gender value', () => {
+    const { npcs } = generateInitialClinic(program, createSeededRng('procedural-gender-check'));
+    const validGenders = ['kadın', 'erkek', 'belirtmek_istemiyorum'];
+    for (const npc of npcs.filter((n) => !n.templateId)) {
+      expect(validGenders).toContain(npc.identity.gender);
+    }
+  });
 });

@@ -38,6 +38,21 @@ test("Hastane NPC avatars are deterministic — identity and derivation seed sur
   await expect(page.getByText("Barış Demir").last()).toBeVisible();
 });
 
+// Android Device QA Hotfix 1, Issue 1 — the authored roster's stored
+// gender must match who they actually are (root cause: it used to come
+// from a discarded random name draw, see domain/npc/generation.ts).
+// domain/avatar/npcAvatar.test.ts proves generation itself honors gender;
+// this proves the real running app's roster carries the correct gender
+// end to end.
+test("authored NPC roster carries the correct stored gender", async ({ page }) => {
+  await loadDebugScenario(page, "senior_power_reversal");
+  const state = await readDebugGameState(page);
+  expect(state.npcs.baris.identity.gender).toBe("erkek");
+  expect(state.npcs.zeynep_sekreter.identity.gender).toBe("kadın");
+  expect(state.npcs.hoca_erhan.identity.gender).toBe("erkek");
+  expect(state.npcs.deniz_comez.identity.gender).toBe("kadın");
+});
+
 // §1/§69 — final primary navigation is Ana Sayfa/Hastane/Harcamalar/
 // Profil; no standalone İlişkiler route is reachable from anywhere.
 test("primary navigation cycles through all four tabs with no standalone Relationships route", async ({ page }) => {

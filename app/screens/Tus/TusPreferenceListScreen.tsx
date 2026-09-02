@@ -9,6 +9,7 @@ import { getProgramHospitalName, type ResidencyProgram } from '../../domain/conf
 import { getBranchDefinition, getBranchOverallDifficulty } from '../../domain/config/branches';
 import { getCityDefinition } from '../../domain/config/cities';
 import { filterPrograms, sortPrograms, type ProgramSortKey } from '../../domain/tus/sortPrograms';
+import { resolveEntryThreshold } from '../../domain/tus/resolveEntryThreshold';
 import {
   PROFILE_DIMENSION_LABELS,
   getProfileLevelLabel,
@@ -48,7 +49,13 @@ function ProgramCard({ program, onPick }: { program: ResidencyProgram; onPick: (
       <Text style={styles.cardCity}>{city.name}</Text>
 
       <View style={styles.statRow}>
-        <Text style={styles.statLine}>TUS: {program.minScore !== undefined ? program.minScore.toFixed(2) : 'Puan sınırı yok'}</Text>
+        {/* Android Device QA Hotfix 1, Issue 2 — neither minScore (Phase 3
+            fictional-program balance numbers) nor gameplayEntryThreshold
+            (deriveGameplayEntryThreshold) is official ÖSYM taban puanı, so
+            this must never read "20XX ÖSYM taban puanı" or similar. */}
+        <Text style={styles.statLine}>
+          Gerekli oyun puanı: {resolveEntryThreshold(program) !== undefined ? resolveEntryThreshold(program)!.toFixed(2) : 'Belirtilmemiş'}
+        </Text>
         <Text style={styles.statLine}>Asistanlık: {difficultyLabel(program)}</Text>
       </View>
 

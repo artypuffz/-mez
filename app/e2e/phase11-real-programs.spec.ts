@@ -7,6 +7,7 @@ import {
   readDebugGameState,
   reloadAndResume,
 } from "./helpers";
+import { LEGACY_PROGRAMS, getProgramHospitalName } from "../domain/config/residencyPrograms";
 
 // Phase 11 §44 flow A — new game -> TUS -> see real programs -> filter ->
 // select -> residency starts -> the correct real institution/branch shows.
@@ -43,6 +44,27 @@ test("real ÖSYM programs are visible, filterable, and selectable end to end", a
   expect(typeof state.career.hierarchyPressure).toBe("number");
   expect(state.career.hierarchyPressure).toBeGreaterThanOrEqual(0.5);
   expect(state.career.hierarchyPressure).toBeLessThanOrEqual(5.0);
+});
+
+// Android Device QA Hotfix 1, Issue 3 — no legacy fictional program's
+// hospital name may appear anywhere in a new game's TUS preference list,
+// and the entry-score label must read honestly (never implying an
+// official ÖSYM taban puanı).
+test("new-game TUS preference list contains zero fictional programs and honest score wording", async ({ page }) => {
+  await gotoFreshMainMenu(page);
+  await page.getByTestId("btn-new-game").click();
+  await createCharacterThroughUi(page, "No Fictional Test");
+  await completeTusThroughUi(page, "duzenli");
+  await expect(page.getByTestId("tus-result-count")).toBeVisible({ timeout: 20_000 });
+
+  const bodyText = await page.locator("body").innerText();
+  for (const program of LEGACY_PROGRAMS) {
+    expect(bodyText).not.toContain(getProgramHospitalName(program));
+  }
+
+  // Honest wording: never claims an official ÖSYM taban puanı.
+  expect(bodyText).not.toMatch(/ÖSYM taban puanı/i);
+  expect(bodyText).toContain("Gerekli oyun puanı");
 });
 
 // Phase 11 §44 flow B — a hard real branch/program actually produces

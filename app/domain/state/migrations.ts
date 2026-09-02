@@ -1,4 +1,4 @@
-import { CURRENT_SAVE_VERSION, type GameState } from "./types";
+import { CURRENT_SAVE_VERSION, type Gender, type GameState } from "./types";
 import { deriveResidencyStartDate } from "../residency/calendar";
 import { generateInitialClinic } from "../npc/generation";
 import { getResidencyProgram } from "../config/residencyPrograms";
@@ -224,7 +224,10 @@ const migrations: Record<number, Migration> = {
   10: (state) => {
     const meta = state.meta as Record<string, unknown>;
     const character = state.character as Record<string, unknown>;
-    const avatar = randomizePlayerAvatar(createScopedRng(meta.rngSeed as string, "avatar:player:initial"));
+    // Android Device QA Hotfix 1, Issue 1 — the backfilled avatar must
+    // respect the character's already-stored gender, same as any other
+    // automatic generation.
+    const avatar = randomizePlayerAvatar(createScopedRng(meta.rngSeed as string, "avatar:player:initial"), character.gender as Gender);
     return {
       ...state,
       meta: { ...meta, saveVersion: 11 },

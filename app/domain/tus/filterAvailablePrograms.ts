@@ -1,15 +1,23 @@
 import type { ResidencyProgram } from "../config/residencyPrograms";
+import { resolveEntryThreshold } from "./resolveEntryThreshold";
 
-// Phase 11 — a program with no minScore has no known official TUS score
-// gate (see ResidencyProgram.minScore's doc comment: most real ÖSYM
-// programs this phase have no verified taban puanı data). Treating that
-// as "score requirement not met" would make every real program entirely
-// unreachable regardless of score, which defeats the point of adding
-// them; treating it as "no gate, always available" is the honest reading
-// of "we don't have this data" rather than a fabricated pass/fail.
+// Android Device QA Hotfix 1, Issue 2 — the score gate now ALWAYS applies
+// for every production (real) program: deriveGameplayEntryThreshold
+// (domain/config/residencyPrograms.ts) sets gameplayEntryThreshold for
+// every single real program, so resolveEntryThreshold never returns
+// undefined for one. A program can only fall through to "no known
+// threshold, always available" if BOTH minScore and gameplayEntryThreshold
+// are genuinely absent — which no longer happens for any program actually
+// reachable through new-game discovery (PRODUCTION_PROGRAMS); it's kept
+// as a defensive fallback, not the common case, so a future program type
+// that genuinely has no threshold data still fails safe (available) rather
+// than crashing or becoming permanently unreachable.
 export function filterAvailablePrograms(
   programs: readonly ResidencyProgram[],
   tusScore: number
 ): ResidencyProgram[] {
-  return programs.filter((p) => p.minScore === undefined || tusScore >= p.minScore);
+  return programs.filter((p) => {
+    const threshold = resolveEntryThreshold(p);
+    return threshold === undefined || tusScore >= threshold;
+  });
 }

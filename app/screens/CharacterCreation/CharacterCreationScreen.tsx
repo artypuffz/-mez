@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -7,7 +7,6 @@ import { useGameStore } from '../../store/useGameStore';
 import { BACKGROUND_DEFINITIONS } from '../../domain/config/backgrounds';
 import type { BackgroundId, Gender } from '../../domain/state/types';
 import type { PlayerAvatar } from '../../domain/avatar/types';
-import { DEFAULT_PLAYER_AVATAR } from '../../domain/avatar/options';
 import {
   EYEBROW_STYLE_OPTIONS, EYE_STYLE_OPTIONS, FACE_SHAPE_OPTIONS, FACIAL_HAIR_OPTIONS,
   GLASSES_OPTIONS, HAIR_COLOR_OPTIONS, HAIR_STYLE_OPTIONS, DETAIL_OPTIONS, SKIN_TONE_OPTIONS,
@@ -87,7 +86,6 @@ export default function CharacterCreationScreen({ navigation }: Props) {
   const [gender, setGender] = useState<Gender>('belirtmek_istemiyorum');
   const [hometown, setHometown] = useState('');
   const [background, setBackground] = useState<BackgroundId | null>(null);
-  const [avatar, setAvatar] = useState<PlayerAvatar>(DEFAULT_PLAYER_AVATAR);
   const [submitting, setSubmitting] = useState(false);
 
   // §28 — one root entropy point (same pattern as the save's own
@@ -97,6 +95,21 @@ export default function CharacterCreationScreen({ navigation }: Props) {
   // createNewGame runs, this avatar is frozen into the save.
   const [rerollSeed] = useState(() => generateRandomSeed());
   const [rerollCount, setRerollCount] = useState(0);
+  const [avatar, setAvatar] = useState<PlayerAvatar>(() =>
+    randomizePlayerAvatar(createScopedRng(rerollSeed, 'avatar:default:0'), gender)
+  );
+  // Android Device QA Hotfix 1, Issue 1 — the DEFAULT avatar must track a
+  // gender change made before the career starts (e.g. the player goes back
+  // to step 1 and changes gender). Once the player has actually touched
+  // the avatar (a manual field pick or a Randomize press), their choice is
+  // never silently overwritten again — only the untouched default reacts
+  // to gender.
+  const [avatarTouched, setAvatarTouched] = useState(false);
+
+  useEffect(() => {
+    if (avatarTouched) return;
+    setAvatar(randomizePlayerAvatar(createScopedRng(rerollSeed, 'avatar:default:0'), gender));
+  }, [gender, avatarTouched, rerollSeed]);
 
   const trimmedName = name.trim();
   const trimmedHometown = hometown.trim();
@@ -106,11 +119,15 @@ export default function CharacterCreationScreen({ navigation }: Props) {
 
   const handleRandomize = () => {
     const rng = createScopedRng(rerollSeed, `avatar:randomize:${rerollCount}`);
-    setAvatar(randomizePlayerAvatar(rng));
+    setAvatar(randomizePlayerAvatar(rng, gender));
     setRerollCount((c) => c + 1);
+    setAvatarTouched(true);
   };
 
-  const set = <K extends keyof PlayerAvatar>(key: K, value: PlayerAvatar[K]) => setAvatar((a) => ({ ...a, [key]: value }));
+  const set = <K extends keyof PlayerAvatar>(key: K, value: PlayerAvatar[K]) => {
+    setAvatar((a) => ({ ...a, [key]: value }));
+    setAvatarTouched(true);
+  };
 
   const handleStart = async () => {
     if (!background || submitting) return;
@@ -179,6 +196,7 @@ export default function CharacterCreationScreen({ navigation }: Props) {
                 style={[styles.chip, gender === opt.id && styles.chipSelected]}
                 onPress={() => setGender(opt.id)}
                 accessibilityRole="button"
+                testID={`gender-${opt.id}`}
               >
                 <Text style={[styles.chipText, gender === opt.id && styles.chipTextSelected]}>
                   {opt.label}

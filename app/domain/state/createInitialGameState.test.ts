@@ -74,4 +74,37 @@ describe('createInitialGameState', () => {
     expect(state.resources.fatigue).toBeGreaterThanOrEqual(0);
     expect(state.resources.burnout).toBeGreaterThanOrEqual(0);
   });
+
+  // Android Device QA Hotfix 1, Issue 1
+  describe('default player avatar generation', () => {
+    it('respects the character\'s selected gender when no explicit avatar is supplied', () => {
+      const female = createInitialGameState({ ...baseInput, gender: 'kadın' }, { seed: 'avatar-gender-seed' });
+      expect(female.character.avatar.facialHair).toBe('none');
+    });
+
+    it('is deterministic for a given seed+gender', () => {
+      const a = createInitialGameState({ ...baseInput, gender: 'erkek' }, { seed: 'avatar-det-seed' });
+      const b = createInitialGameState({ ...baseInput, gender: 'erkek' }, { seed: 'avatar-det-seed' });
+      expect(a.character.avatar).toEqual(b.character.avatar);
+    });
+
+    it('an explicitly supplied avatar (from Character Creation manual customization) always wins over the default, regardless of gender', () => {
+      const manualAvatar = {
+        skinTone: 'tone_06' as const, faceShape: 'heart' as const, hairStyle: 'buzz' as const,
+        hairColor: 'blonde' as const, eyebrowStyle: 'thin' as const, eyeStyle: 'wide' as const,
+        facialHair: 'full_beard' as const, glasses: 'square' as const, detail: 'earrings' as const,
+      };
+      const state = createInitialGameState({ ...baseInput, gender: 'kadın', avatar: manualAvatar }, { seed: 'manual-override-seed' });
+      expect(state.character.avatar).toEqual(manualAvatar);
+    });
+
+    it('avatar/gender choice never affects starting resources, money, or any other gameplay field', () => {
+      const female = createInitialGameState({ ...baseInput, gender: 'kadın' }, { seed: 'same-seed-neutrality' });
+      const male = createInitialGameState({ ...baseInput, gender: 'erkek' }, { seed: 'same-seed-neutrality' });
+      expect(female.resources).toEqual(male.resources);
+      expect(female.resourcePressure).toEqual(male.resourcePressure);
+      expect(female.financialPressure).toEqual(male.financialPressure);
+      expect(female.flags).toEqual(male.flags);
+    });
+  });
 });

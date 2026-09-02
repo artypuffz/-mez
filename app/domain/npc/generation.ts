@@ -1,4 +1,4 @@
-import { clampRelationshipField, type NpcId, type NpcPersonality, type NpcRole, type NpcState, type RelationshipState } from "../state/types";
+import { clampRelationshipField, type Gender, type NpcId, type NpcPersonality, type NpcRole, type NpcState, type RelationshipState } from "../state/types";
 import type { SeededRng } from "../rng/seededRng";
 import type { ResidencyProgram } from "../config/residencyPrograms";
 import { DEFAULT_CLINIC_COMPOSITION, ROLE_TENURE_RANGE, type ClinicCompositionTemplate } from "../config/clinicComposition";
@@ -99,6 +99,11 @@ export interface SpawnNpcOptions {
   index: number;
   templateId?: string;
   overrideName?: string;
+  // Android Device QA Hotfix 1, Issue 1 — an authored template's real
+  // gender, threaded from NpcTemplate.gender (see domain/npc/templates.ts).
+  // Undefined for procedural NPCs, which keep using generateUniqueName's
+  // own drawn gender exactly as before.
+  overrideGender?: Gender;
   personalityOverrides?: Partial<NpcPersonality>;
   // New arrivals join now; the initial roster gets a plausible backdated
   // tenure instead (see ROLE_TENURE_RANGE) — pass false for replenishment.
@@ -136,7 +141,13 @@ export function spawnNpc(options: SpawnNpcOptions): SpawnedNpc {
 
   const npc: NpcState = {
     id,
-    identity: { name: options.overrideName ?? generatedName.fullName, gender: generatedName.gender },
+    // Android Device QA Hotfix 1, Issue 1 (root cause) — this used to be
+    // `generatedName.gender` unconditionally, even for a templated NPC
+    // whose actual `name` came from `options.overrideName` instead of
+    // `generatedName`. An authored character's stored gender must come
+    // from the same authored source as their name, not from a discarded
+    // random draw.
+    identity: { name: options.overrideName ?? generatedName.fullName, gender: options.overrideGender ?? generatedName.gender },
     role,
     branchId,
     hospitalId,
@@ -204,10 +215,10 @@ export function generateInitialClinic(
   const culture = cultureBias(mobbingRiskEquivalent, program.hiddenProfile.npcCultureSeedModifier ?? 0);
   let index = 0;
 
-  const spawn = (role: NpcRole, templateId?: string, overrideName?: string, personalityOverrides?: Partial<NpcPersonality>) => {
+  const spawn = (role: NpcRole, templateId?: string, overrideName?: string, personalityOverrides?: Partial<NpcPersonality>, overrideGender?: Gender) => {
     const { npc, relationship } = spawnNpc({
       role, hospitalId: program.hospitalId, branchId: program.branchId, currentWeek: 0,
-      culture, rng, usedNames, idPrefix: `npc_${program.id}`, index: index++, templateId, overrideName, personalityOverrides,
+      culture, rng, usedNames, idPrefix: `npc_${program.id}`, index: index++, templateId, overrideName, personalityOverrides, overrideGender,
     });
     npcs.push(npc);
     relationships[npc.id] = relationship;
@@ -220,7 +231,7 @@ export function generateInitialClinic(
   }
 
   for (const template of NPC_TEMPLATES) {
-    spawn(template.role, template.templateId, template.name, template.personalityOverrides);
+    spawn(template.role, template.templateId, template.name, template.personalityOverrides, template.gender);
   }
 
   return { npcs, relationships };

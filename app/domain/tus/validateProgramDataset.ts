@@ -1,4 +1,5 @@
-import { RESIDENCY_PROGRAMS, type ResidencyProgram } from "../config/residencyPrograms";
+import { RESIDENCY_PROGRAMS, PRODUCTION_PROGRAMS, LEGACY_PROGRAMS, type ResidencyProgram } from "../config/residencyPrograms";
+import { resolveEntryThreshold } from "./resolveEntryThreshold";
 import { HOSPITAL_DEFINITIONS } from "../config/hospitals";
 import { BRANCH_DEFINITIONS } from "../config/branches";
 import { CITY_DEFINITIONS } from "../config/cities";
@@ -86,19 +87,33 @@ export function validateProgramDataset(
       }
     }
 
-    // invalid TUS score
-    if (program.minScore !== undefined) {
+    // invalid TUS score (either field — see resolveEntryThreshold)
+    const threshold = resolveEntryThreshold(program);
+    if (threshold !== undefined) {
       if (
-        !Number.isFinite(program.minScore) ||
-        program.minScore < DEFAULT_TUS_SCORE_CONFIG.minScore ||
-        program.minScore > DEFAULT_TUS_SCORE_CONFIG.maxScore
+        !Number.isFinite(threshold) ||
+        threshold < DEFAULT_TUS_SCORE_CONFIG.minScore ||
+        threshold > DEFAULT_TUS_SCORE_CONFIG.maxScore
       ) {
         issues.push({
           severity: "error",
           programId: program.id,
-          message: `minScore ${program.minScore} outside the valid TUS score range [${DEFAULT_TUS_SCORE_CONFIG.minScore}, ${DEFAULT_TUS_SCORE_CONFIG.maxScore}]`,
+          message: `entry threshold ${threshold} outside the valid TUS score range [${DEFAULT_TUS_SCORE_CONFIG.minScore}, ${DEFAULT_TUS_SCORE_CONFIG.maxScore}]`,
         });
       }
+    }
+
+    // Android Device QA Hotfix 1, Issue 2 — a regression guard: every real
+    // production program must carry a gameplayEntryThreshold. Without
+    // this, a future edit that stops computing it would silently
+    // regress back into "undefined = universally available at any score",
+    // exactly the bug this hotfix fixes.
+    if (program.sourceType === "real" && program.gameplayEntryThreshold === undefined) {
+      issues.push({
+        severity: "error",
+        programId: program.id,
+        message: `real production program is missing gameplayEntryThreshold — it would be selectable at any TUS score`,
+      });
     }
 
     // invalid quota

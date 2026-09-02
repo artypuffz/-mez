@@ -41,7 +41,7 @@ export function createInitialGameState(
   const createdAt = (options.now ?? (() => new Date().toISOString()))();
   const backgroundDef = getBackgroundDefinition(input.background);
   const modifiers = backgroundDef.resourceModifiers;
-  const avatar = input.avatar ?? randomizePlayerAvatar(createScopedRng(seed, "avatar:player:initial"));
+  const avatar = input.avatar ?? randomizePlayerAvatar(createScopedRng(seed, "avatar:player:initial"), input.gender);
 
   return {
     meta: {

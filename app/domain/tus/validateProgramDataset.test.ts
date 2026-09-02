@@ -59,6 +59,16 @@ describe('validateProgramDataset', () => {
     expect(issues.some((i) => i.severity === 'error' && i.message.includes('difficultyModifier.onCallLoad'))).toBe(true);
   });
 
+  // Android Device QA Hotfix 1, Issue 2 — regression guard for the original
+  // bug: a real program with no threshold at all must fail validation
+  // rather than silently becoming universally selectable.
+  it('catches a real program missing gameplayEntryThreshold', () => {
+    const base = RESIDENCY_PROGRAMS.find((p) => p.sourceType === 'real')!;
+    const bad: ResidencyProgram = { ...base, id: 'bad_no_threshold', gameplayEntryThreshold: undefined };
+    const issues = validateProgramDataset([bad]);
+    expect(issues.some((i) => i.severity === 'error' && i.message.includes('missing gameplayEntryThreshold'))).toBe(true);
+  });
+
   it('warns (does not error) on a same institution+branch appearing twice', () => {
     const base = RESIDENCY_PROGRAMS.find((p) => p.sourceType === 'real')!;
     const secondRow: ResidencyProgram = { ...base, id: `${base.id}__extra` };

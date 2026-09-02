@@ -3,16 +3,21 @@ import { getBackgroundDefinition } from "../config/backgrounds";
 import { getBranchDefinition } from "../config/branches";
 import { getCityDefinition } from "../config/cities";
 import { getHospitalDefinition } from "../config/hospitals";
-import { RESIDENCY_PROGRAMS } from "../config/residencyPrograms";
+import { PRODUCTION_PROGRAMS } from "../config/residencyPrograms";
 import { filterAvailablePrograms } from "../tus/filterAvailablePrograms";
 
 export function selectCareerPhase(state: GameState): CareerPhase {
   return state.career.phase;
 }
 
+// Android Device QA Hotfix 1, Issue 3 — new-game TUS discovery must read
+// ONLY the real-program pool. RESIDENCY_PROGRAMS (real + legacy fictional)
+// stays reserved for by-id lookup of programs an existing save already
+// committed to (see getResidencyProgram in residencyPrograms.ts) — it must
+// never be the source for a fresh preference list.
 export function selectAvailablePrograms(state: GameState) {
   if (state.career.tusScore === undefined) return [];
-  return filterAvailablePrograms(RESIDENCY_PROGRAMS, state.career.tusScore);
+  return filterAvailablePrograms(PRODUCTION_PROGRAMS, state.career.tusScore);
 }
 
 export interface ResidencySummary {

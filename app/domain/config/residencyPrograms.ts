@@ -3,6 +3,8 @@ import type { ProfileLevel } from "./programProfileLabels";
 import { getHospitalDefinition } from "./hospitals";
 import { getBranchDefinition } from "./branches";
 import { getCityDefinition } from "./cities";
+import { getBranchCompetitivenessTier } from "./branchCompetitiveness";
+import { DEFAULT_TUS_SCORE_CONFIG } from "./tusScoreConfig";
 import realProgramsData from "../../../data/tus/programs.json";
 
 // Phase 11 §22-24 — a small, OPTIONAL nudge on a specific real
@@ -30,7 +32,18 @@ export interface ResidencyProgram {
   // minScore is treated as having no TUS score gate (see
   // domain/tus/filterAvailablePrograms.ts), never a fabricated number.
   minScore?: number;
-  // Phase 11 — real quota from the ÖSYM source, display-only.
+  // Android Device QA Hotfix 1, Issue 2 — the real-program equivalent of
+  // `minScore` above, computed by `deriveGameplayEntryThreshold` below.
+  // Kept as a SEPARATE, differently-named field on purpose (never folded
+  // into `minScore`) so it can never be mistaken for, or accidentally
+  // rendered as, an official ÖSYM taban puanı — we do not possess one for
+  // any real program (see docs/program-data-sources.md). It IS the field
+  // that actually gates real-program eligibility (see
+  // domain/tus/resolveEntryThreshold.ts, the one place both this and
+  // `minScore` are read together).
+  gameplayEntryThreshold?: number;
+  // Phase 11 — real quota from the ÖSYM source, display-only (and, since
+  // this hotfix, also one of gameplayEntryThreshold's real inputs).
   quota?: number;
   // Phase 11 — "fictional" for the original Phase 3 MVP programs (kept
   // unchanged for backward compatibility), "real" for programs sourced
@@ -128,6 +141,42 @@ function deriveVisibleProfile(branchId: BranchId, cityId: CityId): ResidencyProg
   };
 }
 
+// Android Device QA Hotfix 1, Issue 2 — a deterministic, centrally-computed
+// gameplay entry-competitiveness threshold for real programs, built from
+// three REAL inputs (never hospital workplace difficulty, per the hotfix
+// brief):
+//   - branch competitiveness tier (domain/config/branchCompetitiveness.ts
+//     — a labeled gameplay judgment, see its own file header)
+//   - quota scarcity (this program's own real `quota` — a genuinely
+//     scarcer program is a defensible reason to require a stronger score)
+//   - city demand (the city's existing `costIndex` — already an in-game
+//     proxy for a city's relative scale/desirability, not a new claim)
+//
+// Calibrated against computeTusScore's REAL attainable range
+// (DEFAULT_TUS_SCORE_CONFIG: [20, 98], most runs 55-75, see
+// domain/tus/computeTusScore.ts) so that:
+//   - the lowest possible threshold (tier 1, large quota, cheap city) is
+//     BELOW the score floor (20) — a realistic low score never produces
+//     zero real programs, avoiding the "no career path" dead end;
+//   - the highest possible threshold (tier 5, quota 1, expensive city) is
+//     comfortably below the score ceiling (98) — a very high score always
+//     has real headroom to unlock literally everything, not just "most
+//     things".
+// This is a GAMEPLAY APPROXIMATION, explicitly labeled as such everywhere
+// it's read (see resolveEntryThreshold.ts and the TUS preference UI) —
+// never presented as an official ÖSYM score.
+function deriveGameplayEntryThreshold(branchId: BranchId, quota: number, cityId: CityId): number {
+  const BASE = 15;
+  const tier = getBranchCompetitivenessTier(branchId);
+  const tierBonus = (tier - 1) * 10; // tier1:0 .. tier5:40
+  const quotaScarcityBonus = Math.max(0, Math.min(10, 12 - quota)) * 2; // quota<=2:~20 .. quota>=12:0
+  const cityDemandBonus = Math.max(0, getCityDefinition(cityId).costIndex - 38) * 0.4; // cheapest city:0 .. priciest:~12
+
+  const raw = BASE + tierBonus + quotaScarcityBonus + cityDemandBonus;
+  const clamped = Math.min(DEFAULT_TUS_SCORE_CONFIG.maxScore, Math.max(DEFAULT_TUS_SCORE_CONFIG.minScore, raw));
+  return Math.round(clamped);
+}
+
 const REAL_PROGRAMS: ResidencyProgram[] = (realProgramsData as RealProgramRow[]).map(
   (row): ResidencyProgram => ({
     id: row.id,
@@ -136,6 +185,7 @@ const REAL_PROGRAMS: ResidencyProgram[] = (realProgramsData as RealProgramRow[])
     cityId: row.cityId,
     quota: row.quota,
     sourceType: "real",
+    gameplayEntryThreshold: deriveGameplayEntryThreshold(row.branchId, row.quota, row.cityId),
     jointUsePartner: row.jointUsePartner,
     visibleProfile: deriveVisibleProfile(row.branchId, row.cityId),
     hiddenProfile: deriveHiddenProfileFromBranch(row.branchId),
@@ -149,6 +199,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "ic_hastaliklari",
     cityId: "ankara",
     minScore: 78,
+    sourceType: "fictional",
     visibleProfile: { education: "high", workload: "medium", onCallDensity: "medium", academicEnvironment: "high", cityCost: "medium" },
     hintText: "Servis yoğun ama eğitim iyi.",
     hiddenProfile: { mobbingRisk: 35, burnoutPressure: 45, staffingPressure: 40, npcCultureSeedModifier: 2 },
@@ -159,6 +210,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "genel_cerrahi",
     cityId: "ankara",
     minScore: 82,
+    sourceType: "fictional",
     visibleProfile: { education: "very_high", workload: "very_high", onCallDensity: "very_high", academicEnvironment: "high", cityCost: "medium" },
     hintText: "Ameliyathane programı yoğun, ekip deneyimli.",
     hiddenProfile: { mobbingRisk: 55, burnoutPressure: 70, staffingPressure: 50, npcCultureSeedModifier: -1 },
@@ -169,6 +221,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "ic_hastaliklari",
     cityId: "ankara",
     minScore: 45,
+    sourceType: "fictional",
     visibleProfile: { education: "medium", workload: "medium", onCallDensity: "medium", academicEnvironment: "medium", cityCost: "medium" },
     hintText: "Bölüm sakin görünür.",
     hiddenProfile: { mobbingRisk: 30, burnoutPressure: 35, staffingPressure: 45 },
@@ -179,6 +232,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "psikiyatri",
     cityId: "ankara",
     minScore: 40,
+    sourceType: "fictional",
     visibleProfile: { education: "medium", workload: "low", onCallDensity: "low", academicEnvironment: "medium", cityCost: "medium" },
     hintText: "Süpervizyon düzenli işliyor.",
     hiddenProfile: { mobbingRisk: 20, burnoutPressure: 25, staffingPressure: 30 },
@@ -189,6 +243,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "genel_cerrahi",
     cityId: "istanbul",
     minScore: 88,
+    sourceType: "fictional",
     visibleProfile: { education: "very_high", workload: "very_high", onCallDensity: "very_high", academicEnvironment: "very_high", cityCost: "very_high" },
     hintText: "Kıdem sistemi gelenekseldir.",
     hiddenProfile: { mobbingRisk: 65, burnoutPressure: 75, staffingPressure: 55, npcCultureSeedModifier: -3 },
@@ -199,6 +254,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "psikiyatri",
     cityId: "istanbul",
     minScore: 55,
+    sourceType: "fictional",
     visibleProfile: { education: "high", workload: "medium", onCallDensity: "low", academicEnvironment: "medium", cityCost: "very_high" },
     hintText: "Burada herkes birbirini tanır.",
     hiddenProfile: { mobbingRisk: 40, burnoutPressure: 35, staffingPressure: 35 },
@@ -209,6 +265,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "ic_hastaliklari",
     cityId: "istanbul",
     minScore: 60,
+    sourceType: "fictional",
     visibleProfile: { education: "high", workload: "high", onCallDensity: "high", academicEnvironment: "medium", cityCost: "very_high" },
     hintText: "Nöbetler biraz yorucu.",
     hiddenProfile: { mobbingRisk: 45, burnoutPressure: 55, staffingPressure: 50 },
@@ -219,6 +276,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "ic_hastaliklari",
     cityId: "izmir",
     minScore: 70,
+    sourceType: "fictional",
     visibleProfile: { education: "high", workload: "medium", onCallDensity: "medium", academicEnvironment: "high", cityCost: "medium" },
     hintText: "Hocalar biraz eski usul.",
     hiddenProfile: { mobbingRisk: 50, burnoutPressure: 40, staffingPressure: 35 },
@@ -229,6 +287,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "genel_cerrahi",
     cityId: "izmir",
     minScore: 35,
+    sourceType: "fictional",
     visibleProfile: { education: "medium", workload: "high", onCallDensity: "high", academicEnvironment: "low", cityCost: "medium" },
     hintText: "Personel sık değişiyor.",
     hiddenProfile: { mobbingRisk: 40, burnoutPressure: 50, staffingPressure: 70 },
@@ -239,6 +298,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "psikiyatri",
     cityId: "bursa",
     minScore: 30,
+    sourceType: "fictional",
     visibleProfile: { education: "medium", workload: "low", onCallDensity: "low", academicEnvironment: "medium", cityCost: "low" },
     hintText: "Sistem biraz eski usul.",
     hiddenProfile: { mobbingRisk: 30, burnoutPressure: 25, staffingPressure: 40 },
@@ -249,6 +309,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "ic_hastaliklari",
     cityId: "antalya",
     minScore: 25,
+    sourceType: "fictional",
     visibleProfile: { education: "low", workload: "medium", onCallDensity: "medium", academicEnvironment: "low", cityCost: "low" },
     hintText: "Asistan yorumları: idare eder.",
     hiddenProfile: { mobbingRisk: 35, burnoutPressure: 40, staffingPressure: 60 },
@@ -259,6 +320,7 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "genel_cerrahi",
     cityId: "eskisehir",
     minScore: 50,
+    sourceType: "fictional",
     visibleProfile: { education: "medium", workload: "high", onCallDensity: "high", academicEnvironment: "medium", cityCost: "low" },
     hintText: "Ekip küçük, iş çok.",
     hiddenProfile: { mobbingRisk: 45, burnoutPressure: 55, staffingPressure: 65 },
@@ -269,16 +331,37 @@ const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
     branchId: "ic_hastaliklari",
     cityId: "eskisehir",
     minScore: 20,
+    sourceType: "fictional",
     visibleProfile: { education: "low", workload: "high", onCallDensity: "high", academicEnvironment: "low", cityCost: "low" },
     hintText: "Buraya kimse gönüllü gelmiyor ama iş öğreniyorsun.",
     hiddenProfile: { mobbingRisk: 40, burnoutPressure: 50, staffingPressure: 75 },
   },
 ];
 
-// Phase 11 — the Phase 3 fictional MVP programs stay exactly as they were
-// (backward compatibility with existing saves/tests), with the real ÖSYM
-// dataset appended after them rather than replacing anything.
-export const RESIDENCY_PROGRAMS: ResidencyProgram[] = [...FICTIONAL_PROGRAMS, ...REAL_PROGRAMS];
+// Android Device QA Hotfix 1, Issue 3 — "real production programs" is now
+// its OWN exported pool, deliberately separate from the legacy fictional
+// ones. This is what every NEW-GAME discovery/filtering path must read
+// (domain/state/selectors.ts's selectAvailablePrograms is the one real
+// consumer) — a fictional program can never reach a new player through
+// this export, structurally, not just by UI omission.
+export const PRODUCTION_PROGRAMS: ResidencyProgram[] = REAL_PROGRAMS;
+
+// The original Phase 3 MVP programs — kept ONLY so an existing save that
+// already references one (tus.selectedProgramId, or a mid-residency
+// career whose engine tick re-resolves it every month) keeps loading and
+// playing correctly forever. NEVER read by new-game TUS discovery/
+// filtering/search — see PRODUCTION_PROGRAMS above and
+// domain/state/selectors.ts.
+export const LEGACY_PROGRAMS: ResidencyProgram[] = FICTIONAL_PROGRAMS;
+
+// The full lookup set — both pools combined — used ONLY by
+// getResidencyProgram(id) below (a by-id resolver that must be able to
+// find ANY program a save might reference, old or new) and by dev/test
+// tooling that intentionally needs the complete dataset (e.g.
+// domain/debug/debugScenarios.ts, which references legacy fictional ids
+// on purpose to keep its own long-standing scenarios stable). Never used
+// for new-game preference discovery.
+export const RESIDENCY_PROGRAMS: ResidencyProgram[] = [...LEGACY_PROGRAMS, ...PRODUCTION_PROGRAMS];
 
 export function getResidencyProgram(id: ProgramId): ResidencyProgram {
   const program = RESIDENCY_PROGRAMS.find((p) => p.id === id);

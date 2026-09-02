@@ -1,19 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { filterPrograms, sortPrograms } from './sortPrograms';
 import { RESIDENCY_PROGRAMS } from '../config/residencyPrograms';
+import { resolveEntryThreshold } from './resolveEntryThreshold';
 import { getBranchDefinition, getBranchOverallDifficulty } from '../config/branches';
 import { getCityDefinition } from '../config/cities';
 
 describe('sortPrograms', () => {
-  it('sorts by score ascending, with unscored programs after every scored one', () => {
+  it('sorts by threshold ascending, with unthresholded programs after every thresholded one', () => {
     const sorted = sortPrograms(RESIDENCY_PROGRAMS, 'score');
-    const scoredIndices = sorted.map((p, i) => (p.minScore !== undefined ? i : -1)).filter((i) => i >= 0);
-    const unscoredIndices = sorted.map((p, i) => (p.minScore === undefined ? i : -1)).filter((i) => i >= 0);
+    const scoredIndices = sorted.map((p, i) => (resolveEntryThreshold(p) !== undefined ? i : -1)).filter((i) => i >= 0);
+    const unscoredIndices = sorted.map((p, i) => (resolveEntryThreshold(p) === undefined ? i : -1)).filter((i) => i >= 0);
     if (scoredIndices.length > 0 && unscoredIndices.length > 0) {
       expect(Math.max(...scoredIndices)).toBeLessThan(Math.min(...unscoredIndices));
     }
     for (let i = 1; i < scoredIndices.length; i++) {
-      expect(sorted[scoredIndices[i]].minScore!).toBeGreaterThanOrEqual(sorted[scoredIndices[i - 1]].minScore!);
+      expect(resolveEntryThreshold(sorted[scoredIndices[i]])!).toBeGreaterThanOrEqual(
+        resolveEntryThreshold(sorted[scoredIndices[i - 1]])!
+      );
     }
   });
 

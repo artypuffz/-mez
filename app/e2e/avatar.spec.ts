@@ -75,3 +75,62 @@ test("Randomize on the Görünüş step actually changes the avatar and the fina
   expect(state.character.avatar).toBeDefined();
   expect(typeof state.character.avatar.skinTone).toBe("string");
 });
+
+// Android Device QA Hotfix 1, Issue 1 — the DEFAULT (untouched) avatar
+// shown on the Görünüş step must already reflect the gender picked in
+// step 1, and Randomize must keep respecting it.
+test("selecting kadın in step 1 produces a gender-aware default (no facial hair) on the Görünüş step, and Randomize respects it too", async ({ page }) => {
+  await gotoFreshMainMenu(page);
+  await page.getByTestId("btn-new-game").click();
+  await page.getByTestId("input-name").fill("Elif Kaya");
+  await page.getByTestId("input-hometown").fill("Ankara");
+  await page.getByTestId("gender-kadın").click();
+  await page.getByTestId("btn-step1-next").click();
+  await page.getByTestId("background-kendi_basina").click();
+  await page.getByTestId("btn-step2-next").click();
+
+  // Untouched default — never manually picked a facialHair swatch.
+  await expect(page.getByTestId("btn-randomize-avatar")).toBeVisible();
+
+  // Randomize repeatedly — facial hair must never appear for a kadın default.
+  for (let i = 0; i < 5; i++) {
+    await page.getByTestId("btn-randomize-avatar").click();
+  }
+  await page.getByTestId("btn-step3-next").click();
+  await page.getByTestId("btn-start-tus").click();
+  await expect(page.getByTestId("prep-profile-duzenli")).toBeVisible();
+
+  await completeTusThroughUi(page, "duzenli");
+  await pickFirstResidencyProgram(page);
+
+  const state = await readDebugGameState(page);
+  expect(state.character.gender).toBe("kadın");
+  expect(state.character.avatar.facialHair).toBe("none");
+});
+
+// §29/§9 — manual customization must remain fully permissive regardless
+// of gender: a kadın character can still be given a full_beard by hand,
+// and that explicit choice must be respected, not silently corrected.
+test("manual facial-hair customization is not restricted by gender", async ({ page }) => {
+  await gotoFreshMainMenu(page);
+  await page.getByTestId("btn-new-game").click();
+  await page.getByTestId("input-name").fill("Selin Demir");
+  await page.getByTestId("input-hometown").fill("İzmir");
+  await page.getByTestId("gender-kadın").click();
+  await page.getByTestId("btn-step1-next").click();
+  await page.getByTestId("background-kendi_basina").click();
+  await page.getByTestId("btn-step2-next").click();
+
+  await expect(page.getByTestId("avatar-Sakal-full_beard")).toBeVisible();
+  await page.getByTestId("avatar-Sakal-full_beard").click();
+  await page.getByTestId("btn-step3-next").click();
+  await page.getByTestId("btn-start-tus").click();
+  await expect(page.getByTestId("prep-profile-duzenli")).toBeVisible();
+
+  await completeTusThroughUi(page, "duzenli");
+  await pickFirstResidencyProgram(page);
+
+  const state = await readDebugGameState(page);
+  expect(state.character.gender).toBe("kadın");
+  expect(state.character.avatar.facialHair).toBe("full_beard");
+});

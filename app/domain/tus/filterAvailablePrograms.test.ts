@@ -1,40 +1,41 @@
 import { describe, expect, it } from 'vitest';
 import { filterAvailablePrograms } from './filterAvailablePrograms';
-import { RESIDENCY_PROGRAMS } from '../config/residencyPrograms';
+import { RESIDENCY_PROGRAMS, PRODUCTION_PROGRAMS } from '../config/residencyPrograms';
 import { DEFAULT_TUS_SCORE_CONFIG } from '../config/tusScoreConfig';
+import { resolveEntryThreshold } from './resolveEntryThreshold';
 
 describe('filterAvailablePrograms', () => {
   it('excludes scored programs above the given score', () => {
     const lowScore = 22;
     const result = filterAvailablePrograms(RESIDENCY_PROGRAMS, lowScore);
     for (const program of result) {
-      if (program.minScore !== undefined) {
-        expect(program.minScore).toBeLessThanOrEqual(lowScore);
+      const threshold = resolveEntryThreshold(program);
+      if (threshold !== undefined) {
+        expect(threshold).toBeLessThanOrEqual(lowScore);
       }
     }
     expect(result.length).toBeLessThan(RESIDENCY_PROGRAMS.length);
   });
 
-  it('includes every program whose minScore is met', () => {
+  it('includes every program whose threshold is met', () => {
     const highScore = 95;
     const result = filterAvailablePrograms(RESIDENCY_PROGRAMS, highScore);
-    const expectedIds = RESIDENCY_PROGRAMS.filter(
-      (p) => p.minScore === undefined || p.minScore <= highScore
-    ).map((p) => p.id);
+    const expectedIds = RESIDENCY_PROGRAMS.filter((p) => {
+      const threshold = resolveEntryThreshold(p);
+      return threshold === undefined || threshold <= highScore;
+    }).map((p) => p.id);
     expect(result.map((p) => p.id).sort()).toEqual(expectedIds.sort());
   });
 
-  // Phase 11 — real ÖSYM programs ship with no verified minScore; they
-  // must stay selectable at every score rather than becoming permanently
-  // unreachable because we don't have official taban puanı data for them.
-  it('includes every program with no minScore regardless of score', () => {
-    const veryLowScore = DEFAULT_TUS_SCORE_CONFIG.minScore;
-    const result = filterAvailablePrograms(RESIDENCY_PROGRAMS, veryLowScore);
-    const unscoredIds = RESIDENCY_PROGRAMS.filter((p) => p.minScore === undefined).map((p) => p.id);
-    expect(unscoredIds.length).toBeGreaterThan(0);
-    const resultIds = new Set(result.map((p) => p.id));
-    for (const id of unscoredIds) {
-      expect(resultIds.has(id)).toBe(true);
+  // Android Device QA Hotfix 1, Issue 2 — this is the fix for the original
+  // Phase 11 bug: real ÖSYM programs have no official minScore, but they
+  // now ALWAYS carry a computed gameplayEntryThreshold (see
+  // deriveGameplayEntryThreshold in residencyPrograms.ts), so
+  // resolveEntryThreshold never returns undefined for a real program.
+  // "No official score" must never again mean "always available".
+  it('every real production program carries a resolvable entry threshold', () => {
+    for (const program of PRODUCTION_PROGRAMS) {
+      expect(resolveEntryThreshold(program)).toBeDefined();
     }
   });
 
@@ -48,5 +49,26 @@ describe('filterAvailablePrograms', () => {
   it('never locks the player out at the absolute score floor', () => {
     const result = filterAvailablePrograms(RESIDENCY_PROGRAMS, DEFAULT_TUS_SCORE_CONFIG.minScore);
     expect(result.length).toBeGreaterThan(0);
+  });
+
+  // Android Device QA Hotfix 1, Issue 2 — a low score must not select
+  // every program; this is the core symptom the ticket reported.
+  it('a low score cannot select every production program', () => {
+    const lowScore = DEFAULT_TUS_SCORE_CONFIG.minScore;
+    const result = filterAvailablePrograms(PRODUCTION_PROGRAMS, lowScore);
+    expect(result.length).toBeLessThan(PRODUCTION_PROGRAMS.length);
+  });
+
+  // Monotonicity: raising the score can only add programs, never remove any.
+  it('increasing score monotonically expands the available set', () => {
+    const scores = [20, 35, 50, 65, 80, 95];
+    let previous = new Set<string>();
+    for (const score of scores) {
+      const current = new Set(filterAvailablePrograms(PRODUCTION_PROGRAMS, score).map((p) => p.id));
+      for (const id of previous) {
+        expect(current.has(id)).toBe(true);
+      }
+      previous = current;
+    }
   });
 });
