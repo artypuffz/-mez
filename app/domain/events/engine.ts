@@ -1,4 +1,4 @@
-import type { GameState, NpcTransition, QueuedEventInstance, ResolvedResourceDelta } from "../state/types";
+import { RELATIONSHIP_HISTORY_CAP, type GameState, type NpcTransition, type QueuedEventInstance, type ResolvedResourceDelta } from "../state/types";
 import type { SeededRng } from "../rng/seededRng";
 import { createScopedRng } from "../rng/seededRng";
 import { advanceResidencyWeek, type WeekAdvanceResult } from "../residency/advanceResidencyWeek";
@@ -13,7 +13,13 @@ import { resolveNpcSelectors } from "../npc/selector";
 import { generateOnCallSchedule } from "../oncall/generateSchedule";
 import { computeOnCallPressureModifier } from "../oncall/pressure";
 import { applyOnCallEffects } from "../oncall/applyEffects";
+import { applyOvertimeHours, computeWeeklyWorkload, workingHoursPressureBand } from "../residency/workingHours";
+import { resolveEffectiveOnCallProfile } from "../oncall/effectiveProfile";
 import { computeMonthlyEconomy } from "../economy/monthlyEconomy";
+import { generateWeeklySchedule } from "../residency/schedule";
+import { startNewWeekFreeTime } from "../residency/freeTime";
+import { applyWeeklyHealth, applyWeeklySocial } from "../residency/wellbeing";
+import { computeLifestyleHealthModifier } from "../config/lifestyleConfig";
 import { buildRequirementContext } from "./requirements";
 import { getVisibleChoices } from "./choices";
 import { resolveText } from "./variants";
@@ -26,12 +32,14 @@ import {
   applyResourceDelta,
   applySpecialistExamAttempt,
   applyStatistics,
+  recordRelationshipHistory,
   resolveEffectMap,
 } from "./effects";
 import { isOnCooldown, recordTrigger } from "./cooldown";
 import { selectPoolEvents, type PoolSelectionTrace } from "./selection";
 import { applyDuePendingEffects, resolveDuePendingEvents, type ScheduledResolutionTrace } from "./scheduled";
 import { selectCrisisEvent, type CrisisSelectionTrace } from "../crisis/selection";
+import { deriveRelationshipFeedback, type RelationshipFeedbackEntry } from "../npc/relationshipFeedback";
 import type { EventRepository } from "./repository";
 import type { ChoiceDefinition, EventDefinition } from "./types";
 import { DEFAULT_POOL_SELECTION_CONFIG, type PoolSelectionConfig } from "../config/eventSelection";
@@ -101,6 +109,7 @@ export function advanceResidencyWeekWithEvents(
     const lifecycleRng = createScopedRng(state.meta.rngSeed, `npc:lifecycle:${currentWeek}`);
     const lifecycle = tickNpcLifecycle(workingState.npcs, workingState.relationships, program, currentWeek, lifecycleRng, {
       ensureJuniorForSeniorPlayer: workingState.career.seniorityStage === "kidemli",
+      gameSeed: state.meta.rngSeed,
     });
     npcTransitions = lifecycle.transitions;
     workingState = {
@@ -131,7 +140,7 @@ export function advanceResidencyWeekWithEvents(
       const schedule = generateOnCallSchedule({
         monthKey,
         generatedAtWeek: currentWeek,
-        onCallProfile: branch.onCallProfile,
+        onCallProfile: resolveEffectiveOnCallProfile(branch, program),
         seniorityStage: workingState.career.seniorityStage,
         activeResidents,
         targetResidents,
@@ -169,6 +178,8 @@ export function advanceResidencyWeekWithEvents(
         onCallSchedule: workingState.onCall.schedule,
         city,
         background: workingState.character.background,
+        foodTier: workingState.lifestyle.foodTier,
+        housingTier: workingState.ownership.housing,
       });
       const nextMoney = workingState.resources.money + breakdown.net;
       workingState = {
@@ -193,6 +204,67 @@ export function advanceResidencyWeekWithEvents(
     ...workingState,
     resources: applyResourceDelta(workingState.resources, computeOnCallPressureModifier(workingState.onCall.schedule)),
   };
+
+  // Phase 11 §15-18 — the new working-hours system's own weekly tick,
+  // same cadence as the on-call nudge above but a SEPARATE pressure
+  // source (reads only branch/program workingHours axis + this week's
+  // overtime, never the on-call schedule — see workingHoursPressureBand's
+  // doc comment for why that avoids double-counting on-call). Runs for
+  // every residency week (the phase check at the top of this function
+  // already guarantees career.branch/selectedProgramId are set).
+  {
+    const workloadBranch = getBranchDefinition(workingState.career.branch!);
+    const workloadProgram = getResidencyProgram(workingState.tus.selectedProgramId!);
+    const workloadRng = createScopedRng(state.meta.rngSeed, `workload:${currentWeek}`);
+    const nextWorkload = computeWeeklyWorkload(workloadBranch, workloadProgram, workingState.workload, workloadRng);
+    const pressure = workingHoursPressureBand(nextWorkload.currentWeekHours);
+    workingState = {
+      ...workingState,
+      workload: nextWorkload,
+      resources: applyResourceDelta(workingState.resources, pressure),
+    };
+
+    // Gameplay Expansion Part A §1/§3/§4 — schedule/freeTime/health/social
+    // all run in this SAME block, right after workload, since all three
+    // read the workload/resourcePressure values just computed above (and,
+    // for schedule, the current month's real on-call assignments) rather
+    // than inventing their own inputs.
+    //
+    // Known limitation: a residency week that spans a calendar-month
+    // boundary only has access to ONE month's onCall.schedule.assignments
+    // (Phase 7's month-at-a-time design) — a nöbet actually scheduled for
+    // next month, on a day that still falls inside THIS display week,
+    // won't show up as a "nobet" slot yet. Display-only; the underlying
+    // on-call resource pressure itself is unaffected.
+    const weekStart = getResidencyCalendar(workingState.career.residencyStartedAt!, currentWeek).date;
+    const scheduleRng = createScopedRng(state.meta.rngSeed, `schedule:${currentWeek}`);
+    const schedule = generateWeeklySchedule(
+      workloadBranch,
+      nextWorkload,
+      workingState.onCall.schedule?.assignments ?? [],
+      weekStart,
+      currentWeek,
+      scheduleRng
+    );
+    const freeTime = startNewWeekFreeTime(nextWorkload);
+    const lifestyleHealthModifier = computeLifestyleHealthModifier(workingState.lifestyle.foodTier, workingState.ownership.housing);
+    const nextHealth = applyWeeklyHealth(workingState.resources.health, {
+      resourcePressure: workingState.resourcePressure,
+      burnout: workingState.resources.burnout,
+      workload: nextWorkload,
+      lifestyleHealthModifier,
+    });
+    const nextSocial = applyWeeklySocial(workingState.resources.social, {
+      workload: nextWorkload,
+      freeTimeHoursThisWeek: freeTime.totalHours,
+    });
+    workingState = {
+      ...workingState,
+      schedule,
+      freeTime,
+      resources: { ...workingState.resources, health: nextHealth, social: nextSocial },
+    };
+  }
 
   // §1/§3 — collapses the one-tick "residency_complete" transitional
   // value (still what Phase 4's advanceResidencyWeek itself sets) into
@@ -314,6 +386,10 @@ export interface ResolveEventChoiceResult {
   state: GameState;
   visibleEffects: ResolvedResourceDelta;
   npcTransitions: NpcTransition[];
+  // Gameplay Expansion Part B §6 — ephemeral, like visibleEffects; never
+  // persisted (the store just clears it on the next action, same pattern
+  // as lastChoiceEffects).
+  relationshipFeedback: RelationshipFeedbackEntry[];
 }
 
 function findVisibleChoice(event: EventDefinition, choiceId: string, ctx: ReturnType<typeof buildRequirementContext>): ChoiceDefinition {
@@ -351,8 +427,20 @@ export function resolveEventChoice(
   const immediateDelta = resolveEffectMap(choice.immediateEffects, rng);
   const resources = applyResourceDelta(state.resources, immediateDelta);
   const relationships = applyRelationshipEffects(state.relationships, choice.relationshipEffects, boundNpcIds);
+  const relationshipHistory = recordRelationshipHistory(
+    state.relationshipHistory,
+    choice.relationshipEffects,
+    boundNpcIds,
+    currentWeek,
+    choice.interactionSummary,
+    RELATIONSHIP_HISTORY_CAP
+  );
   const { npcs, transitions: npcTransitions } = applyNpcTransitionEffects(state.npcs, choice.npcTransitions, boundNpcIds, currentWeek);
   const onCallSchedule = applyOnCallEffects(state.onCall.schedule, choice.onCallEffects, rng, boundNpcIds);
+  const workload = (choice.workloadEffects ?? []).reduce(
+    (acc, effect) => (effect.type === "add_overtime_hours" ? applyOvertimeHours(acc, effect.hours) : acc),
+    state.workload
+  );
 
   // §4 — deterministic given state + this exact seed scope, independent
   // of whatever scope the caller passed `rng` under, so a refresh can
@@ -423,8 +511,10 @@ export function resolveEventChoice(
       ...state,
       resources,
       relationships,
+      relationshipHistory,
       npcs,
       onCall: { schedule: onCallSchedule },
+      workload,
       flags,
       statistics,
       behaviorStats,
@@ -439,6 +529,7 @@ export function resolveEventChoice(
     },
     visibleEffects: immediateDelta,
     npcTransitions,
+    relationshipFeedback: deriveRelationshipFeedback(choice.relationshipEffects, boundNpcIds, npcs),
   };
 }
 

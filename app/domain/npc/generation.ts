@@ -4,6 +4,7 @@ import type { ResidencyProgram } from "../config/residencyPrograms";
 import { DEFAULT_CLINIC_COMPOSITION, ROLE_TENURE_RANGE, type ClinicCompositionTemplate } from "../config/clinicComposition";
 import { NPC_TEMPLATES } from "./templates";
 import { generateUniqueName } from "./names";
+import { hierarchyPressureToMobbingRiskEquivalent, resolveFinalHierarchyPressure } from "../residency/hospitalCulture";
 
 const ROLE_ORDER: NpcRole[] = [
   "department_head", "faculty", "specialist", "senior_resident",
@@ -166,17 +167,41 @@ export interface GenerateInitialClinicResult {
   relationships: Record<NpcId, RelationshipState>;
 }
 
+// Phase 11 — a real program (see residencyPrograms.ts) has no static
+// hiddenProfile.mobbingRisk by design (§10: no fixed mobbing score on a
+// real hospital). When it's absent, culture is instead derived
+// PROCEDURALLY per (gameSeed, programId) via hospitalCulture.ts, mapped
+// onto the same 0-100 scale cultureBias() already expects — so the exact
+// same generatePersonality() pipeline Phase 6 built keeps working
+// unchanged for both fictional and real programs. `gameSeed` is only
+// required when hiddenProfile.mobbingRisk is absent; every existing
+// caller with a fictional program (which always sets mobbingRisk) keeps
+// working with it omitted.
+function resolveMobbingRiskEquivalent(program: ResidencyProgram, gameSeed?: string): number {
+  if (program.hiddenProfile.mobbingRisk !== undefined) {
+    return program.hiddenProfile.mobbingRisk;
+  }
+  if (!gameSeed) {
+    throw new Error(
+      `generateInitialClinic: program "${program.id}" has no static hiddenProfile.mobbingRisk and no gameSeed was provided to derive one procedurally`
+    );
+  }
+  return hierarchyPressureToMobbingRiskEquivalent(resolveFinalHierarchyPressure(gameSeed, program));
+}
+
 // Deterministic for a given (seed, programId): same save seed + same
 // program -> same starting roster, every time (§4).
 export function generateInitialClinic(
   program: ResidencyProgram,
   rng: SeededRng,
-  composition: ClinicCompositionTemplate = DEFAULT_CLINIC_COMPOSITION
+  composition: ClinicCompositionTemplate = DEFAULT_CLINIC_COMPOSITION,
+  gameSeed?: string
 ): GenerateInitialClinicResult {
   const npcs: NpcState[] = [];
   const relationships: Record<NpcId, RelationshipState> = {};
   const usedNames = new Set<string>();
-  const culture = cultureBias(program.hiddenProfile.mobbingRisk, program.hiddenProfile.npcCultureSeedModifier ?? 0);
+  const mobbingRiskEquivalent = resolveMobbingRiskEquivalent(program, gameSeed);
+  const culture = cultureBias(mobbingRiskEquivalent, program.hiddenProfile.npcCultureSeedModifier ?? 0);
   let index = 0;
 
   const spawn = (role: NpcRole, templateId?: string, overrideName?: string, personalityOverrides?: Partial<NpcPersonality>) => {

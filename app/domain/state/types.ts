@@ -1,3 +1,5 @@
+import type { PlayerAvatar } from "../avatar/types";
+
 export type Gender = "kadın" | "erkek" | "belirtmek_istemiyorum";
 
 export type BackgroundId =
@@ -174,10 +176,18 @@ export interface EventLogEntry {
 // any {min,max} ranges resolved to a concrete number at scheduling time
 // (same rng pass as the choice's immediateEffects), not re-rolled when
 // they're actually applied N weeks later.
+//
+// Gameplay Expansion Part A — health/social added alongside the original
+// three. Per the design brief, health/social must NOT change from events
+// ALONE (there's always a passive weekly driver too — see
+// domain/residency/wellbeing.ts), but content/spending activities may
+// still nudge them directly here, same as any other resource.
 export interface ResolvedResourceDelta {
   stress?: number;
   fatigue?: number;
   burnout?: number;
+  health?: number;
+  social?: number;
   money?: number;
 }
 
@@ -323,7 +333,97 @@ export interface SpecialistExamState {
   result?: "passed" | "failed";
 }
 
-export const CURRENT_SAVE_VERSION = 8;
+// Phase 11 §15 — the working-hours system's own minimal state, separate
+// from (and never double-counting) the existing Phase 7 on-call schedule.
+// currentWeekHours/regularHours/overtimeHours reset each weekly tick;
+// recentAverageHours is a slow-moving average kept for display/analytics.
+export interface WorkloadState {
+  currentWeekHours: number;
+  regularHours: number;
+  overtimeHours: number;
+  recentAverageHours: number;
+}
+
+// Gameplay Expansion Part A §1/§18 — a DISPLAY layer over the existing
+// Phase 11 workload/on-call state, never a second source of truth for
+// hours. See domain/residency/schedule.ts: total active-day hours here
+// are budgeted from workload.regularHours, and every "nobet"/
+// "nobet_ertesi" slot is placed directly from the current month's
+// onCall.schedule.assignments — this module never invents its own hour
+// total.
+export type ScheduleActivity =
+  | "vizit" | "servis" | "poliklinik" | "ameliyathane" | "egitim"
+  | "nobet" | "nobet_ertesi" | "bos";
+
+export interface ScheduleSlot {
+  activity: ScheduleActivity;
+  startHour: number; // 0-24 (24 = midnight rollover, e.g. nöbet 20-08 spans two days conceptually but is stored on its start day)
+  endHour: number;
+}
+
+export interface ScheduleDay {
+  // 0..6, the day's offset within THIS residency week — a residency week
+  // is a simple 7-day block from career.residencyStartedAt (see
+  // domain/residency/calendar.ts), never snapped to a real Monday. `date`
+  // carries the real calendar date, so a UI can still derive the correct
+  // real weekday label per day; it just won't always be Monday-first.
+  dayIndex: number;
+  date: string; // YYYY-MM-DD
+  slots: ScheduleSlot[];
+}
+
+export interface WeeklySchedule {
+  residencyWeek: number;
+  days: ScheduleDay[]; // always 7 entries, dayIndex 0-6
+}
+
+// §3 — a hard hour-based resource, not a token/right system. usedHours is
+// spent immediately by a resolved spending activity (§11); never negative,
+// never exceeds totalHours.
+export interface FreeTimeState {
+  totalHours: number;
+  usedHours: number;
+}
+
+export type FoodTier = "economical" | "normal" | "good";
+export type PhoneTier = "old" | "normal" | "good";
+export type ComputerTier = "none" | "basic" | "good";
+export type HousingTier = "cheap" | "normal" | "good";
+
+// §8 — a standing choice, not a weekly click. Changed via a store action,
+// stays in effect until changed again, read by computeMonthlyExpenses.
+export interface LifestyleState {
+  foodTier: FoodTier;
+}
+
+// §12 — a small, explicitly non-cosmetic ownership model (distinct from
+// any FUTURE cosmetic/avatar item ownership — see the Part A audit's
+// scope note). housing feeds the monthly rent formula directly (the real
+// economy lever, see docs/program-data-sources.md's sibling economy doc);
+// phone/computer persist for future event-requirement use but carry no
+// mechanical effect yet this phase.
+export interface OwnershipState {
+  phone: PhoneTier;
+  computer: ComputerTier;
+  housing: HousingTier;
+}
+
+export const CURRENT_SAVE_VERSION = 11;
+
+// Gameplay Expansion Part B section 8 — a capped, newest-first,
+// player-facing interaction record. `direction` drives icon/color only;
+// `summary` is the ONLY narrative text ever shown — never an eventId,
+// choiceId, or raw stat delta (see recordRelationshipHistory in
+// domain/events/effects.ts for how entries get created and capped).
+export type RelationshipHistoryDirection = "positive" | "negative" | "neutral";
+
+export interface RelationshipHistoryEntry {
+  week: number;
+  summary: string;
+  direction: RelationshipHistoryDirection;
+}
+
+export const RELATIONSHIP_HISTORY_CAP = 8;
 
 export interface GameState {
   meta: {
@@ -339,6 +439,11 @@ export interface GameState {
     hometown: string;
     currentCity?: CityId;
     background: BackgroundId;
+    // Gameplay Expansion Part C section 24 — chosen once in Character
+    // Creation's Görünüş step (or defaulted deterministically if skipped),
+    // then persists unchanged for the rest of the career (section 28: a
+    // refresh must never reroll it).
+    avatar: PlayerAvatar;
   };
 
   career: {
@@ -360,6 +465,13 @@ export interface GameState {
     residencyYear: number;
 
     seniorityStage: SeniorityStage;
+
+    // Phase 11 §11/§12 — the FINAL hierarchy pressure for this career
+    // (branch difficultyBaseline.hierarchyPressure + a seeded procedural
+    // culture modifier), computed once in selectResidencyProgram and never
+    // rerolled. 0.5-5.0 scale. Absent before a program is selected. See
+    // domain/residency/hospitalCulture.ts.
+    hierarchyPressure?: number;
   };
 
   tus: TusState;
@@ -368,6 +480,13 @@ export interface GameState {
     stress: number;
     fatigue: number;
     burnout: number;
+    // Gameplay Expansion Part A §4 — 0-100 integer, like every other
+    // resource here. health never triggers Game Over on its own (§4's
+    // explicit rule) — it's display + future crisis-eligibility input
+    // only. social is deliberately distinct from any single NPC's
+    // RelationshipState (§4).
+    health: number;
+    social: number;
     money: number;
   };
 
@@ -385,6 +504,12 @@ export interface GameState {
   specialistExam?: SpecialistExamState;
 
   relationships: Record<NpcId, RelationshipState>;
+
+  // Gameplay Expansion Part B section 8 — capped (RELATIONSHIP_HISTORY_CAP
+  // entries), newest-first per NPC. A player-facing record of what an
+  // interaction FELT like, layered on top of (never replacing)
+  // `relationships`' own numeric-but-hidden trust/friendship/grudge.
+  relationshipHistory: Record<NpcId, RelationshipHistoryEntry[]>;
 
   npcs: Record<NpcId, NpcState>;
 
@@ -426,6 +551,21 @@ export interface GameState {
     lastProcessedMonthKey: string | null;
     lastBreakdown: MonthlyEconomyBreakdown | null;
   };
+
+  // Phase 11 — see WorkloadState above. null before residency starts (or
+  // for a migrated pre-Phase-11 save until its first weekly tick), same
+  // pattern as onCall.schedule.
+  workload: WorkloadState | null;
+
+  // Gameplay Expansion Part A — see WeeklySchedule/FreeTimeState above.
+  // schedule is regenerated every weekly tick (display only, derived from
+  // workload/onCall — never a second hour authority); freeTime resets its
+  // usedHours to 0 every week and is spent immediately by resolved
+  // spending activities within that same week.
+  schedule: WeeklySchedule | null;
+  freeTime: FreeTimeState;
+  lifestyle: LifestyleState;
+  ownership: OwnershipState;
 
   status: "active" | "gameover" | "specialist";
 }

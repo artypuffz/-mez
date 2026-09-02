@@ -41,15 +41,18 @@ test("crisis card (EventCard) has no horizontal overflow at any viewport", async
   await assertNoHorizontalOverflow(page, "EventCard / crisis card");
 });
 
-test("hospital roster, relationships, and profile tabs have no horizontal overflow", async ({ page }) => {
+test("hospital roster, spending, and profile tabs have no horizontal overflow", async ({ page }) => {
   await loadDebugScenario(page, "senior_power_reversal");
   await expect(page.getByTestId("home-screen")).toBeVisible();
 
+  // Gameplay Expansion Part B §1 — final nav is Ana Sayfa/Hastane/
+  // Harcamalar/Profil; the standalone İlişkiler tab is gone (its rows
+  // now live inside Hastane, see hospital-npc-detail.spec.ts).
   await page.getByRole("tab", { name: /Hastane/ }).click();
   await assertNoHorizontalOverflow(page, "Hospital roster");
 
-  await page.getByRole("tab", { name: /İlişkiler/ }).click();
-  await assertNoHorizontalOverflow(page, "Relationships");
+  await page.getByRole("tab", { name: /Harcamalar/ }).click();
+  await assertNoHorizontalOverflow(page, "Spending");
 
   await page.getByRole("tab", { name: /Profil/ }).click();
   await assertNoHorizontalOverflow(page, "Profile");

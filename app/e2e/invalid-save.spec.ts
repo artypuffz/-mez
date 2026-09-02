@@ -56,6 +56,9 @@ test("starting a new game after a corrupt save fully recovers gameplay", async (
   await page.getByTestId("btn-step1-next").click();
   await page.getByTestId("background-kendi_basina").click();
   await page.getByTestId("btn-step2-next").click();
+  // Gameplay Expansion Part C — Görünüş (avatar) step now sits between
+  // Geçmiş and Özet.
+  await page.getByTestId("btn-step3-next").click();
   await page.getByTestId("btn-start-tus").click();
   await expect(page.getByTestId("prep-profile-duzenli")).toBeVisible();
 

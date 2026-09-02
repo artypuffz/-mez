@@ -1,5 +1,7 @@
-import type { GameState, NpcId, NpcRole, NpcState } from "../state/types";
-import { deriveRelationshipLabel, type RelationshipLabel } from "./relationshipLabel";
+import type { GameState, NpcId, NpcRole, NpcState, RelationshipHistoryEntry } from "../state/types";
+import { deriveRelationshipLabel, deriveRelationshipScore, type RelationshipLabel } from "./relationshipLabel";
+import { selectNpcAvatar } from "../avatar/selectNpcAvatar";
+import type { PlayerAvatar } from "../avatar/types";
 
 // Per-npc role label (detail views, İlişkiler rows) — distinct from the
 // coarser group labels below (§25/§27/§28: shown text, never a raw stat).
@@ -54,29 +56,43 @@ export interface RelationshipRosterEntry {
   roleLabel: string;
   active: boolean;
   label: RelationshipLabel;
+  score: number;
+  avatar: PlayerAvatar | null;
 }
 
 // İlişkiler tab (§25/§26) — every active NPC has a relationship record
 // from the moment the clinic is generated (§19), so this is effectively
 // the same roster as Hastane's, but rendered as name/role/label rows.
+// Gameplay Expansion Part B merges this INTO Hastane (§2) — kept as its
+// own selector since Hastane still needs the plain grouped roster for its
+// "Kişi ara" search, this one is what backs the relationship-focused rows.
 export function selectRelationshipRoster(state: GameState): RelationshipRosterEntry[] {
   return Object.values(state.npcs)
     .filter((n) => n.active)
-    .map((n) => ({
-      npcId: n.id,
-      name: n.identity.name,
-      roleLabel: NPC_ROLE_LABELS_TR[n.role],
-      active: n.active,
-      label: deriveRelationshipLabel(state.relationships[n.id] ?? { trust: 0, friendship: 0, grudge: 0 }),
-    }))
+    .map((n) => {
+      const relationship = state.relationships[n.id] ?? { trust: 0, friendship: 0, grudge: 0 };
+      return {
+        npcId: n.id,
+        name: n.identity.name,
+        roleLabel: NPC_ROLE_LABELS_TR[n.role],
+        active: n.active,
+        label: deriveRelationshipLabel(relationship),
+        score: deriveRelationshipScore(relationship),
+        avatar: selectNpcAvatar(state, n.id),
+      };
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export interface NpcDetail {
+  npcId: NpcId;
   name: string;
   roleLabel: string;
   tenureLabel: string;
   relationshipLabel: RelationshipLabel;
+  relationshipScore: number;
+  avatar: PlayerAvatar | null;
+  history: RelationshipHistoryEntry[];
 }
 
 function tenureLabel(joinedWeek: number, currentWeek: number): string {
@@ -94,9 +110,13 @@ export function selectNpcDetail(state: GameState, npcId: NpcId): NpcDetail | nul
   if (!npc) return null;
   const relationship = state.relationships[npcId] ?? { trust: 0, friendship: 0, grudge: 0 };
   return {
+    npcId,
     name: npc.identity.name,
     roleLabel: NPC_ROLE_LABELS_TR[npc.role],
     tenureLabel: tenureLabel(npc.career.joinedWeek, state.career.residencyWeek),
     relationshipLabel: deriveRelationshipLabel(relationship),
+    relationshipScore: deriveRelationshipScore(relationship),
+    avatar: selectNpcAvatar(state, npcId),
+    history: state.relationshipHistory[npcId] ?? [],
   };
 }

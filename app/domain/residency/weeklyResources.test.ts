@@ -53,25 +53,54 @@ describe('applyWeeklyFatigue / applyWeeklyStress', () => {
 });
 
 describe('updateResourcePressure', () => {
-  it('increments streaks while the condition holds, resets the instant it stops', () => {
+  it('increments streaks while the condition holds', () => {
     let pressure = ZERO_PRESSURE;
     pressure = updateResourcePressure(pressure, 65, 65); // both high
     expect(pressure.combinedPressureWeeks).toBe(1);
     pressure = updateResourcePressure(pressure, 65, 65);
     expect(pressure.combinedPressureWeeks).toBe(2);
-    pressure = updateResourcePressure(pressure, 65, 20); // fatigue drops, stress stays high
-    expect(pressure.combinedPressureWeeks).toBe(0);
-    expect(pressure.highStressWeeks).toBe(3); // stress-only streak keeps counting
-    expect(pressure.highFatigueWeeks).toBe(0);
   });
 
-  it('tracks a separate low-pressure streak for recovery', () => {
+  // Gameplay Expansion Part A — the root-caused fix: a single
+  // non-qualifying week LEAKS the streak by a small, configured amount
+  // instead of wiping it back to 0. This is what makes sustained (but not
+  // perfectly monotonic) pressure actually accumulate toward burnout.
+  it('leaks by a small amount on a non-qualifying week, instead of resetting to 0', () => {
+    let pressure = ZERO_PRESSURE;
+    for (let i = 0; i < 5; i++) pressure = updateResourcePressure(pressure, 65, 65);
+    expect(pressure.combinedPressureWeeks).toBe(5);
+
+    pressure = updateResourcePressure(pressure, 65, 20); // fatigue drops one week
+    expect(pressure.combinedPressureWeeks).toBe(4); // leaked by 1, not reset to 0
+    expect(pressure.highStressWeeks).toBe(6); // stress-only streak keeps counting
+    expect(pressure.highFatigueWeeks).toBe(4); // fatigue streak also just leaks by 1, not reset to 0
+  });
+
+  it('a single bad/good week among many opposite weeks barely dents a long streak', () => {
+    let pressure = ZERO_PRESSURE;
+    for (let i = 0; i < 16; i++) pressure = updateResourcePressure(pressure, 80, 70);
+    expect(pressure.combinedPressureWeeks).toBe(16);
+    // one single off week (fatigue dips under threshold), then resumes
+    pressure = updateResourcePressure(pressure, 80, 55);
+    pressure = updateResourcePressure(pressure, 80, 70);
+    // still a substantial streak — nowhere near reset to 0/1 the old
+    // hard-reset behavior would have produced.
+    expect(pressure.combinedPressureWeeks).toBeGreaterThanOrEqual(16);
+  });
+
+  it('never goes negative, even after many consecutive non-qualifying weeks', () => {
+    let pressure: typeof ZERO_PRESSURE = { ...ZERO_PRESSURE, combinedPressureWeeks: 2 };
+    for (let i = 0; i < 10; i++) pressure = updateResourcePressure(pressure, 10, 10);
+    expect(pressure.combinedPressureWeeks).toBe(0);
+  });
+
+  it('tracks a separate low-pressure streak for recovery, which also leaks rather than resets', () => {
     let pressure = ZERO_PRESSURE;
     pressure = updateResourcePressure(pressure, 10, 10);
     pressure = updateResourcePressure(pressure, 10, 10);
     expect(pressure.lowPressureWeeks).toBe(2);
     pressure = updateResourcePressure(pressure, 40, 10);
-    expect(pressure.lowPressureWeeks).toBe(0);
+    expect(pressure.lowPressureWeeks).toBe(1); // leaked by 1, not reset to 0
   });
 });
 

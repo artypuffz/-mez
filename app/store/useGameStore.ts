@@ -1,6 +1,7 @@
 import { create, type StoreApi, type UseBoundStore } from "zustand";
 
 import type { GameState, ResolvedResourceDelta, TusPrepProfileId } from "../domain/state/types";
+import type { RelationshipFeedbackEntry } from "../domain/npc/relationshipFeedback";
 import {
   createInitialGameState,
   type CharacterCreationInput,
@@ -21,6 +22,10 @@ import type { WeekAdvanceResourceDelta, WeekAdvanceTransitions } from "../domain
 import { advanceResidencyWeekWithEvents, advanceSpecialistExamWeek, resolveEventChoice } from "../domain/events/engine";
 import { getEventRepository } from "../domain/events/content";
 import { buildDebugScenario, type DebugScenarioId } from "../domain/debug/debugScenarios";
+import { resolveSpendingActivity, type SpendingActivityRejection } from "../domain/spending/resolveSpendingActivity";
+import { purchaseOwnershipUpgrade, type OwnershipCategory, type PurchaseOwnershipRejection } from "../domain/spending/purchaseOwnership";
+import { setLifestyleFoodTier } from "../domain/spending/setLifestyle";
+import type { FoodTier, HousingTier, PhoneTier, ComputerTier } from "../domain/state/types";
 
 export interface WeekSummary {
   week: number;
@@ -41,6 +46,10 @@ export interface GameStore {
   // Same idea, per resolved choice — visible resource deltas only, never
   // hidden relationship/flag/behaviorTag effects (§26/27).
   lastChoiceEffects: ResolvedResourceDelta | null;
+  // Gameplay Expansion Part B §6 — same ephemeral lifecycle as
+  // lastChoiceEffects (reset on every new choice resolution, never
+  // persisted). HomeScreen shows these as a restrained one-line banner.
+  lastRelationshipFeedback: RelationshipFeedbackEntry[];
   // RC1 review — a corrupt/unreadable save (bad JSON, an unmigratable
   // shape) must never blank-screen the app. Set when repository.load()
   // throws; MainMenuScreen surfaces it instead of crashing. The bad data
@@ -64,6 +73,17 @@ export interface GameStore {
   // under `__DEV__ === false` (a release/production build), so this is
   // never reachable outside a dev server or the E2E harness driving one.
   debugLoadScenario: (scenarioId: DebugScenarioId) => Promise<void>;
+
+  // Gameplay Expansion Part A §5/§12 — Harcamalar (Spending) actions.
+  // Shared guard (isProcessingLifestyleAction) rather than one per action:
+  // all three touch overlapping money/freeTime/lifestyle state and a real
+  // UI never fires two of them at once, so one flag is enough to stop a
+  // double-tap from double-applying an activity/purchase.
+  isProcessingLifestyleAction: boolean;
+  lastLifestyleRejection: SpendingActivityRejection | PurchaseOwnershipRejection | null;
+  resolveSpendingActivityAction: (activityId: string) => Promise<void>;
+  purchaseOwnershipAction: (category: OwnershipCategory, tier: PhoneTier | ComputerTier | HousingTier) => Promise<void>;
+  setLifestyleFoodTierAction: (tier: FoodTier) => Promise<void>;
 }
 
 // The store's only job is orchestration (call domain functions, call the
@@ -85,7 +105,10 @@ export function createGameStore(
     isResolvingEvent: false,
     lastWeekSummary: null,
     lastChoiceEffects: null,
+    lastRelationshipFeedback: [],
     loadError: false,
+    isProcessingLifestyleAction: false,
+    lastLifestyleRejection: null,
 
     async loadGame() {
       set({ status: "loading" });
@@ -159,7 +182,7 @@ export function createGameStore(
       if (!gameState || isAdvancingWeek || (phase !== "residency" && phase !== "specialist_exam")) return;
       if (gameState.weeklyEventQueue.length > 0) return;
 
-      set({ isAdvancingWeek: true, lastChoiceEffects: null });
+      set({ isAdvancingWeek: true, lastChoiceEffects: null, lastRelationshipFeedback: [] });
       try {
         if (phase === "specialist_exam") {
           // Phase 10 §1 — its own, much lighter week-advance path; no
@@ -207,7 +230,7 @@ export function createGameStore(
         );
         const result = resolveEventChoice(gameState, event, choiceId, rng);
         await repository.save(result.state);
-        set({ gameState: result.state, lastChoiceEffects: result.visibleEffects });
+        set({ gameState: result.state, lastChoiceEffects: result.visibleEffects, lastRelationshipFeedback: result.relationshipFeedback });
       } finally {
         set({ isResolvingEvent: false });
       }
@@ -217,7 +240,50 @@ export function createGameStore(
       if (!__DEV__) return;
       const state = buildDebugScenario(scenarioId, getEventRepository());
       await persist(set, state);
-      set({ hasSave: true, lastWeekSummary: null, lastChoiceEffects: null });
+      set({ hasSave: true, lastWeekSummary: null, lastChoiceEffects: null, lastRelationshipFeedback: [] });
+    },
+
+    async resolveSpendingActivityAction(activityId) {
+      const { gameState, isProcessingLifestyleAction } = get();
+      if (!gameState || isProcessingLifestyleAction) return;
+      set({ isProcessingLifestyleAction: true, lastLifestyleRejection: null });
+      try {
+        const result = resolveSpendingActivity(gameState, activityId, gameState.career.residencyWeek);
+        if (!result.ok) {
+          set({ lastLifestyleRejection: result.reason });
+          return;
+        }
+        await persist(set, result.state);
+      } finally {
+        set({ isProcessingLifestyleAction: false });
+      }
+    },
+
+    async purchaseOwnershipAction(category, tier) {
+      const { gameState, isProcessingLifestyleAction } = get();
+      if (!gameState || isProcessingLifestyleAction) return;
+      set({ isProcessingLifestyleAction: true, lastLifestyleRejection: null });
+      try {
+        const result = purchaseOwnershipUpgrade(gameState, category, tier);
+        if (!result.ok) {
+          set({ lastLifestyleRejection: result.reason });
+          return;
+        }
+        await persist(set, result.state);
+      } finally {
+        set({ isProcessingLifestyleAction: false });
+      }
+    },
+
+    async setLifestyleFoodTierAction(tier) {
+      const { gameState, isProcessingLifestyleAction } = get();
+      if (!gameState || isProcessingLifestyleAction) return;
+      set({ isProcessingLifestyleAction: true, lastLifestyleRejection: null });
+      try {
+        await persist(set, setLifestyleFoodTier(gameState, tier));
+      } finally {
+        set({ isProcessingLifestyleAction: false });
+      }
     },
   }));
 }

@@ -1,0 +1,3153 @@
+[
+  {
+    "id": "p11_acil_tip_01",
+    "title": "EVRAK YIĞINI",
+    "description": "Acil serviste bu haftaki triyaj kayıtları hâlâ elektronik sisteme işlenmemiş. Nöbetçi başhekim yardımcısı akşama kadar tamamlanmasını istiyor; sedye sırası kapıya taşmış.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "acil_tip"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_acil_tip_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam acil serviste çıkacaktın ki nöbetçi başhekim yardımcısı bugünkü triyaj listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "acil_tip"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_acil_tip_03",
+    "title": "SUNUM SIRASI",
+    "description": "Bu hafta servis toplantısında triyaj üzerine bir sunum hazırlaman gerekiyor. Nöbetçi başhekim yardımcısı hazırlıksız gelmeni istemiyor; sedye sırası kapıya taşmış.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "acil_tip"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_aile_hekimligi_01",
+    "title": "KAYIT GECİKMESİ",
+    "description": "Aile sağlığı merkezinde bu haftaki muayene kayıtları hâlâ elektronik sisteme işlenmemiş. Il sağlık müdürlüğü akşama kadar tamamlanmasını istiyor; aşı takibi tabloları elle tutuluyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "aile_hekimligi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_aile_hekimligi_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam aile sağlığı merkezi çıkacaktın ki il sağlık müdürlüğü bugünkü muayene listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "aile_hekimligi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_aile_hekimligi_03",
+    "title": "SERVİS TOPLANTISI",
+    "description": "Bu hafta servis toplantısında muayene üzerine bir sunum hazırlaman gerekiyor. Il sağlık müdürlüğü hazırlıksız gelmeni istemiyor; aşı takibi tabloları elle tutuluyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "aile_hekimligi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_anesteziyoloji_ve_reanimasyon_01",
+    "title": "SİSTEME İŞLENMEMİŞ",
+    "description": "Ameliyathanede bu haftaki indüksiyon kayıtları hâlâ elektronik sisteme işlenmemiş. Anestezi sorumlusu hoca akşama kadar tamamlanmasını istiyor; art arda üç vaka aynı listede.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "anesteziyoloji_ve_reanimasyon"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_anesteziyoloji_ve_reanimasyon_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam ameliyathan çıkacaktın ki anestezi sorumlusu hoca bugünkü indüksiyon listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "anesteziyoloji_ve_reanimasyon"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_anesteziyoloji_ve_reanimasyon_03",
+    "title": "VAKA SUNUMU",
+    "description": "Bu hafta servis toplantısında indüksiyon üzerine bir sunum hazırlaman gerekiyor. Anestezi sorumlusu hoca hazırlıksız gelmeni istemiyor; art arda üç vaka aynı listede.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "anesteziyoloji_ve_reanimasyon"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_beyin_ve_sinir_cerrahisi_01",
+    "title": "FORM TAKİBİ",
+    "description": "Ameliyathanede bu haftaki kraniyotomi kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; vaka planlanandan iki saat uzadı.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "beyin_ve_sinir_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_beyin_ve_sinir_cerrahisi_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam ameliyathan çıkacaktın ki kıdemli asistan bugünkü kraniyotomi listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "beyin_ve_sinir_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_beyin_ve_sinir_cerrahisi_03",
+    "title": "HAZIRLIK BASKISI",
+    "description": "Bu hafta servis toplantısında kraniyotomi üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; vaka planlanandan iki saat uzadı.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "beyin_ve_sinir_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_cerrahisi_01",
+    "title": "EVRAK YIĞINI",
+    "description": "Çocuk cerrahisi servisinde bu haftaki ameliyat sonrası vizit kayıtları hâlâ elektronik sisteme işlenmemiş. Servis şefi akşama kadar tamamlanmasını istiyor; ebeveynler koridorda bekliyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_cerrahisi_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam çocuk cerrahisi servisi çıkacaktın ki servis şefi bugünkü ameliyat sonrası vizit listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_cerrahisi_03",
+    "title": "SUNUM SIRASI",
+    "description": "Bu hafta servis toplantısında ameliyat sonrası vizit üzerine bir sunum hazırlaman gerekiyor. Servis şefi hazırlıksız gelmeni istemiyor; ebeveynler koridorda bekliyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_sagligi_ve_hastaliklari_01",
+    "title": "KAYIT GECİKMESİ",
+    "description": "Çocuk polikliniğinde bu haftaki vizit kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; aşı takvimi karışıklığı var.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_sagligi_ve_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_sagligi_ve_hastaliklari_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam çocuk polikliniği çıkacaktın ki kıdemli asistan bugünkü vizit listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_sagligi_ve_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_sagligi_ve_hastaliklari_03",
+    "title": "SERVİS TOPLANTISI",
+    "description": "Bu hafta servis toplantısında vizit üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; aşı takvimi karışıklığı var.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_sagligi_ve_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_ve_ergen_ruh_sagligi_01",
+    "title": "SİSTEME İŞLENMEMİŞ",
+    "description": "Görüşme odasında bu haftaki aile görüşmesi kayıtları hâlâ elektronik sisteme işlenmemiş. Süpervizör hoca akşama kadar tamamlanmasını istiyor; okul raporu son dakika istendi.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_ve_ergen_ruh_sagligi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_ve_ergen_ruh_sagligi_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam görüşme odası çıkacaktın ki süpervizör hoca bugünkü aile görüşmesi listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_ve_ergen_ruh_sagligi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_cocuk_ve_ergen_ruh_sagligi_03",
+    "title": "VAKA SUNUMU",
+    "description": "Bu hafta servis toplantısında aile görüşmesi üzerine bir sunum hazırlaman gerekiyor. Süpervizör hoca hazırlıksız gelmeni istemiyor; okul raporu son dakika istendi.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "cocuk_ve_ergen_ruh_sagligi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_deri_ve_zuhrevi_hastaliklari_01",
+    "title": "FORM TAKİBİ",
+    "description": "Dermatoloji polikliniğinde bu haftaki biyopsi kaydı kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; randevu sistemi yine çakışmış.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "deri_ve_zuhrevi_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_deri_ve_zuhrevi_hastaliklari_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam dermatoloji polikliniği çıkacaktın ki kıdemli asistan bugünkü biyopsi kaydı listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "deri_ve_zuhrevi_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_deri_ve_zuhrevi_hastaliklari_03",
+    "title": "HAZIRLIK BASKISI",
+    "description": "Bu hafta servis toplantısında biyopsi kaydı üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; randevu sistemi yine çakışmış.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "deri_ve_zuhrevi_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_enfeksiyon_hastaliklari_01",
+    "title": "EVRAK YIĞINI",
+    "description": "Enfeksiyon konsültasyon servisinde bu haftaki konsültasyon kayıtları hâlâ elektronik sisteme işlenmemiş. Enfeksiyon kontrol komitesi akşama kadar tamamlanmasını istiyor; izolasyon formu eksik dolmuş.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "enfeksiyon_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_enfeksiyon_hastaliklari_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam enfeksiyon konsültasyon servisi çıkacaktın ki enfeksiyon kontrol komitesi bugünkü konsültasyon listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "enfeksiyon_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_enfeksiyon_hastaliklari_03",
+    "title": "SUNUM SIRASI",
+    "description": "Bu hafta servis toplantısında konsültasyon üzerine bir sunum hazırlaman gerekiyor. Enfeksiyon kontrol komitesi hazırlıksız gelmeni istemiyor; izolasyon formu eksik dolmuş.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "enfeksiyon_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_fiziksel_tip_ve_rehabilitasyon_01",
+    "title": "KAYIT GECİKMESİ",
+    "description": "Rehabilitasyon ünitesinde bu haftaki egzersiz programı kayıtları hâlâ elektronik sisteme işlenmemiş. Fizyoterapi ekibi akşama kadar tamamlanmasını istiyor; cihaz randevuları çakışmış.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "fiziksel_tip_ve_rehabilitasyon"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_fiziksel_tip_ve_rehabilitasyon_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam rehabilitasyon ünitesi çıkacaktın ki fizyoterapi ekibi bugünkü egzersiz programı listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "fiziksel_tip_ve_rehabilitasyon"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_fiziksel_tip_ve_rehabilitasyon_03",
+    "title": "SERVİS TOPLANTISI",
+    "description": "Bu hafta servis toplantısında egzersiz programı üzerine bir sunum hazırlaman gerekiyor. Fizyoterapi ekibi hazırlıksız gelmeni istemiyor; cihaz randevuları çakışmış.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "fiziksel_tip_ve_rehabilitasyon"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_gogus_cerrahisi_01",
+    "title": "SİSTEME İŞLENMEMİŞ",
+    "description": "Ameliyathanede bu haftaki torakotomi kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; yoğun bakım yatağı bulunamıyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "gogus_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_gogus_cerrahisi_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam ameliyathan çıkacaktın ki kıdemli asistan bugünkü torakotomi listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "gogus_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_gogus_cerrahisi_03",
+    "title": "VAKA SUNUMU",
+    "description": "Bu hafta servis toplantısında torakotomi üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; yoğun bakım yatağı bulunamıyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "gogus_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_gogus_hastaliklari_01",
+    "title": "FORM TAKİBİ",
+    "description": "Göğüs hastalıkları servisinde bu haftaki solunum fonksiyon testi kayıtları hâlâ elektronik sisteme işlenmemiş. Servis şefi akşama kadar tamamlanmasını istiyor; oksijen tüpü sayımı tutmuyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "gogus_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_gogus_hastaliklari_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam göğüs hastalıkları servisi çıkacaktın ki servis şefi bugünkü solunum fonksiyon testi listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "gogus_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_gogus_hastaliklari_03",
+    "title": "HAZIRLIK BASKISI",
+    "description": "Bu hafta servis toplantısında solunum fonksiyon testi üzerine bir sunum hazırlaman gerekiyor. Servis şefi hazırlıksız gelmeni istemiyor; oksijen tüpü sayımı tutmuyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "gogus_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_goz_hastaliklari_01",
+    "title": "EVRAK YIĞINI",
+    "description": "Göz polikliniğinde bu haftaki muayene kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; ameliyat listesi son anda değişti.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "goz_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_goz_hastaliklari_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam göz polikliniği çıkacaktın ki kıdemli asistan bugünkü muayene listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "goz_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_goz_hastaliklari_03",
+    "title": "SUNUM SIRASI",
+    "description": "Bu hafta servis toplantısında muayene üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; ameliyat listesi son anda değişti.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "goz_hastaliklari"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kadin_dogum_01",
+    "title": "KAYIT GECİKMESİ",
+    "description": "Doğumhanede bu haftaki doğum takibi kayıtları hâlâ elektronik sisteme işlenmemiş. Nöbetçi kıdemli akşama kadar tamamlanmasını istiyor; iki doğum aynı anda ilerliyor.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kadin_dogum"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_kadin_dogum_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam doğumhan çıkacaktın ki nöbetçi kıdemli bugünkü doğum takibi listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kadin_dogum"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kadin_dogum_03",
+    "title": "SERVİS TOPLANTISI",
+    "description": "Bu hafta servis toplantısında doğum takibi üzerine bir sunum hazırlaman gerekiyor. Nöbetçi kıdemli hazırlıksız gelmeni istemiyor; iki doğum aynı anda ilerliyor.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kadin_dogum"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kalp_ve_damar_cerrahisi_01",
+    "title": "SİSTEME İŞLENMEMİŞ",
+    "description": "Ameliyathanede bu haftaki bypass ameliyatı kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; pompa ekibiyle koordinasyon gecikti.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kalp_ve_damar_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_kalp_ve_damar_cerrahisi_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam ameliyathan çıkacaktın ki kıdemli asistan bugünkü bypass ameliyatı listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kalp_ve_damar_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kalp_ve_damar_cerrahisi_03",
+    "title": "VAKA SUNUMU",
+    "description": "Bu hafta servis toplantısında bypass ameliyatı üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; pompa ekibiyle koordinasyon gecikti.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kalp_ve_damar_cerrahisi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kardiyoloji_01",
+    "title": "FORM TAKİBİ",
+    "description": "Kateter laboratuvarında bu haftaki anjiyografi kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; acil vaka listeyi böldü.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kardiyoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_kardiyoloji_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam kateter laboratuvarı çıkacaktın ki kıdemli asistan bugünkü anjiyografi listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kardiyoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kardiyoloji_03",
+    "title": "HAZIRLIK BASKISI",
+    "description": "Bu hafta servis toplantısında anjiyografi üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; acil vaka listeyi böldü.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kardiyoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kbb_01",
+    "title": "EVRAK YIĞINI",
+    "description": "Kbb polikliniğinde bu haftaki endoskopik muayene kayıtları hâlâ elektronik sisteme işlenmemiş. Servis şefi akşama kadar tamamlanmasını istiyor; ameliyathane sırası ertelendi.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kbb"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_kbb_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam KBB polikliniği çıkacaktın ki servis şefi bugünkü endoskopik muayene listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kbb"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_kbb_03",
+    "title": "SUNUM SIRASI",
+    "description": "Bu hafta servis toplantısında endoskopik muayene üzerine bir sunum hazırlaman gerekiyor. Servis şefi hazırlıksız gelmeni istemiyor; ameliyathane sırası ertelendi.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "kbb"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_noroloji_01",
+    "title": "KAYIT GECİKMESİ",
+    "description": "Nöroloji servisinde bu haftaki nörolojik muayene kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; EEG randevuları birikmiş.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "noroloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_noroloji_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam nöroloji servisi çıkacaktın ki kıdemli asistan bugünkü nörolojik muayene listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "noroloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_noroloji_03",
+    "title": "SERVİS TOPLANTISI",
+    "description": "Bu hafta servis toplantısında nörolojik muayene üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; EEG randevuları birikmiş.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "noroloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_nukleer_tip_01",
+    "title": "SİSTEME İŞLENMEMİŞ",
+    "description": "Nükleer tıp laboratuvarında bu haftaki sintigrafi raporu kayıtları hâlâ elektronik sisteme işlenmemiş. Fizik mühendisi ekibi akşama kadar tamamlanmasını istiyor; izotop teslimatı gecikti.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "nukleer_tip"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_nukleer_tip_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam nükleer tıp laboratuvarı çıkacaktın ki fizik mühendisi ekibi bugünkü sintigrafi raporu listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "nukleer_tip"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_nukleer_tip_03",
+    "title": "VAKA SUNUMU",
+    "description": "Bu hafta servis toplantısında sintigrafi raporu üzerine bir sunum hazırlaman gerekiyor. Fizik mühendisi ekibi hazırlıksız gelmeni istemiyor; izotop teslimatı gecikti.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "nukleer_tip"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_ortopedi_ve_travmatoloji_01",
+    "title": "FORM TAKİBİ",
+    "description": "Ameliyathanede bu haftaki kırık redüksiyonu kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; travma vakaları art arda geldi.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "ortopedi_ve_travmatoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_ortopedi_ve_travmatoloji_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam ameliyathan çıkacaktın ki kıdemli asistan bugünkü kırık redüksiyonu listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "ortopedi_ve_travmatoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_ortopedi_ve_travmatoloji_03",
+    "title": "HAZIRLIK BASKISI",
+    "description": "Bu hafta servis toplantısında kırık redüksiyonu üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; travma vakaları art arda geldi.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "ortopedi_ve_travmatoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_plastik_cerrahi_01",
+    "title": "EVRAK YIĞINI",
+    "description": "Ameliyathanede bu haftaki rekonstrüktif ameliyat kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; yanık konsültasyonu araya girdi.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "plastik_cerrahi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_plastik_cerrahi_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam ameliyathan çıkacaktın ki kıdemli asistan bugünkü rekonstrüktif ameliyat listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "plastik_cerrahi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_plastik_cerrahi_03",
+    "title": "SUNUM SIRASI",
+    "description": "Bu hafta servis toplantısında rekonstrüktif ameliyat üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; yanık konsültasyonu araya girdi.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "plastik_cerrahi"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_radyoloji_01",
+    "title": "KAYIT GECİKMESİ",
+    "description": "Radyoloji raporlama biriminde bu haftaki tetkik raporu kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; acil tetkik yığılması var.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "radyoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_radyoloji_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam radyoloji raporlama birimi çıkacaktın ki kıdemli asistan bugünkü tetkik raporu listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "radyoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_radyoloji_03",
+    "title": "SERVİS TOPLANTISI",
+    "description": "Bu hafta servis toplantısında tetkik raporu üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; acil tetkik yığılması var.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "radyoloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_uroloji_01",
+    "title": "SİSTEME İŞLENMEMİŞ",
+    "description": "Ameliyathanede bu haftaki endoskopik girişim kayıtları hâlâ elektronik sisteme işlenmemiş. Kıdemli asistan akşama kadar tamamlanmasını istiyor; taş kırma cihazı arızalandı.",
+    "category": "GENERAL",
+    "triggerMode": "pool",
+    "weight": 9,
+    "cooldownWeeks": 9,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "uroloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_tamamla",
+        "text": "Kal, hepsini bugün bitir.",
+        "immediateEffects": {
+          "fatigue": 8,
+          "stress": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_completed": 1
+          }
+        }
+      },
+      {
+        "id": "yarina_birak",
+        "text": "Kalanını yarına devret.",
+        "immediateEffects": {
+          "stress": 6
+        },
+        "statistics": {
+          "increment": {
+            "p11_bureaucracy_deferred": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "p11_uroloji_02",
+    "title": "TAM ÇIKACAKKEN",
+    "description": "Saat geç oldu, tam ameliyathan çıkacaktın ki kıdemli asistan bugünkü endoskopik girişim listesinin yeniden düzenlenmesini istedi.",
+    "category": "ON_CALL",
+    "triggerMode": "pool",
+    "weight": 10,
+    "cooldownWeeks": 6,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "uroloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "kal_bitir",
+        "text": "Kal ve bitir.",
+        "immediateEffects": {
+          "fatigue": 6
+        },
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": 4
+          }
+        ],
+        "workloadEffects": [
+          {
+            "type": "add_overtime_hours",
+            "hours": 4
+          }
+        ]
+      },
+      {
+        "id": "yarin_hallet",
+        "text": "\"Yarın halledeceğim\" de.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p11_uroloji_03",
+    "title": "VAKA SUNUMU",
+    "description": "Bu hafta servis toplantısında endoskopik girişim üzerine bir sunum hazırlaman gerekiyor. Kıdemli asistan hazırlıksız gelmeni istemiyor; taş kırma cihazı arızalandı.",
+    "category": "NPC",
+    "triggerMode": "pool",
+    "weight": 8,
+    "cooldownWeeks": 10,
+    "requirements": {
+      "all": [
+        {
+          "branchIn": [
+            "uroloji"
+          ]
+        }
+      ]
+    },
+    "choices": [
+      {
+        "id": "hazirlan",
+        "text": "Ekstra zaman ayırıp hazırlan.",
+        "immediateEffects": {
+          "stress": 5,
+          "fatigue": 4
+        },
+        "statistics": {
+          "increment": {
+            "p11_presentation_prepared": 1
+          }
+        }
+      },
+      {
+        "id": "gecistir",
+        "text": "Basit geç, fazla zaman harcama.",
+        "relationshipEffects": [
+          {
+            "npc": "hoca_generic",
+            "trust": -2
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -6,6 +6,7 @@ import type { EventRepository } from "./repository";
 import type { EventDefinition } from "./types";
 import {
   DEFAULT_POOL_SELECTION_CONFIG,
+  hierarchyWeightMultiplier,
   type PoolSelectionConfig,
 } from "../config/eventSelection";
 
@@ -29,9 +30,13 @@ export interface PoolSelectionResult {
 function weightedSampleWithoutReplacement(
   items: EventDefinition[],
   count: number,
-  rng: SeededRng
+  rng: SeededRng,
+  hierarchyPressure?: number
 ): EventDefinition[] {
-  const pool = items.map((event) => ({ event, weight: Math.max(0.0001, event.weight ?? 1) }));
+  const pool = items.map((event) => ({
+    event,
+    weight: Math.max(0.0001, (event.weight ?? 1) * hierarchyWeightMultiplier(hierarchyPressure, event.category)),
+  }));
   const picked: EventDefinition[] = [];
   for (let i = 0; i < count && pool.length > 0; i++) {
     const total = pool.reduce((sum, p) => sum + p.weight, 0);
@@ -100,7 +105,7 @@ export function selectPoolEvents(
   const rareCandidates = eligible.filter((e) => e.category === "RARE");
   trace.rareRolled = rng.next() < config.rareChancePerWeek;
   if (trace.rareRolled && rareCandidates.length > 0 && remainingBudget > 0) {
-    const [rare] = weightedSampleWithoutReplacement(rareCandidates, 1, rng);
+    const [rare] = weightedSampleWithoutReplacement(rareCandidates, 1, rng, ctx.career.hierarchyPressure);
     selected.push(rare);
     trace.rareSelectedId = rare.id;
     remainingBudget -= 1;
@@ -111,7 +116,7 @@ export function selectPoolEvents(
     const normalCandidates = eligible.filter((e) => e.id !== trace.rareSelectedId && e.category !== "RARE");
     const min = Math.min(config.minEventsPerWeek, remainingBudget);
     const count = min >= remainingBudget ? remainingBudget : rng.int(min, remainingBudget);
-    selected.push(...weightedSampleWithoutReplacement(normalCandidates, count, rng));
+    selected.push(...weightedSampleWithoutReplacement(normalCandidates, count, rng, ctx.career.hierarchyPressure));
   }
 
   trace.selectedIds = selected.map((e) => e.id);

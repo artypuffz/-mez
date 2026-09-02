@@ -63,6 +63,24 @@ export interface WeeklyResourceConfig {
   // mobbingRisk is deliberately not read here — it's an event-weighting
   // parameter for Phase 5+, not a passive resource driver.
   programPressureDivisor: number;
+
+  // Gameplay Expansion Part A — root-caused a real APK finding ("burnout
+  // pratikte hiç artmıyor"). The counters below used to hard-reset to 0
+  // the INSTANT their condition stopped holding for even one week — a
+  // single week where fatigue dipped from 61 to 59 (ordinary rng noise,
+  // or the proportional pull-toward-resting itself) wiped out an entire
+  // multi-week streak, discarding all accrued progress toward the next
+  // burnout increment. A live trace (Genel Cerrahi, 52 weeks, stress
+  // consistently 80-100) showed combinedPressureWeeks collapsing from 16
+  // back to 0 mid-career purely from that fragility, and burnout visibly
+  // plateauing for 6+ real weeks despite objectively terrible resources —
+  // exactly what a short human playtest session would perceive as "never
+  // increases". Fixed as a leaky bucket: a non-qualifying week decays the
+  // streak by this amount instead of zeroing it, so genuinely sustained
+  // pressure still accrues net progress through ordinary week-to-week
+  // noise, while a real recovery (many consecutive good weeks) still
+  // drains it back to 0 same as before.
+  pressureStreakLeakPerWeek: number;
 }
 
 // Phase 9 rebalance — see the Phase 9 report for the measured weekly
@@ -98,4 +116,6 @@ export const DEFAULT_WEEKLY_RESOURCE_CONFIG: WeeklyResourceConfig = {
   burnoutDecrease: 1,
 
   programPressureDivisor: 25,
+
+  pressureStreakLeakPerWeek: 1,
 };

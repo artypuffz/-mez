@@ -3,6 +3,9 @@ import { deriveResidencyStartDate } from "../residency/calendar";
 import { generateInitialClinic } from "../npc/generation";
 import { getResidencyProgram } from "../config/residencyPrograms";
 import { createScopedRng } from "../rng/seededRng";
+import { resolveFinalHierarchyPressure } from "../residency/hospitalCulture";
+import { DEFAULT_RESOURCES } from "../config/resources";
+import { randomizePlayerAvatar } from "../avatar/randomize";
 
 // Each entry migrates FROM its key version TO key+1. load() always runs
 // data through this, so adding support for a future save version only
@@ -137,6 +140,96 @@ const migrations: Record<number, Migration> = {
             { chainId: "specialist_exam", checkpoint: "stage1", triggerWeek: week, sourceEventId: "residency_completed", sourceChoiceId: "auto" },
           ]
         : (state.pendingEvents ?? []),
+    };
+  },
+  // v8 (RC2) had no working-hours state and no persisted
+  // career.hierarchyPressure — Phase 11 added both. workload always
+  // starts null (same "safe to start empty, regenerates on the next
+  // weekly tick" reasoning as v5's onCall/economy backfill above).
+  // hierarchyPressure is backfilled ONLY for a save already mid-residency
+  // with a resolvable program+branch, using the exact same deterministic
+  // formula selectResidencyProgram now uses — a legacy save's existing
+  // fictional program still has its own static hiddenProfile.mobbingRisk
+  // (never absent for the 12 Phase 3 programs), so this backfill only
+  // ever feeds the event-weight modifier, never the NPC-culture fallback
+  // (that fallback only triggers for mobbingRisk-less REAL programs,
+  // which cannot appear in a save older than Phase 11). A save with an
+  // unresolvable/removed program id is left without hierarchyPressure
+  // rather than thrown on — the event-weight modifier treats an absent
+  // value as a no-op (multiplier 1), never a crash.
+  8: (state) => {
+    const meta = state.meta as Record<string, unknown>;
+    const career = state.career as Record<string, unknown>;
+    const tus = state.tus as Record<string, unknown> | undefined;
+    const programId = tus?.selectedProgramId as string | undefined;
+    let hierarchyPressure: number | undefined;
+    if (career.phase === "residency" && programId) {
+      try {
+        hierarchyPressure = resolveFinalHierarchyPressure(meta.rngSeed as string, getResidencyProgram(programId));
+      } catch {
+        hierarchyPressure = undefined;
+      }
+    }
+    return {
+      ...state,
+      meta: { ...meta, saveVersion: 9 },
+      career: hierarchyPressure !== undefined ? { ...career, hierarchyPressure } : career,
+      workload: null,
+    };
+  },
+  // v9 (Phase 11) had no health/social resources, no schedule/freeTime,
+  // and no lifestyle/ownership state — Gameplay Expansion Part A added
+  // all four. Same "safe to start empty/neutral, regenerates or is read
+  // fresh on the next weekly tick" reasoning as every prior migration
+  // that added a derived-state slice (v5's onCall/economy, v9's
+  // workload): health/social get a neutral (not punishing, not
+  // rewarding) default matching DEFAULT_RESOURCES exactly, so an
+  // existing character isn't retroactively given a life history it never
+  // had; schedule starts null (regenerates the next tick, same as
+  // workload); freeTime starts zeroed (recomputed the next tick);
+  // lifestyle/ownership both start at "normal" — the ONE tier value that
+  // is mathematically a no-op against the pre-Part-A expense formula (see
+  // domain/economy/expenses.ts), so an existing save's monthly economy
+  // numbers do not silently change out from under it just because this
+  // migration ran.
+  9: (state) => {
+    const meta = state.meta as Record<string, unknown>;
+    const resources = state.resources as Record<string, unknown>;
+    return {
+      ...state,
+      meta: { ...meta, saveVersion: 10 },
+      resources: { ...resources, health: DEFAULT_RESOURCES.health, social: DEFAULT_RESOURCES.social },
+      schedule: null,
+      freeTime: { totalHours: 0, usedHours: 0 },
+      lifestyle: { foodTier: "normal" },
+      ownership: { phone: "old", computer: "none", housing: "normal" },
+    };
+  },
+  // v10 (Gameplay Expansion Part A) had no character.avatar and no
+  // relationshipHistory — Part B/C added both. avatar is backfilled
+  // DETERMINISTICALLY from this exact save's own rngSeed via the same
+  // `avatar:player:initial` scope createInitialGameState uses for a
+  // player who skips Character Creation's Görünüş step — so an existing
+  // character gets *a* stable, reproducible look (not a fresh random one
+  // on every load) rather than the fresh-game default appearing to
+  // "reroll" on migration. NPC avatars need NO migration at all — they're
+  // computed on demand from (rngSeed, npcId), never persisted, so a
+  // migrated save's NPCs are already fully covered (see
+  // domain/avatar/npcAvatar.ts). relationshipHistory starts empty per NPC
+  // — same "safe to start empty, only ever grows forward" reasoning as
+  // every other capped/derived collection in this file; it does NOT
+  // retroactively reconstruct history from eventHistory (that would mix
+  // old, summary-less content into a feature that only ever shows
+  // authored interactionSummary text).
+  10: (state) => {
+    const meta = state.meta as Record<string, unknown>;
+    const character = state.character as Record<string, unknown>;
+    const avatar = randomizePlayerAvatar(createScopedRng(meta.rngSeed as string, "avatar:player:initial"));
+    return {
+      ...state,
+      meta: { ...meta, saveVersion: 11 },
+      character: { ...character, avatar },
+      relationshipHistory: {},
     };
   },
 };

@@ -57,6 +57,11 @@ export async function createCharacterThroughUi(page: Page, name: string): Promis
   await page.getByTestId("background-kendi_basina").click();
   await page.getByTestId("btn-step2-next").click();
 
+  // Gameplay Expansion Part C — Görünüş (avatar customization) step,
+  // between Geçmiş and Özet. Defaults are fine for a generic E2E flow;
+  // this just moves through it.
+  await page.getByTestId("btn-step3-next").click();
+
   await page.getByTestId("btn-start-tus").click();
 }
 

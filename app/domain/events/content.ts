@@ -12,6 +12,7 @@
 import branchInternalMedicine from "../../../data/events/branches/internal-medicine/internal-medicine.json";
 import branchSurgery from "../../../data/events/branches/surgery/surgery.json";
 import branchPsychiatry from "../../../data/events/branches/psychiatry/psychiatry.json";
+import branchPhase11 from "../../../data/events/branches/phase11-branches.json";
 import chainBaris from "../../../data/events/chains/baris.json";
 import chainSecretary from "../../../data/events/chains/secretary.json";
 import chainFaculty from "../../../data/events/chains/faculty.json";
@@ -61,6 +62,7 @@ const RAW_EVENT_FILES: unknown[] = [
   ...branchInternalMedicine,
   ...branchSurgery,
   ...branchPsychiatry,
+  ...branchPhase11,
   ...chainBaris,
   ...chainSecretary,
   ...chainFaculty,

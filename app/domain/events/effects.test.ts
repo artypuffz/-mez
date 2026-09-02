@@ -48,18 +48,29 @@ describe('resolveEffectMap', () => {
     expect(a.stress).toBeGreaterThanOrEqual(3);
     expect(a.stress).toBeLessThanOrEqual(8);
   });
+
+  // Gameplay Expansion Part B bugfix — health/social were added to
+  // EffectMap in Part A but this resolver never read them, so any event
+  // content authored with a health/social effect silently no-opped. Fixed
+  // alongside the rest of Part B's relationship/content work.
+  it('resolves health and social fields, fixed and ranged, same as every other resource', () => {
+    expect(resolveEffectMap({ health: 3, social: -2 }, createSeededRng('x'))).toEqual({ health: 3, social: -2 });
+    const ranged = resolveEffectMap({ social: { min: 4, max: 9 } }, createSeededRng('social-range'));
+    expect(ranged.social).toBeGreaterThanOrEqual(4);
+    expect(ranged.social).toBeLessThanOrEqual(9);
+  });
 });
 
 describe('applyResourceDelta', () => {
   it('clamps stress/fatigue/burnout to [0,100]', () => {
-    const result = applyResourceDelta({ stress: 95, fatigue: 5, burnout: 98, money: 1000 }, { stress: 20, fatigue: -20, burnout: 10 });
+    const result = applyResourceDelta({ stress: 95, fatigue: 5, burnout: 98, health: 100, social: 50, money: 1000 }, { stress: 20, fatigue: -20, burnout: 10 });
     expect(result.stress).toBe(100);
     expect(result.fatigue).toBe(0);
     expect(result.burnout).toBe(100);
   });
 
   it('never clamps money — it can go negative', () => {
-    const result = applyResourceDelta({ stress: 0, fatigue: 0, burnout: 0, money: 500 }, { money: -2000 });
+    const result = applyResourceDelta({ stress: 0, fatigue: 0, burnout: 0, health: 100, social: 50, money: 500 }, { money: -2000 });
     expect(result.money).toBe(-1500);
   });
 });

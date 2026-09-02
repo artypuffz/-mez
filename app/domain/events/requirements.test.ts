@@ -24,7 +24,7 @@ describe('evaluateRequirements', () => {
   });
 
   it('evaluates a resource stat with gte/lte', () => {
-    const c = ctx({ resources: { stress: 42, fatigue: 0, burnout: 0, money: 0 } });
+    const c = ctx({ resources: { stress: 42, fatigue: 0, burnout: 0, health: 100, social: 50, money: 0 } });
     expect(evaluateRequirements({ stat: 'resources.stress', gte: 40 }, c)).toBe(true);
     expect(evaluateRequirements({ stat: 'resources.stress', gte: 43 }, c)).toBe(false);
     expect(evaluateRequirements({ stat: 'resources.stress', lte: 42 }, c)).toBe(true);
@@ -42,7 +42,7 @@ describe('evaluateRequirements', () => {
   });
 
   it('supports neq, gt, lt, in, notIn', () => {
-    const c = ctx({ resources: { stress: 50, fatigue: 0, burnout: 0, money: 0 } });
+    const c = ctx({ resources: { stress: 50, fatigue: 0, burnout: 0, health: 100, social: 50, money: 0 } });
     expect(evaluateRequirements({ stat: 'resources.stress', neq: 40 }, c)).toBe(true);
     expect(evaluateRequirements({ stat: 'resources.stress', gt: 49 }, c)).toBe(true);
     expect(evaluateRequirements({ stat: 'resources.stress', lt: 51 }, c)).toBe(true);
@@ -80,19 +80,19 @@ describe('evaluateRequirements', () => {
   });
 
   it('evaluates all (AND)', () => {
-    const c = ctx({ resources: { stress: 50, fatigue: 50, burnout: 0, money: 0 } });
+    const c = ctx({ resources: { stress: 50, fatigue: 50, burnout: 0, health: 100, social: 50, money: 0 } });
     expect(evaluateRequirements({ all: [{ stat: 'resources.stress', gte: 40 }, { stat: 'resources.fatigue', gte: 40 }] }, c)).toBe(true);
     expect(evaluateRequirements({ all: [{ stat: 'resources.stress', gte: 40 }, { stat: 'resources.fatigue', gte: 60 }] }, c)).toBe(false);
   });
 
   it('evaluates any (OR)', () => {
-    const c = ctx({ resources: { stress: 10, fatigue: 90, burnout: 0, money: 0 } });
+    const c = ctx({ resources: { stress: 10, fatigue: 90, burnout: 0, health: 100, social: 50, money: 0 } });
     expect(evaluateRequirements({ any: [{ stat: 'resources.stress', gte: 40 }, { stat: 'resources.fatigue', gte: 40 }] }, c)).toBe(true);
     expect(evaluateRequirements({ any: [{ stat: 'resources.stress', gte: 40 }, { stat: 'resources.fatigue', gte: 95 }] }, c)).toBe(false);
   });
 
   it('evaluates nested any-within-all groups', () => {
-    const c = ctx({ resources: { stress: 10, fatigue: 90, burnout: 0, money: 0 } });
+    const c = ctx({ resources: { stress: 10, fatigue: 90, burnout: 0, health: 100, social: 50, money: 0 } });
     const node = {
       all: [
         { any: [{ stat: 'resources.stress', gte: 40 }, { stat: 'resources.fatigue', gte: 40 }] },

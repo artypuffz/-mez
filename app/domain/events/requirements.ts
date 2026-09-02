@@ -21,8 +21,15 @@ export interface RequirementContext {
     branch?: string;
     hospital?: string;
     city?: string;
+    // Phase 11 — the final (branch baseline + procedural culture modifier)
+    // hierarchy pressure for this career, 0.5-5.0. Undefined before a
+    // program is selected. Readable by content via the generic "stat"
+    // leaf ({stat: "career.hierarchyPressure", gte: 4}); also read
+    // directly by selectPoolEvents' event-weight modifier (see
+    // domain/config/eventSelection.ts).
+    hierarchyPressure?: number;
   };
-  resources: { stress: number; fatigue: number; burnout: number; money: number };
+  resources: { stress: number; fatigue: number; burnout: number; health: number; social: number; money: number };
   // Phase 9 — sustained-pressure streaks and financial-pressure memory,
   // readable via the existing generic "stat" dot-path leaf (e.g.
   // {stat: "resourcePressure.combinedPressureWeeks", gte: 6}) exactly
@@ -79,6 +86,7 @@ export function buildRequirementContext(
       branch: state.career.branch,
       hospital: state.career.hospital,
       city: state.career.city,
+      hierarchyPressure: state.career.hierarchyPressure,
     },
     resources: state.resources,
     resourcePressure: state.resourcePressure,

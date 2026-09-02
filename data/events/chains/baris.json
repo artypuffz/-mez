@@ -44,7 +44,8 @@
           "chainId": "baris",
           "checkpoint": "stage2",
           "delayWeeks": 14
-        }
+        },
+        "interactionSummary": "Barış'ın ilk ricasını sessizce kabul ettin."
       },
       {
         "id": "nazik_sinir",
@@ -68,7 +69,8 @@
           "chainId": "baris",
           "checkpoint": "stage2",
           "delayWeeks": 14
-        }
+        },
+        "interactionSummary": "Barış'a nazikçe ama net bir sınır koydun."
       },
       {
         "id": "reddet",
@@ -92,7 +94,8 @@
           "chainId": "baris",
           "checkpoint": "stage2",
           "delayWeeks": 14
-        }
+        },
+        "interactionSummary": "Barış'ın ricasını reddettin."
       },
       {
         "id": "kidemliye_sikayet",
@@ -117,7 +120,8 @@
           "chainId": "baris",
           "checkpoint": "stage2",
           "delayWeeks": 14
-        }
+        },
+        "interactionSummary": "Barış'ı bölüm kıdemlisine şikayet ettin."
       }
     ]
   },
@@ -166,7 +170,8 @@
           "chainId": "baris",
           "checkpoint": "stage3",
           "delayWeeks": 20
-        }
+        },
+        "interactionSummary": "Barış'la nöbet takası yaptın."
       },
       {
         "id": "karsiliksiz_yardim",
@@ -185,7 +190,8 @@
           "chainId": "baris",
           "checkpoint": "stage3",
           "delayWeeks": 20
-        }
+        },
+        "interactionSummary": "Barış'ın nöbetini karşılıksız üstlendin."
       }
     ]
   },
@@ -438,7 +444,12 @@
             "trust": 10
           }
         ],
-        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "npcTransitions": [
+          {
+            "npc": "baris",
+            "type": "became_specialist"
+          }
+        ],
         "followUpEvent": {
           "chainId": "baris",
           "checkpoint": "stage5",
@@ -457,7 +468,12 @@
             "trust": 3
           }
         ],
-        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "npcTransitions": [
+          {
+            "npc": "baris",
+            "type": "became_specialist"
+          }
+        ],
         "followUpEvent": {
           "chainId": "baris",
           "checkpoint": "stage5",
@@ -505,7 +521,12 @@
             "grudge": 6
           }
         ],
-        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "npcTransitions": [
+          {
+            "npc": "baris",
+            "type": "became_specialist"
+          }
+        ],
         "flags": {
           "set": {
             "chain_baris_itiraz_etti": true
@@ -525,7 +546,12 @@
           "stress": 10,
           "burnout": 5
         },
-        "npcTransitions": [{ "npc": "baris", "type": "became_specialist" }],
+        "npcTransitions": [
+          {
+            "npc": "baris",
+            "type": "became_specialist"
+          }
+        ],
         "followUpEvent": {
           "chainId": "baris",
           "checkpoint": "stage5",
@@ -559,7 +585,11 @@
         }
       ]
     },
-    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "npcSelectors": {
+      "primary": {
+        "randomActiveByRole": "junior_resident"
+      }
+    },
     "choices": [
       {
         "id": "evraklari_kendin_hallet",
@@ -633,7 +663,11 @@
         }
       ]
     },
-    "npcSelectors": { "primary": { "randomActiveByRole": "junior_resident" } },
+    "npcSelectors": {
+      "primary": {
+        "randomActiveByRole": "junior_resident"
+      }
+    },
     "choices": [
       {
         "id": "farkli_davran",

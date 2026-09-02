@@ -81,6 +81,8 @@ const EffectMapSchema = z
     stress: NumericOrRangeSchema.optional(),
     fatigue: NumericOrRangeSchema.optional(),
     burnout: NumericOrRangeSchema.optional(),
+    health: NumericOrRangeSchema.optional(),
+    social: NumericOrRangeSchema.optional(),
     money: NumericOrRangeSchema.optional(),
   })
   .strict();
@@ -142,6 +144,11 @@ const DelayedEffectEntrySchema = z
 
 // Phase 7 §23 — tiny surface, matching domain/oncall/applyEffects.ts's
 // OnCallEffect union exactly.
+// Phase 11 §19 — mirrors WorkloadEffect exactly (domain/events/types.ts).
+const WorkloadEffectSchema = z.union([
+  z.object({ type: z.literal("add_overtime_hours"), hours: z.number() }).strict(),
+]);
+
 const OnCallEffectSchema = z.union([
   z.object({ type: z.literal("add_player_shift"), count: z.number().int().positive(), shiftType: z.enum(["weekday", "weekend"]).optional() }).strict(),
   z.object({ type: z.literal("remove_player_shift"), count: z.number().int().positive() }).strict(),
@@ -178,6 +185,7 @@ const ChoiceDefinitionSchema = z
     immediateEffects: EffectMapSchema.optional(),
     delayedEffects: z.array(DelayedEffectEntrySchema).optional(),
     relationshipEffects: z.array(RelationshipEffectSchema).optional(),
+    interactionSummary: z.string().min(1).optional(),
     flags: z
       .object({
         set: z.record(z.string(), z.union([z.boolean(), z.number(), z.string()])).optional(),
@@ -190,6 +198,7 @@ const ChoiceDefinitionSchema = z
     followUpEvent: FollowUpRefSchema.optional(),
     npcTransitions: z.array(NpcTransitionEffectSchema).optional(),
     onCallEffects: z.array(OnCallEffectSchema).optional(),
+    workloadEffects: z.array(WorkloadEffectSchema).optional(),
     careerEffects: z.array(CareerEffectSchema).optional(),
     specialistExamEffects: z.array(SpecialistExamEffectSchema).optional(),
   })

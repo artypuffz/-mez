@@ -71,11 +71,16 @@ export function applyWeeklyStress(
   return pullTowardResting(afterPressure, config.stressRestingPoint, config.stressPullRate, config.stressPullFloor);
 }
 
-// Phase 9 §3 — consecutive-week streak bookkeeping that drives burnout.
-// Called with THIS week's already-ticked stress/fatigue (matching the
-// existing fatigue -> stress -> burnout tick order). A streak resets to 0
-// the instant the underlying condition stops holding; it is not a
-// running total, and is never allowed to go negative.
+// Phase 9 §3, fixed in Gameplay Expansion Part A — sustained-pressure
+// streak bookkeeping that drives burnout. Called with THIS week's
+// already-ticked stress/fatigue (matching the existing fatigue -> stress
+// -> burnout tick order). A streak LEAKS by pressureStreakLeakPerWeek the
+// moment its condition stops holding, rather than hard-resetting to 0 —
+// see WeeklyResourceConfig.pressureStreakLeakPerWeek's doc comment for
+// why the old reset-to-zero behavior was a real bug, root-caused via a
+// live trace. Still never goes negative, still genuinely drains to 0
+// given enough consecutive non-qualifying weeks — this is a leak, not a
+// removal of the recovery path.
 export function updateResourcePressure(
   current: ResourcePressureState,
   stress: number,
@@ -85,12 +90,15 @@ export function updateResourcePressure(
   const highStress = stress >= config.burnoutHighStressThreshold;
   const highFatigue = fatigue >= config.burnoutHighFatigueThreshold;
   const lowBoth = stress < config.burnoutLowStressThreshold && fatigue < config.burnoutLowFatigueThreshold;
+  const leak = config.pressureStreakLeakPerWeek;
+
+  const step = (holds: boolean, streak: number) => (holds ? streak + 1 : Math.max(0, streak - leak));
 
   return {
-    highStressWeeks: highStress ? current.highStressWeeks + 1 : 0,
-    highFatigueWeeks: highFatigue ? current.highFatigueWeeks + 1 : 0,
-    combinedPressureWeeks: highStress && highFatigue ? current.combinedPressureWeeks + 1 : 0,
-    lowPressureWeeks: lowBoth ? current.lowPressureWeeks + 1 : 0,
+    highStressWeeks: step(highStress, current.highStressWeeks),
+    highFatigueWeeks: step(highFatigue, current.highFatigueWeeks),
+    combinedPressureWeeks: step(highStress && highFatigue, current.combinedPressureWeeks),
+    lowPressureWeeks: step(lowBoth, current.lowPressureWeeks),
   };
 }
 

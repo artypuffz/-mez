@@ -101,6 +101,11 @@ export interface EffectMap {
   stress?: NumericOrRange;
   fatigue?: NumericOrRange;
   burnout?: NumericOrRange;
+  // Gameplay Expansion Part A — see ResolvedResourceDelta's doc comment
+  // (domain/state/types.ts) for why events MAY use these even though
+  // they're never the ONLY driver of health/social.
+  health?: NumericOrRange;
+  social?: NumericOrRange;
   money?: NumericOrRange;
 }
 
@@ -147,6 +152,17 @@ export type CareerEffect =
 // own probability.
 export type SpecialistExamEffect = { type: "attempt" };
 
+// Phase 11 §19 — a minimal, single-purpose leaf: adds overtime hours to
+// the CURRENT week's WorkloadState (see domain/residency/workingHours.ts).
+// Deliberately does not itself apply any stress/fatigue — an overtime
+// choice's actual gameplay cost/benefit is authored directly via the same
+// immediateEffects/relationshipEffects every other choice already uses
+// (e.g. "kal ve bitir" -> +overtime hours, NPC trust +; "yarın halledeceğim"
+// -> no overtime, NPC trust -), so this never risks double-counting
+// against the weekly working-hours pressure band, which only ever reads
+// off the branch/program axis, not this accumulator.
+export type WorkloadEffect = { type: "add_overtime_hours"; hours: number };
+
 export interface ChoiceDefinition {
   id: string;
   text: string;
@@ -154,6 +170,17 @@ export interface ChoiceDefinition {
   immediateEffects?: EffectMap;
   delayedEffects?: DelayedEffectEntry[];
   relationshipEffects?: RelationshipEffect[];
+  // Gameplay Expansion Part B §8 — an optional, data-driven, PLAYER-FACING
+  // sentence describing this interaction from the player's side ("Nöbet
+  // değişiminde ona yardım ettin."). Purely presentational: recorded into
+  // GameState.relationshipHistory (see domain/events/effects.ts's
+  // recordRelationshipHistory) for every NPC this choice's
+  // relationshipEffects touches, never read by any gameplay/requirement
+  // logic. Existing content without it stays perfectly valid — a choice
+  // with relationshipEffects but no interactionSummary just adds no
+  // history entry, it never crashes or falls back to exposing the
+  // eventId/choiceId.
+  interactionSummary?: string;
   flags?: { set?: Record<string, boolean | number | string>; clear?: string[] };
   behaviorTags?: string[];
   statistics?: { increment?: Record<string, number> };
@@ -164,6 +191,8 @@ export interface ChoiceDefinition {
   // resolved before residency starts, which shouldn't happen but stays
   // safe either way) or if a mutation runs out of valid dates/assignments.
   onCallEffects?: OnCallEffect[];
+  // Phase 11 — see WorkloadEffect above.
+  workloadEffects?: WorkloadEffect[];
   // Phase 9 — see CareerEffect above. Always the LAST thing resolveEventChoice
   // applies for a choice (§25): every other effect on the same choice
   // still lands (a resignation choice's stress relief is real, not erased

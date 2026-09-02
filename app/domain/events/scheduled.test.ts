@@ -122,7 +122,7 @@ describe('resolveDuePendingEvents', () => {
 describe('applyDuePendingEffects', () => {
   it('applies an effect exactly at its due week and removes it from the queue', () => {
     const state = stateWith({
-      resources: { stress: 20, fatigue: 20, burnout: 0, money: 0 },
+      resources: { stress: 20, fatigue: 20, burnout: 0, health: 100, social: 50, money: 0 },
       pendingEffects: [{ dueWeek: 30, sourceEventId: 's', sourceChoiceId: 'c', effects: { stress: 5 } }],
     });
     const before = applyDuePendingEffects(state, 25);

@@ -1,7 +1,8 @@
 import type { SeededRng } from "../rng/seededRng";
-import { clampRelationshipField, type GameOverState, type GameState, type NpcState, type NpcTransition, type RelationshipState, type ResolvedResourceDelta, type SpecialistExamState } from "../state/types";
+import { clampRelationshipField, type GameOverState, type GameState, type NpcState, type NpcTransition, type RelationshipHistoryEntry, type RelationshipState, type ResolvedResourceDelta, type SpecialistExamState } from "../state/types";
 import type { CareerEffect, EffectMap, NpcTransitionEffect, NumericOrRange, RelationshipEffect, RelationshipField, SpecialistExamEffect } from "./types";
 import { resolveNpcTargetId } from "./npcTargets";
+import { deriveRelationshipDirection } from "../npc/relationshipLabel";
 import { buildExamFactors, calculateSpecialistExamOutcome } from "../specialistExam/outcome";
 
 function clamp(value: number, min: number, max: number): number {
@@ -23,6 +24,14 @@ export function resolveEffectMap(map: EffectMap | undefined, rng: SeededRng): Re
   if (map.stress !== undefined) resolved.stress = resolveValue(map.stress, rng);
   if (map.fatigue !== undefined) resolved.fatigue = resolveValue(map.fatigue, rng);
   if (map.burnout !== undefined) resolved.burnout = resolveValue(map.burnout, rng);
+  // Gameplay Expansion Part B bugfix — health/social were added to
+  // EffectMap/ResolvedResourceDelta/applyResourceDelta in Part A but never
+  // wired into this resolver, so any event content authored with a
+  // health/social effect would silently no-op. No shipped content used
+  // either field yet (grep confirmed), so this was latent, not yet visibly
+  // broken — fixed here rather than left for whenever content adopts it.
+  if (map.health !== undefined) resolved.health = resolveValue(map.health, rng);
+  if (map.social !== undefined) resolved.social = resolveValue(map.social, rng);
   if (map.money !== undefined) resolved.money = resolveValue(map.money, rng);
   return resolved;
 }
@@ -31,17 +40,21 @@ export interface ResourceState {
   stress: number;
   fatigue: number;
   burnout: number;
+  health: number;
+  social: number;
   money: number;
 }
 
-// stress/fatigue/burnout clamp to [0,100] like every other resource tick
-// in the game; money is never clamped — it can go negative (debt is a
-// valid, meaningful state, not a system error).
+// stress/fatigue/burnout/health/social clamp to [0,100] like every other
+// resource tick in the game; money is never clamped — it can go negative
+// (debt is a valid, meaningful state, not a system error).
 export function applyResourceDelta(resources: ResourceState, delta: ResolvedResourceDelta): ResourceState {
   return {
     stress: clamp(resources.stress + (delta.stress ?? 0), 0, 100),
     fatigue: clamp(resources.fatigue + (delta.fatigue ?? 0), 0, 100),
     burnout: clamp(resources.burnout + (delta.burnout ?? 0), 0, 100),
+    health: clamp(resources.health + (delta.health ?? 0), 0, 100),
+    social: clamp(resources.social + (delta.social ?? 0), 0, 100),
     money: resources.money + (delta.money ?? 0),
   };
 }
@@ -82,6 +95,38 @@ export function applyRelationshipEffects(
       }
     }
     next[npcId] = updated;
+  }
+  return next;
+}
+
+// Gameplay Expansion Part B section 8 — a capped, newest-first,
+// player-facing interaction log, recorded alongside (never instead of)
+// applyRelationshipEffects above. Only choices that actually author an
+// `interactionSummary` produce an entry — content with relationshipEffects
+// but no summary keeps working exactly as before, it simply adds nothing
+// to history. `direction` is derived from the SAME deltas already applied
+// (net of trust+friendship-grudge, same weighting recordRelationshipHistory's
+// sibling headless-sim heuristic uses), never a second authored field, so
+// it can never disagree with what actually happened to the relationship.
+export function recordRelationshipHistory(
+  history: Record<string, RelationshipHistoryEntry[]>,
+  effects: RelationshipEffect[] | undefined,
+  boundNpcIds: Record<string, string>,
+  week: number,
+  interactionSummary: string | undefined,
+  cap: number
+): Record<string, RelationshipHistoryEntry[]> {
+  if (!effects || effects.length === 0 || !interactionSummary) return history;
+  const next = { ...history };
+  const touchedNpcIds = new Set<string>();
+  for (const effect of effects) {
+    const { npc, boundNpc, ...deltas } = effect;
+    const npcId = resolveNpcTargetId({ npc, boundNpc }, boundNpcIds);
+    if (!npcId || touchedNpcIds.has(npcId)) continue;
+    touchedNpcIds.add(npcId);
+    const direction = deriveRelationshipDirection(deltas);
+    const existing = next[npcId] ?? [];
+    next[npcId] = [{ week, summary: interactionSummary, direction }, ...existing].slice(0, cap);
   }
   return next;
 }

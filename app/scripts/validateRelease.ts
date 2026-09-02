@@ -58,6 +58,7 @@ function main() {
     () => runStep("TypeScript (tsc --noEmit)", "npx tsc --noEmit"),
     () => runStep("Unit tests (vitest)", "npx vitest run"),
     () => runStep("Event content validation", "npx tsx scripts/validateEvents.ts"),
+    () => runStep("TUS program dataset validation", "npx tsx scripts/validateTusDataset.ts"),
     runHeadlessSanity,
   ];
 

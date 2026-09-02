@@ -1,39 +1,56 @@
 import { describe, expect, it } from 'vitest';
-import { deriveRelationshipLabel } from './relationshipLabel';
+import { deriveRelationshipDirection, deriveRelationshipLabel, deriveRelationshipScore } from './relationshipLabel';
 
-describe('deriveRelationshipLabel', () => {
-  it('labels a neutral, untouched relationship as Nötr', () => {
-    expect(deriveRelationshipLabel({ trust: 0, friendship: 0, grudge: 0 })).toBe('Nötr');
+describe('deriveRelationshipScore', () => {
+  it('clamps to [0,100]', () => {
+    expect(deriveRelationshipScore({ trust: 100, friendship: 100, grudge: 0 })).toBeLessThanOrEqual(100);
+    expect(deriveRelationshipScore({ trust: -100, friendship: -100, grudge: 100 })).toBeGreaterThanOrEqual(0);
   });
 
-  it('labels heavy grudge as Gergin even with some trust', () => {
-    expect(deriveRelationshipLabel({ trust: 10, friendship: 0, grudge: 60 })).toBe('Gergin');
+  it('is 50 at a completely neutral relationship', () => {
+    expect(deriveRelationshipScore({ trust: 0, friendship: 0, grudge: 0 })).toBe(50);
   });
 
-  it('labels strongly negative trust/friendship as Gergin', () => {
-    expect(deriveRelationshipLabel({ trust: -60, friendship: -40, grudge: 0 })).toBe('Gergin');
+  it('increases monotonically with trust/friendship and decreases with grudge', () => {
+    const base = deriveRelationshipScore({ trust: 10, friendship: 10, grudge: 0 });
+    const moreTrust = deriveRelationshipScore({ trust: 30, friendship: 10, grudge: 0 });
+    const moreGrudge = deriveRelationshipScore({ trust: 10, friendship: 10, grudge: 30 });
+    expect(moreTrust).toBeGreaterThan(base);
+    expect(moreGrudge).toBeLessThan(base);
   });
 
-  it('labels mild negative as Mesafeli', () => {
-    expect(deriveRelationshipLabel({ trust: -15, friendship: 0, grudge: 5 })).toBe('Mesafeli');
-  });
-
-  it('labels solid positive trust as Aranız iyi', () => {
-    expect(deriveRelationshipLabel({ trust: 40, friendship: 10, grudge: 0 })).toBe('Aranız iyi');
-  });
-
-  it('labels high mutual friendship+trust as Yakın', () => {
-    expect(deriveRelationshipLabel({ trust: 60, friendship: 70, grudge: 0 })).toBe('Yakın');
-  });
-
-  it('never exposes raw numbers — always one of the fixed label strings', () => {
-    const labels = new Set(['Gergin', 'Mesafeli', 'Nötr', 'Aranız iyi', 'Yakın']);
-    for (let trust = -100; trust <= 100; trust += 25) {
-      for (let friendship = -100; friendship <= 100; friendship += 25) {
-        for (let grudge = 0; grudge <= 100; grudge += 25) {
-          expect(labels.has(deriveRelationshipLabel({ trust, friendship, grudge }))).toBe(true);
-        }
-      }
+  it('never disagrees in direction with deriveRelationshipLabel across a spread of relationships', () => {
+    const cases = [
+      { trust: 50, friendship: 60, grudge: 0 },
+      { trust: -50, friendship: -20, grudge: 60 },
+      { trust: 0, friendship: 0, grudge: 0 },
+      { trust: 20, friendship: 5, grudge: 10 },
+    ];
+    for (const rel of cases) {
+      const label = deriveRelationshipLabel(rel);
+      const score = deriveRelationshipScore(rel);
+      if (label === 'Gergin') expect(score).toBeLessThan(50);
+      if (label === 'Yakın') expect(score).toBeGreaterThan(50);
     }
+  });
+});
+
+describe('deriveRelationshipDirection', () => {
+  it('classifies a clearly positive delta as positive', () => {
+    expect(deriveRelationshipDirection({ trust: 10 })).toBe('positive');
+  });
+
+  it('classifies a clearly negative delta (grudge up) as negative', () => {
+    expect(deriveRelationshipDirection({ grudge: 10 })).toBe('negative');
+  });
+
+  it('classifies a small/mixed delta as neutral', () => {
+    expect(deriveRelationshipDirection({ trust: 1, grudge: 1 })).toBe('neutral');
+    expect(deriveRelationshipDirection({})).toBe('neutral');
+  });
+
+  it('trust and friendship both count positively, grudge negatively, in the same net', () => {
+    expect(deriveRelationshipDirection({ trust: 5, friendship: 5, grudge: 0 })).toBe('positive');
+    expect(deriveRelationshipDirection({ trust: 0, friendship: 0, grudge: 20 })).toBe('negative');
   });
 });

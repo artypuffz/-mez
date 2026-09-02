@@ -40,6 +40,7 @@ export interface CharacterSummary {
   age: number;
   hometown: string;
   backgroundLabel: string;
+  avatar: GameState["character"]["avatar"];
 }
 
 export function selectCharacterSummary(state: GameState): CharacterSummary {
@@ -48,6 +49,7 @@ export function selectCharacterSummary(state: GameState): CharacterSummary {
     age: state.character.age,
     hometown: state.character.hometown,
     backgroundLabel: getBackgroundDefinition(state.character.background).label,
+    avatar: state.character.avatar,
   };
 }
 
@@ -77,6 +79,83 @@ export function formatDuration(weeks: number): string {
   if (years > 0) parts.push(`${years} yıl`);
   if (months > 0 || years === 0) parts.push(`${months} ay`);
   return parts.join(' ');
+}
+
+// Gameplay Expansion Part B section 18 — Kariyer İstatistikleri, entirely
+// from counters the engine already tracks (oncall_lifetime_* has existed
+// since Phase 10 §8; the rest mirrors selectGameOverSummary's own fields).
+// Never a scoring screen — no total/ranking, just what happened. No stat
+// here is derived by counting arbitrary event ids; each one traces back to
+// a real accumulating counter or a small, fixed, documented category list.
+const JUNIOR_SUPPORT_TAGS = ['junior:supportive', 'junior:protected', 'junior:defended'];
+
+export interface CareerStatistics {
+  residencyWeek: number;
+  residencyYear: number;
+  seniorityStage: string;
+  totalOnCallShifts: number;
+  weekendOnCallShifts: number;
+  extraOnCallShifts: number;
+  crisisCount: number;
+  crisisRecoveredCount: number;
+  eventsResolved: number;
+  mobbingEventCount: number;
+  spendingActivityCount: number;
+  juniorSupportCount: number;
+  lowestBalanceEver: number;
+}
+
+// Gameplay Expansion Part B §15/§17 — "Asistanlık İlerlemesi": real
+// residency-week-based progress toward finishing the branch's own
+// residencyYears, deliberately NOT an XP system (no points, no arbitrary
+// "next level" curve — the denominator is the branch's actual real-world
+// duration).
+export interface ResidencyProgressSummary {
+  weeksCompleted: number;
+  totalWeeks: number;
+  ratio: number;
+}
+
+export function selectResidencyProgress(state: GameState): ResidencyProgressSummary | null {
+  if (!state.career.branch) return null;
+  const branch = getBranchDefinition(state.career.branch);
+  const totalWeeks = branch.residencyYears * 52;
+  const weeksCompleted = Math.min(state.career.residencyWeek, totalWeeks);
+  return { weeksCompleted, totalWeeks, ratio: totalWeeks > 0 ? weeksCompleted / totalWeeks : 0 };
+}
+
+export function selectCareerStatistics(state: GameState): CareerStatistics {
+  return {
+    residencyWeek: state.career.residencyWeek,
+    residencyYear: state.career.residencyYear,
+    seniorityStage: state.career.seniorityStage,
+    totalOnCallShifts: state.statistics['oncall_lifetime_shifts'] ?? 0,
+    weekendOnCallShifts: state.statistics['oncall_lifetime_weekend_shifts'] ?? 0,
+    extraOnCallShifts: state.statistics['oncall_lifetime_extra_shifts'] ?? 0,
+    crisisCount: state.statistics['crisis:total'] ?? 0,
+    crisisRecoveredCount: state.statistics['crisis:recovered'] ?? 0,
+    eventsResolved: state.eventHistory.length,
+    mobbingEventCount: state.eventHistory.filter((e) => e.category === 'MOBBING').length,
+    spendingActivityCount: state.statistics['spending:total'] ?? 0,
+    juniorSupportCount: JUNIOR_SUPPORT_TAGS.reduce((sum, tag) => sum + (state.behaviorStats[tag] ?? 0), 0),
+    lowestBalanceEver: state.financialPressure.lowestBalance,
+  };
+}
+
+// Gameplay Expansion Part B §16 — ONLY ever surfaces already-committed
+// state (an existing PendingEvent, scheduled exactly like every other
+// followUpEvent/chain checkpoint the engine already tracks), NEVER a
+// prediction of what pool/random content might trigger. Deliberately
+// generic (no title/category) — the engine's own pendingEvents entries
+// carry no player-facing text, and inventing one here would risk
+// spoiling a chain's actual content.
+export function selectUpcomingHint(state: GameState): string | null {
+  if (state.pendingEvents.length === 0) return null;
+  const nearest = state.pendingEvents.reduce((min, e) => Math.min(min, e.triggerWeek), Infinity);
+  const weeksAway = nearest - state.career.residencyWeek;
+  if (weeksAway <= 0) return 'Bu hafta beklenen bir gelişme var.';
+  if (weeksAway === 1) return 'Önümüzdeki hafta beklenen bir gelişme var.';
+  return `${weeksAway} hafta içinde beklenen bir gelişme var.`;
 }
 
 export function selectGameOverSummary(state: GameState): GameOverSummary | null {

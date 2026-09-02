@@ -1,6 +1,20 @@
 import type { BranchId, HospitalId, CityId, ProgramId } from "../state/types";
 import type { ProfileLevel } from "./programProfileLabels";
 import { getHospitalDefinition } from "./hospitals";
+import { getBranchDefinition } from "./branches";
+import { getCityDefinition } from "./cities";
+import realProgramsData from "../../../data/tus/programs.json";
+
+// Phase 11 §22-24 — a small, OPTIONAL nudge on a specific real
+// institution+branch combination. Deliberately tiny (branch identity must
+// stay dominant, §22) and NEVER fabricated from forum impressions (§23) —
+// every real program in this phase ships with modifier 0 (i.e. omitted)
+// because no verifiable per-institution methodology exists yet; the field
+// only exists so a future phase with real data has somewhere to put it.
+export interface ProgramDifficultyModifier {
+  onCallLoad: number;
+  workingHours: number;
+}
 
 export interface ResidencyProgram {
   id: ProgramId;
@@ -8,7 +22,25 @@ export interface ResidencyProgram {
   branchId: BranchId;
   cityId: CityId;
 
-  minScore: number;
+  // Phase 11 §5 — entry difficulty ("yerleşme koşulu"), kept conceptually
+  // and structurally separate from residency (gameplay) difficulty below.
+  // Optional because the real ÖSYM source used this phase (a pre-exam
+  // KONTENJAN PLANLAMASI table) does not include taban puanı/yerleştirme
+  // sonucu data — see docs/program-data-sources.md. A program with no
+  // minScore is treated as having no TUS score gate (see
+  // domain/tus/filterAvailablePrograms.ts), never a fabricated number.
+  minScore?: number;
+  // Phase 11 — real quota from the ÖSYM source, display-only.
+  quota?: number;
+  // Phase 11 — "fictional" for the original Phase 3 MVP programs (kept
+  // unchanged for backward compatibility), "real" for programs sourced
+  // from the official ÖSYM dataset this phase.
+  sourceType?: "fictional" | "real";
+  // Phase 11 §22 — see ProgramDifficultyModifier above.
+  difficultyModifier?: ProgramDifficultyModifier;
+  // Phase 11 — set only when the ÖSYM row named a joint-use university
+  // partner for an EAH program (ortak kullanım protokolü). Display-only.
+  jointUsePartner?: string;
 
   visibleProfile: {
     education: ProfileLevel;
@@ -23,15 +55,94 @@ export interface ResidencyProgram {
   // Never rendered directly in the preference screen — only hintText and
   // visibleProfile are shown. Static/hand-authored for the Phase 3 MVP;
   // see hospitals.ts for why the institutions themselves are fictional.
+  //
+  // Phase 11 §10/§11 — for a REAL program, mobbingRisk is deliberately
+  // OMITTED here rather than filled with a static per-hospital number: a
+  // fixed dataset value would be exactly the "gerçek hastaneye sabit
+  // mobbing puanı" the spec forbids. Real programs instead derive their
+  // culture procedurally, per (gameSeed, programId), from the branch's
+  // difficultyBaseline.hierarchyPressure — see
+  // domain/residency/hospitalCulture.ts and generateInitialClinic's
+  // fallback in domain/npc/generation.ts. burnoutPressure/staffingPressure
+  // stay present (branch-derived, not a "culture" claim — see
+  // deriveHiddenProfileFromBranch below) since the existing Phase 9
+  // program-pressure model and Phase 7 staffing-load model need a value.
   hiddenProfile: {
-    mobbingRisk: number;
+    mobbingRisk?: number;
     burnoutPressure: number;
     staffingPressure: number;
     npcCultureSeedModifier?: number;
   };
 }
 
-export const RESIDENCY_PROGRAMS: ResidencyProgram[] = [
+interface RealProgramRow {
+  id: string;
+  hospitalId: string;
+  branchId: string;
+  cityId: string;
+  quota: number;
+  jointUsePartner?: string;
+}
+
+// Phase 11 — a purely BRANCH-derived (never per-institution) starting
+// point for the two hiddenProfile fields real programs still need
+// (burnoutPressure feeds weeklyResources.ts's programPressureDivisor,
+// staffingPressure feeds the on-call staffing-load calculation) — every
+// real program of the same branch gets the exact same number here, so
+// this can never read as an institution-specific claim. mobbingRisk is
+// intentionally left undefined (see the interface doc above).
+function deriveHiddenProfileFromBranch(branchId: BranchId): ResidencyProgram["hiddenProfile"] {
+  const { onCallLoad, workingHours } = getBranchDefinition(branchId).difficultyBaseline;
+  return {
+    burnoutPressure: Math.round(((workingHours - 1) / 4) * 100),
+    staffingPressure: Math.round(((onCallLoad - 1) / 4) * 60 + 20),
+  };
+}
+
+// Phase 11 — a minimal, defensible visibleProfile derived from the same
+// branch axes, since the real ÖSYM source has no per-program "how hard is
+// this service" survey data to show pre-selection. cityCost reads off the
+// program's own city, not the branch.
+function deriveVisibleProfile(branchId: BranchId, cityId: CityId): ResidencyProgram["visibleProfile"] {
+  const branch = getBranchDefinition(branchId);
+  const { onCallLoad, workingHours } = branch.difficultyBaseline;
+  const city = getCityDefinition(cityId);
+  const level = (value: number): ProfileLevel => {
+    if (value >= 4.3) return "very_high";
+    if (value >= 3.5) return "high";
+    if (value >= 2.5) return "medium";
+    return "low";
+  };
+  const cityCostLevel = (index: number): ProfileLevel => {
+    if (index >= 65) return "very_high";
+    if (index >= 52) return "high";
+    if (index >= 40) return "medium";
+    return "low";
+  };
+  return {
+    education: "medium",
+    workload: level(workingHours),
+    onCallDensity: level(onCallLoad),
+    academicEnvironment: "medium",
+    cityCost: cityCostLevel(city.costIndex),
+  };
+}
+
+const REAL_PROGRAMS: ResidencyProgram[] = (realProgramsData as RealProgramRow[]).map(
+  (row): ResidencyProgram => ({
+    id: row.id,
+    hospitalId: row.hospitalId,
+    branchId: row.branchId,
+    cityId: row.cityId,
+    quota: row.quota,
+    sourceType: "real",
+    jointUsePartner: row.jointUsePartner,
+    visibleProfile: deriveVisibleProfile(row.branchId, row.cityId),
+    hiddenProfile: deriveHiddenProfileFromBranch(row.branchId),
+  })
+);
+
+const FICTIONAL_PROGRAMS: ResidencyProgram[] = [
   {
     id: "yesilkent_ic",
     hospitalId: "yesilkent_universite",
@@ -163,6 +274,11 @@ export const RESIDENCY_PROGRAMS: ResidencyProgram[] = [
     hiddenProfile: { mobbingRisk: 40, burnoutPressure: 50, staffingPressure: 75 },
   },
 ];
+
+// Phase 11 — the Phase 3 fictional MVP programs stay exactly as they were
+// (backward compatibility with existing saves/tests), with the real ÖSYM
+// dataset appended after them rather than replacing anything.
+export const RESIDENCY_PROGRAMS: ResidencyProgram[] = [...FICTIONAL_PROGRAMS, ...REAL_PROGRAMS];
 
 export function getResidencyProgram(id: ProgramId): ResidencyProgram {
   const program = RESIDENCY_PROGRAMS.find((p) => p.id === id);

@@ -4,6 +4,7 @@ import type { ResidencyProgram } from "../config/residencyPrograms";
 import { DEFAULT_CLINIC_COMPOSITION, type ClinicCompositionTemplate } from "../config/clinicComposition";
 import { DEFAULT_NPC_LIFECYCLE_CONFIG, type NpcLifecycleConfig } from "../config/npcLifecycle";
 import { cultureBias, spawnNpc } from "./generation";
+import { hierarchyPressureToMobbingRiskEquivalent, resolveFinalHierarchyPressure } from "../residency/hospitalCulture";
 
 export interface TickNpcLifecycleResult {
   npcs: Record<NpcId, NpcState>;
@@ -34,6 +35,11 @@ export function tickNpcLifecycle(
     config?: NpcLifecycleConfig;
     composition?: ClinicCompositionTemplate;
     ensureJuniorForSeniorPlayer?: boolean;
+    // Phase 11 — required only when program.hiddenProfile.mobbingRisk is
+    // absent (a real program), to derive its procedural culture the same
+    // way generateInitialClinic does. See resolveMobbingRiskEquivalent's
+    // twin logic below.
+    gameSeed?: string;
   } = {}
 ): TickNpcLifecycleResult {
   const config = options.config ?? DEFAULT_NPC_LIFECYCLE_CONFIG;
@@ -93,7 +99,16 @@ export function tickNpcLifecycle(
     }
   }
 
-  const culture = cultureBias(program.hiddenProfile.mobbingRisk, program.hiddenProfile.npcCultureSeedModifier ?? 0);
+  let mobbingRiskEquivalent = program.hiddenProfile.mobbingRisk;
+  if (mobbingRiskEquivalent === undefined) {
+    if (!options.gameSeed) {
+      throw new Error(
+        `tickNpcLifecycle: program "${program.id}" has no static hiddenProfile.mobbingRisk and no gameSeed was provided to derive one procedurally`
+      );
+    }
+    mobbingRiskEquivalent = hierarchyPressureToMobbingRiskEquivalent(resolveFinalHierarchyPressure(options.gameSeed, program));
+  }
+  const culture = cultureBias(mobbingRiskEquivalent, program.hiddenProfile.npcCultureSeedModifier ?? 0);
   const usedNames = new Set(Object.values(nextNpcs).map((n) => n.identity.name));
 
   const activeCountByRole = (role: keyof ClinicCompositionTemplate) =>

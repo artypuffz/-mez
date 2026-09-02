@@ -32,17 +32,36 @@ function simulateWeeks(programId: string, seed: string, weeks: number) {
   return state;
 }
 
+// Phase 11 — RESIDENCY_PROGRAMS now holds ~2200 real ÖSYM programs on top
+// of the original 12 fictional ones. Every real program's weekly-pressure
+// inputs (branch.weeklyBaseline, hiddenProfile.burnoutPressure/
+// staffingPressure) are derived PURELY from its branchId (see
+// deriveHiddenProfileFromBranch in residencyPrograms.ts) — two programs
+// sharing a branch are numerically identical here, so iterating one
+// representative program per branch gives the exact same coverage as
+// iterating all ~2200 while staying fast. Every branch is still covered.
+function oneProgramPerBranch(): typeof RESIDENCY_PROGRAMS {
+  const seen = new Set<string>();
+  const representatives: typeof RESIDENCY_PROGRAMS = [];
+  for (const program of RESIDENCY_PROGRAMS) {
+    if (seen.has(program.branchId)) continue;
+    seen.add(program.branchId);
+    representatives.push(program);
+  }
+  return representatives;
+}
+
 describe('weekly baseline sanity (no events yet)', () => {
   it('no program saturates stress/fatigue to the ceiling within one year', () => {
-    for (const program of RESIDENCY_PROGRAMS) {
+    for (const program of oneProgramPerBranch()) {
       const state = simulateWeeks(program.id, `sanity-${program.id}`, 52);
       expect(state.resources.stress).toBeLessThan(90);
       expect(state.resources.fatigue).toBeLessThan(90);
     }
-  });
+  }, 20000);
 
   it('no program drives average burnout anywhere near the ceiling within two years', () => {
-    for (const program of RESIDENCY_PROGRAMS) {
+    for (const program of oneProgramPerBranch()) {
       const N = 20;
       let sum = 0;
       for (let i = 0; i < N; i++) {
@@ -51,7 +70,7 @@ describe('weekly baseline sanity (no events yet)', () => {
       }
       expect(sum / N).toBeLessThan(20);
     }
-  });
+  }, 30000);
 
   it('resources actually move — the baseline is not a no-op', () => {
     const state = simulateWeeks('baskent_ic', 'movement-check', 52);

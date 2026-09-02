@@ -1,7 +1,9 @@
 import { CURRENT_SAVE_VERSION, type BackgroundId, type GameState, type Gender } from "./types";
-import { generateRandomSeed } from "../rng/seededRng";
+import { generateRandomSeed, createScopedRng } from "../rng/seededRng";
 import { DEFAULT_RESOURCES } from "../config/resources";
 import { getBackgroundDefinition } from "../config/backgrounds";
+import { randomizePlayerAvatar } from "../avatar/randomize";
+import type { PlayerAvatar } from "../avatar/types";
 
 export interface CharacterCreationInput {
   name: string;
@@ -9,6 +11,13 @@ export interface CharacterCreationInput {
   gender: Gender;
   hometown: string;
   background: BackgroundId;
+  // Gameplay Expansion Part C section 25 — set by Character Creation's
+  // Görünüş step. Optional so every existing caller (tests, debug
+  // scenarios, headless sims) keeps compiling unchanged; omitting it
+  // derives a deterministic default from this save's own seed below,
+  // exactly the same "safe, reproducible, never Math.random()" rule the
+  // rest of the avatar system follows.
+  avatar?: PlayerAvatar;
 }
 
 export interface CreateInitialGameStateOptions {
@@ -32,6 +41,7 @@ export function createInitialGameState(
   const createdAt = (options.now ?? (() => new Date().toISOString()))();
   const backgroundDef = getBackgroundDefinition(input.background);
   const modifiers = backgroundDef.resourceModifiers;
+  const avatar = input.avatar ?? randomizePlayerAvatar(createScopedRng(seed, "avatar:player:initial"));
 
   return {
     meta: {
@@ -45,6 +55,7 @@ export function createInitialGameState(
       gender: input.gender,
       hometown: input.hometown.trim(),
       background: input.background,
+      avatar,
     },
     career: {
       phase: "character_creation",
@@ -61,12 +72,15 @@ export function createInitialGameState(
       stress: clampResource(DEFAULT_RESOURCES.stress + (modifiers.stress ?? 0)),
       fatigue: clampResource(DEFAULT_RESOURCES.fatigue + (modifiers.fatigue ?? 0)),
       burnout: clampResource(DEFAULT_RESOURCES.burnout + (modifiers.burnout ?? 0)),
+      health: clampResource(DEFAULT_RESOURCES.health),
+      social: clampResource(DEFAULT_RESOURCES.social),
       money: DEFAULT_RESOURCES.money + (modifiers.money ?? 0),
     },
     resourcePressure: { highStressWeeks: 0, highFatigueWeeks: 0, combinedPressureWeeks: 0, lowPressureWeeks: 0 },
     financialPressure: { consecutiveNegativeMonths: 0, lowestBalance: DEFAULT_RESOURCES.money + (modifiers.money ?? 0) },
     crisisState: { lastCrisisWeek: null },
     relationships: {},
+    relationshipHistory: {},
     npcs: {},
     flags: { ...backgroundDef.flags },
     pendingEvents: [],
@@ -79,6 +93,11 @@ export function createInitialGameState(
     weeklyEventQueue: [],
     onCall: { schedule: null },
     economy: { lastProcessedMonthKey: null, lastBreakdown: null },
+    workload: null,
+    schedule: null,
+    freeTime: { totalHours: 0, usedHours: 0 },
+    lifestyle: { foodTier: "normal" },
+    ownership: { phone: "old", computer: "none", housing: "normal" },
     status: "active",
   };
 }

@@ -49,11 +49,17 @@ describe('selectRelationshipRoster', () => {
 });
 
 describe('selectNpcDetail', () => {
-  it('returns name/role/tenure/relationship label and nothing else for a known npc', () => {
+  it('returns name/role/tenure/relationship label/avatar/history and nothing else (no hidden personality numbers) for a known npc', () => {
     const state = residencyState('detail-check');
     const detail = selectNpcDetail(state, 'baris');
     expect(detail).toMatchObject({ name: 'Barış Demir', roleLabel: 'Kıdemli Asistan' });
-    expect(Object.keys(detail!).sort()).toEqual(['name', 'relationshipLabel', 'roleLabel', 'tenureLabel']);
+    // Gameplay Expansion Part B/C added avatar/history/npcId/relationshipScore
+    // (all deliberately safe — semantic avatar ids, capped narrative
+    // summaries, the intentional §7 normalized display score, and the id
+    // the caller already passed in) — still never a raw personality number.
+    expect(Object.keys(detail!).sort()).toEqual(
+      ['avatar', 'history', 'name', 'npcId', 'relationshipLabel', 'relationshipScore', 'roleLabel', 'tenureLabel']
+    );
   });
 
   it('returns null for an unknown npc id', () => {

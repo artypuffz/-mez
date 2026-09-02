@@ -10,6 +10,7 @@ import { computeTusScore } from "../tus/computeTusScore";
 import type { ResidencyProgram } from "../config/residencyPrograms";
 import { deriveResidencyStartDate } from "../residency/calendar";
 import { generateInitialClinic } from "../npc/generation";
+import { resolveFinalHierarchyPressure } from "../residency/hospitalCulture";
 
 // prep -> exam: picks and freezes this playthrough's exam-day event
 // subset+order, so a resumed session sees exactly what it saw before.
@@ -73,8 +74,14 @@ export function proceedToPreference(state: GameState): GameState {
 // roster (§4), scoped independently of every other rng draw in the game.
 export function selectResidencyProgram(state: GameState, program: ResidencyProgram): GameState {
   const npcRng = createScopedRng(state.meta.rngSeed, `npc:initial:${program.id}`);
-  const { npcs, relationships } = generateInitialClinic(program, npcRng);
+  const { npcs, relationships } = generateInitialClinic(program, npcRng, undefined, state.meta.rngSeed);
   const npcsById = Object.fromEntries(npcs.map((npc) => [npc.id, npc]));
+
+  // Phase 11 — computed once here (deterministic per gameSeed+programId,
+  // never rerolled on refresh) and persisted on career, so every later
+  // reader (the event-weight modifier, the post-selection UI number) uses
+  // the exact same value instead of recomputing it ad hoc.
+  const hierarchyPressure = resolveFinalHierarchyPressure(state.meta.rngSeed, program);
 
   return {
     ...state,
@@ -89,6 +96,7 @@ export function selectResidencyProgram(state: GameState, program: ResidencyProgr
       residencyWeek: 0,
       residencyYear: 1,
       seniorityStage: "comez",
+      hierarchyPressure,
     },
     tus: { ...state.tus, selectedProgramId: program.id },
     npcs: npcsById,

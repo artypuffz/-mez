@@ -4,11 +4,13 @@ import { RESIDENCY_PROGRAMS } from '../config/residencyPrograms';
 import { DEFAULT_TUS_SCORE_CONFIG } from '../config/tusScoreConfig';
 
 describe('filterAvailablePrograms', () => {
-  it('excludes programs above the given score', () => {
+  it('excludes scored programs above the given score', () => {
     const lowScore = 22;
     const result = filterAvailablePrograms(RESIDENCY_PROGRAMS, lowScore);
     for (const program of result) {
-      expect(program.minScore).toBeLessThanOrEqual(lowScore);
+      if (program.minScore !== undefined) {
+        expect(program.minScore).toBeLessThanOrEqual(lowScore);
+      }
     }
     expect(result.length).toBeLessThan(RESIDENCY_PROGRAMS.length);
   });
@@ -16,8 +18,24 @@ describe('filterAvailablePrograms', () => {
   it('includes every program whose minScore is met', () => {
     const highScore = 95;
     const result = filterAvailablePrograms(RESIDENCY_PROGRAMS, highScore);
-    const expectedIds = RESIDENCY_PROGRAMS.filter((p) => p.minScore <= highScore).map((p) => p.id);
+    const expectedIds = RESIDENCY_PROGRAMS.filter(
+      (p) => p.minScore === undefined || p.minScore <= highScore
+    ).map((p) => p.id);
     expect(result.map((p) => p.id).sort()).toEqual(expectedIds.sort());
+  });
+
+  // Phase 11 — real ÖSYM programs ship with no verified minScore; they
+  // must stay selectable at every score rather than becoming permanently
+  // unreachable because we don't have official taban puanı data for them.
+  it('includes every program with no minScore regardless of score', () => {
+    const veryLowScore = DEFAULT_TUS_SCORE_CONFIG.minScore;
+    const result = filterAvailablePrograms(RESIDENCY_PROGRAMS, veryLowScore);
+    const unscoredIds = RESIDENCY_PROGRAMS.filter((p) => p.minScore === undefined).map((p) => p.id);
+    expect(unscoredIds.length).toBeGreaterThan(0);
+    const resultIds = new Set(result.map((p) => p.id));
+    for (const id of unscoredIds) {
+      expect(resultIds.has(id)).toBe(true);
+    }
   });
 
   it('has at least one program available at every 5-point score band in the MVP range', () => {
