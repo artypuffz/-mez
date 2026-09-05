@@ -61,7 +61,7 @@ describe('filterAvailablePrograms', () => {
 
   // Monotonicity: raising the score can only add programs, never remove any.
   it('increasing score monotonically expands the available set', () => {
-    const scores = [20, 35, 50, 65, 80, 95];
+    const scores = [50, 55, 60, 65, 70, 75, 80, 85];
     let previous = new Set<string>();
     for (const score of scores) {
       const current = new Set(filterAvailablePrograms(PRODUCTION_PROGRAMS, score).map((p) => p.id));

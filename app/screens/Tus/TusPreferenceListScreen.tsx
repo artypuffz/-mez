@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../navigation/RootStack';
 import { useGameStore } from '../../store/useGameStore';
-import { selectAvailablePrograms } from '../../domain/state/selectors';
+import { selectCuratedTusOffer } from '../../domain/state/selectors';
 import { getProgramHospitalName, type ResidencyProgram } from '../../domain/config/residencyPrograms';
+import { getHospitalDefinition } from '../../domain/config/hospitals';
 import { getBranchDefinition, getBranchOverallDifficulty } from '../../domain/config/branches';
 import { getCityDefinition } from '../../domain/config/cities';
-import { filterPrograms, sortPrograms, type ProgramSortKey } from '../../domain/tus/sortPrograms';
 import { resolveEntryThreshold } from '../../domain/tus/resolveEntryThreshold';
 import {
   PROFILE_DIMENSION_LABELS,
@@ -26,33 +26,39 @@ const DIMENSIONS: ProfileDimension[] = [
   'cityCost',
 ];
 
-const SORT_LABELS: Record<ProgramSortKey, string> = {
-  score: 'TUS puanına göre',
-  difficulty: 'Asistanlık zorluğuna göre',
-  city: 'Şehre göre',
-};
-
 function difficultyLabel(program: ResidencyProgram): string {
   const overall = getBranchOverallDifficulty(getBranchDefinition(program.branchId));
   return `${overall.toFixed(1)} / 5`;
 }
 
+// TUS System Redesign §22 — real, structured, already-official-source
+// institution info (HospitalDefinition.kind), safe to surface as-is; NOT
+// a competitiveness signal, just what kind of institution it is.
+function institutionKindLabel(program: ResidencyProgram): string | null {
+  const kind = getHospitalDefinition(program.hospitalId).kind;
+  if (kind === 'university') return 'Üniversite Hastanesi';
+  if (kind === 'training_research_hospital') return 'Eğitim ve Araştırma Hastanesi';
+  return null;
+}
+
 function ProgramCard({ program, onPick }: { program: ResidencyProgram; onPick: () => void }) {
   const branch = getBranchDefinition(program.branchId);
   const city = getCityDefinition(program.cityId);
+  const kindLabel = institutionKindLabel(program);
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>
-        {getProgramHospitalName(program)} — {branch.name}
-      </Text>
-      <Text style={styles.cardCity}>{city.name}</Text>
+      <Text style={styles.cardBranch}>{branch.name}</Text>
+      <Text style={styles.cardTitle}>{getProgramHospitalName(program)}</Text>
+      <Text style={styles.cardCity}>{city.name}{kindLabel ? ` · ${kindLabel}` : ''}</Text>
 
       <View style={styles.statRow}>
         {/* Android Device QA Hotfix 1, Issue 2 — neither minScore (Phase 3
             fictional-program balance numbers) nor gameplayEntryThreshold
             (deriveGameplayEntryThreshold) is official ÖSYM taban puanı, so
-            this must never read "20XX ÖSYM taban puanı" or similar. */}
+            this must never read "20XX ÖSYM taban puanı" or similar. Never
+            expose the internal specialty/hospital/city tier machinery here
+            (TUS System Redesign §22) — development/balancing data only. */}
         <Text style={styles.statLine}>
           Gerekli oyun puanı: {resolveEntryThreshold(program) !== undefined ? resolveEntryThreshold(program)!.toFixed(2) : 'Belirtilmemiş'}
         </Text>
@@ -87,84 +93,29 @@ function ProgramCard({ program, onPick }: { program: ResidencyProgram; onPick: (
   );
 }
 
-function FilterChip({ label, active, onPress, testID }: { label: string; active: boolean; onPress: () => void; testID?: string }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      testID={testID}
-      style={[styles.chip, active && styles.chipActive]}
-    >
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
-    </Pressable>
-  );
-}
-
 export default function TusPreferenceListScreen({ navigation }: Props) {
   const gameState = useGameStore((s) => s.gameState);
-  const allPrograms = gameState ? selectAvailablePrograms(gameState) : [];
-
-  const [cityId, setCityId] = useState<string | undefined>(undefined);
-  const [branchId, setBranchId] = useState<string | undefined>(undefined);
-  const [sortKey, setSortKey] = useState<ProgramSortKey>('score');
-
-  // Only offer filter chips for cities/branches that actually have an
-  // available program right now — a 62-city, 26-branch chip row with
-  // mostly-empty options would just be noise.
-  const cityOptions = useMemo(() => {
-    const ids = new Set(allPrograms.map((p) => p.cityId));
-    return Array.from(ids)
-      .map((id) => getCityDefinition(id))
-      .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-  }, [allPrograms]);
-
-  const branchOptions = useMemo(() => {
-    const ids = new Set(allPrograms.map((p) => p.branchId));
-    return Array.from(ids)
-      .map((id) => getBranchDefinition(id))
-      .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-  }, [allPrograms]);
-
-  const programs = useMemo(
-    () => sortPrograms(filterPrograms(allPrograms, { cityId, branchId }), sortKey),
-    [allPrograms, cityId, branchId, sortKey]
-  );
+  // TUS System Redesign §13-23 — the player never sees the full eligible
+  // pool; this is the curated, deterministic (per save + score) offer of
+  // up to 7 real placement options. Curation only ever selects FROM the
+  // authoritative eligible pool (selectAvailablePrograms) — it can never
+  // surface a program the player doesn't actually qualify for.
+  const programs = useMemo(() => (gameState ? selectCuratedTusOffer(gameState) : []), [gameState]);
 
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Text style={styles.heading}>Tercihlerin</Text>
+        <Text style={styles.heading}>TUS Tercihlerin</Text>
         {gameState?.career.tusScore !== undefined && (
           <Text style={styles.scoreLine}>TUS puanın: {gameState.career.tusScore.toFixed(2)}</Text>
         )}
+        <Text style={styles.explanation} testID="tus-offer-explanation">
+          Puanın ve kariyer seçeneklerine göre sana {programs.length} yerleştirme seçeneği sunuldu.
+        </Text>
         <Text style={styles.disclaimer}>
           Bazı programlarda gerçek kurum, şehir ve uzmanlık dalı adları kullanılır. Çalışma koşulları, servis kültürü,
           NPC'ler ve olaylar oyun mekaniği amacıyla kurgulanmıştır; gerçek kişi veya kurumlara ilişkin bir
           değerlendirme değildir.
-        </Text>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={styles.filterRowContent}>
-          <FilterChip label="Tüm şehirler" active={!cityId} onPress={() => setCityId(undefined)} testID="filter-city-all" />
-          {cityOptions.map((city) => (
-            <FilterChip key={city.id} label={city.name} active={cityId === city.id} onPress={() => setCityId(city.id)} testID={`filter-city-${city.id}`} />
-          ))}
-        </ScrollView>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={styles.filterRowContent}>
-          <FilterChip label="Tüm branşlar" active={!branchId} onPress={() => setBranchId(undefined)} testID="filter-branch-all" />
-          {branchOptions.map((branch) => (
-            <FilterChip key={branch.id} label={branch.name} active={branchId === branch.id} onPress={() => setBranchId(branch.id)} testID={`filter-branch-${branch.id}`} />
-          ))}
-        </ScrollView>
-
-        <View style={styles.sortRow}>
-          {(Object.keys(SORT_LABELS) as ProgramSortKey[]).map((key) => (
-            <FilterChip key={key} label={SORT_LABELS[key]} active={sortKey === key} onPress={() => setSortKey(key)} testID={`sort-${key}`} />
-          ))}
-        </View>
-
-        <Text style={styles.resultCount} testID="tus-result-count">
-          {programs.length} program
         </Text>
       </View>
 
@@ -175,7 +126,7 @@ export default function TusPreferenceListScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <ProgramCard program={item} onPick={() => navigation.navigate('TusPreferenceConfirm', { programId: item.id })} />
         )}
-        ListEmptyComponent={<Text style={styles.emptyText}>Bu filtrelerle uygun program bulunamadı.</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>Şu anda uygun bir yerleştirme seçeneği bulunamadı.</Text>}
       />
     </View>
   );
@@ -186,24 +137,12 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 24, paddingTop: 24, gap: 6 },
   heading: { fontSize: 22, fontWeight: '700' },
   scoreLine: { fontSize: 13, color: '#666' },
+  explanation: { fontSize: 13, color: '#444', marginTop: 2, lineHeight: 18 },
   disclaimer: { fontSize: 11, color: '#888', marginTop: 4, marginBottom: 4, lineHeight: 15 },
-  filterRow: { marginTop: 4, flexGrow: 0 },
-  filterRowContent: { gap: 6, paddingRight: 12 },
-  sortRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  chipActive: { backgroundColor: '#222', borderColor: '#222' },
-  chipText: { fontSize: 12, color: '#444' },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
-  resultCount: { fontSize: 11, color: '#999', marginTop: 6, marginBottom: 4 },
-  list: { paddingHorizontal: 24, paddingBottom: 24, gap: 14 },
+  list: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24, gap: 14 },
   emptyText: { fontSize: 13, color: '#888', textAlign: 'center', marginTop: 24 },
   card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 14, gap: 4 },
+  cardBranch: { fontSize: 13, color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
   cardTitle: { fontSize: 15, fontWeight: '700' },
   cardCity: { fontSize: 13, color: '#666', marginBottom: 4 },
   statRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },

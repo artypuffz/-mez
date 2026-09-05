@@ -15,7 +15,12 @@ export const TUS_PREP_PROFILE_DEFINITIONS: TusPrepProfileDefinition[] = [
     id: "duzenli",
     title: "Düzenli çalıştım",
     description: "Son 6 ay disiplinli çalıştım.",
-    baseModifier: 8,
+    // TUS System Redesign — trimmed from 8 to 6 as part of compressing the
+    // score system's real attainable range down to the required exact
+    // [50, 85] band (see tusScoreConfig.ts and computeTusScore.ts). This
+    // profile stays the strongest positive prep modifier; only its
+    // magnitude shrank.
+    baseModifier: 6,
     flags: { tus_prep_disciplined: true },
   },
   {

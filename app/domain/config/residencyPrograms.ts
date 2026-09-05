@@ -4,6 +4,8 @@ import { getHospitalDefinition } from "./hospitals";
 import { getBranchDefinition } from "./branches";
 import { getCityDefinition } from "./cities";
 import { getBranchCompetitivenessTier } from "./branchCompetitiveness";
+import { getHospitalCompetitivenessModifier } from "./hospitalCompetitiveness";
+import { getCityCompetitivenessModifier } from "./cityCompetitiveness";
 import { DEFAULT_TUS_SCORE_CONFIG } from "./tusScoreConfig";
 import realProgramsData from "../../../data/tus/programs.json";
 
@@ -141,38 +143,72 @@ function deriveVisibleProfile(branchId: BranchId, cityId: CityId): ResidencyProg
   };
 }
 
-// Android Device QA Hotfix 1, Issue 2 — a deterministic, centrally-computed
-// gameplay entry-competitiveness threshold for real programs, built from
-// three REAL inputs (never hospital workplace difficulty, per the hotfix
-// brief):
-//   - branch competitiveness tier (domain/config/branchCompetitiveness.ts
-//     — a labeled gameplay judgment, see its own file header)
-//   - quota scarcity (this program's own real `quota` — a genuinely
-//     scarcer program is a defensible reason to require a stronger score)
-//   - city demand (the city's existing `costIndex` — already an in-game
-//     proxy for a city's relative scale/desirability, not a new claim)
+// TUS System Redesign (post-Hotfix-1), §10 — a deterministic,
+// centrally-computed gameplay entry-competitiveness threshold for real
+// programs, built from a THREE-LAYER model plus a small quota modifier:
+//   1. SPECIALTY competitiveness (branchCompetitiveness.ts) — PRIMARY.
+//   2. HOSPITAL competitiveness (hospitalCompetitiveness.ts) — SECONDARY.
+//   3. CITY competitiveness (cityCompetitiveness.ts) — TERTIARY.
+//   4. Quota scarcity — a SMALL fourth modifier (this program's own real
+//      `quota` field). Bucketed against the real dataset's own quota
+//      distribution (median quota is 3; ~19% of programs have quota=1):
+//      quota 1 (very scarce) -> +2, quota 2-3 (small) -> +1, quota 4-6
+//      (normal) -> 0, quota 7+ (large) -> -1.
 //
-// Calibrated against computeTusScore's REAL attainable range
-// (DEFAULT_TUS_SCORE_CONFIG: [20, 98], most runs 55-75, see
-// domain/tus/computeTusScore.ts) so that:
-//   - the lowest possible threshold (tier 1, large quota, cheap city) is
-//     BELOW the score floor (20) — a realistic low score never produces
-//     zero real programs, avoiding the "no career path" dead end;
-//   - the highest possible threshold (tier 5, quota 1, expensive city) is
-//     comfortably below the score ceiling (98) — a very high score always
-//     has real headroom to unlock literally everything, not just "most
-//     things".
+// SPECIALTY_TIER_BASELINE below are the starting per-tier values from the
+// redesign brief (52/58/64/70/76 — an even 6-point step per tier), kept
+// as-is: distribution-tuning against all 2191 real programs (see the TUS
+// system redesign report) showed they already produce the desired
+// progression without further adjustment.
+//
+// Deliberately allows realistic overlap between adjacent specialty tiers
+// (per §11) — a single hospital/city combination can swing a threshold by
+// more than one tier-step, so a highly-competitive specialty at a weak
+// institution can score lower than a less-competitive specialty at an
+// elite one. The AGGREGATE ordering (mean threshold per specialty tier)
+// stays strictly increasing T5>T4>T3>T2>T1 — verified by test — because
+// hospital/city modifiers average out across the many programs each
+// specialty offers. Preserves SPECIALTY >> HOSPITAL > CITY > QUOTA by
+// each layer's modifier magnitude: specialty tier steps are 6 points;
+// hospital modifier spans a 9-point range but specialty dominates in
+// aggregate; city spans 5; quota spans only 3, the smallest component.
+//
+// Final value is clamp(sum, 50, 85) — the ONE place this formula clamps,
+// intentionally, per §10's explicit instruction; this is different from
+// computeTusScore.ts's redesign, which was required to hit [50, 85] by
+// construction rather than by clamping a mismatched range.
+//
 // This is a GAMEPLAY APPROXIMATION, explicitly labeled as such everywhere
 // it's read (see resolveEntryThreshold.ts and the TUS preference UI) —
 // never presented as an official ÖSYM score.
-function deriveGameplayEntryThreshold(branchId: BranchId, quota: number, cityId: CityId): number {
-  const BASE = 15;
-  const tier = getBranchCompetitivenessTier(branchId);
-  const tierBonus = (tier - 1) * 10; // tier1:0 .. tier5:40
-  const quotaScarcityBonus = Math.max(0, Math.min(10, 12 - quota)) * 2; // quota<=2:~20 .. quota>=12:0
-  const cityDemandBonus = Math.max(0, getCityDefinition(cityId).costIndex - 38) * 0.4; // cheapest city:0 .. priciest:~12
+const SPECIALTY_TIER_BASELINE: Record<1 | 2 | 3 | 4 | 5, number> = {
+  1: 52,
+  2: 58,
+  3: 64,
+  4: 70,
+  5: 76,
+};
 
-  const raw = BASE + tierBonus + quotaScarcityBonus + cityDemandBonus;
+function quotaModifier(quota: number): number {
+  if (quota <= 1) return 2;
+  if (quota <= 3) return 1;
+  if (quota <= 6) return 0;
+  return -1;
+}
+
+function deriveGameplayEntryThreshold(
+  branchId: BranchId,
+  quota: number,
+  cityId: CityId,
+  hospitalId: HospitalId
+): number {
+  const tier = getBranchCompetitivenessTier(branchId);
+  const specialtyBase = SPECIALTY_TIER_BASELINE[tier];
+  const hospitalMod = getHospitalCompetitivenessModifier(hospitalId);
+  const cityMod = getCityCompetitivenessModifier(cityId);
+  const quotaMod = quotaModifier(quota);
+
+  const raw = specialtyBase + hospitalMod + cityMod + quotaMod;
   const clamped = Math.min(DEFAULT_TUS_SCORE_CONFIG.maxScore, Math.max(DEFAULT_TUS_SCORE_CONFIG.minScore, raw));
   return Math.round(clamped);
 }
@@ -185,7 +221,7 @@ const REAL_PROGRAMS: ResidencyProgram[] = (realProgramsData as RealProgramRow[])
     cityId: row.cityId,
     quota: row.quota,
     sourceType: "real",
-    gameplayEntryThreshold: deriveGameplayEntryThreshold(row.branchId, row.quota, row.cityId),
+    gameplayEntryThreshold: deriveGameplayEntryThreshold(row.branchId, row.quota, row.cityId, row.hospitalId),
     jointUsePartner: row.jointUsePartner,
     visibleProfile: deriveVisibleProfile(row.branchId, row.cityId),
     hiddenProfile: deriveHiddenProfileFromBranch(row.branchId),

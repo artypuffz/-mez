@@ -9,29 +9,25 @@ import {
 } from "./helpers";
 import { LEGACY_PROGRAMS, getProgramHospitalName } from "../domain/config/residencyPrograms";
 
-// Phase 11 §44 flow A — new game -> TUS -> see real programs -> filter ->
-// select -> residency starts -> the correct real institution/branch shows.
-test("real ÖSYM programs are visible, filterable, and selectable end to end", async ({ page }) => {
+// Phase 11 §44 flow A, updated by TUS System Redesign §13-23 — new game ->
+// TUS -> see a curated real-program offer -> select -> residency starts ->
+// the correct real institution/branch shows.
+test("real ÖSYM programs are visible in the curated offer and selectable end to end", async ({ page }) => {
   await gotoFreshMainMenu(page);
   await page.getByTestId("btn-new-game").click();
   await createCharacterThroughUi(page, "Real Program Test");
   await completeTusThroughUi(page, "duzenli");
 
-  await expect(page.getByTestId("tus-result-count")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-testid^="pick-program-"]').first()).toBeVisible({ timeout: 20_000 });
+
+  // At most 7 curated options, never the full eligible pool (§13).
+  const cardCount = await page.locator('[data-testid^="pick-program-"]').count();
+  expect(cardCount).toBeLessThanOrEqual(7);
+  expect(cardCount).toBeGreaterThan(0);
 
   // The disclaimer about real institution/branch names must be present
   // somewhere on the preference list before any selection (§28).
   await expect(page.getByText(/gerçek kurum/i)).toBeVisible();
-
-  // Filter to a single real branch (Kardiyoloji only exists as a real
-  // Phase 11 branch — none of the 13 fictional programs use it) and
-  // confirm the result count narrows and every visible card is that
-  // branch.
-  await page.getByTestId("filter-branch-kardiyoloji").click();
-  await expect(page.getByTestId("tus-result-count")).toBeVisible();
-  const cardCountText = await page.getByTestId("tus-result-count").textContent();
-  expect(cardCountText).toMatch(/^\d+ program$/);
-  expect(Number(cardCountText!.split(" ")[0])).toBeGreaterThan(0);
 
   await page.locator('[data-testid^="pick-program-"]').first().click();
   await expect(page.getByTestId("btn-confirm-program")).toBeVisible();
@@ -40,7 +36,7 @@ test("real ÖSYM programs are visible, filterable, and selectable end to end", a
   await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 20_000 });
 
   const state = await readDebugGameState(page);
-  expect(state.career.branch).toBe("kardiyoloji");
+  expect(typeof state.career.branch).toBe("string");
   expect(typeof state.career.hierarchyPressure).toBe("number");
   expect(state.career.hierarchyPressure).toBeGreaterThanOrEqual(0.5);
   expect(state.career.hierarchyPressure).toBeLessThanOrEqual(5.0);
@@ -55,7 +51,7 @@ test("new-game TUS preference list contains zero fictional programs and honest s
   await page.getByTestId("btn-new-game").click();
   await createCharacterThroughUi(page, "No Fictional Test");
   await completeTusThroughUi(page, "duzenli");
-  await expect(page.getByTestId("tus-result-count")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-testid^="pick-program-"]').first()).toBeVisible({ timeout: 20_000 });
 
   const bodyText = await page.locator("body").innerText();
   for (const program of LEGACY_PROGRAMS) {
@@ -74,11 +70,10 @@ test("residency in a real program produces workload state that survives a refres
   await page.getByTestId("btn-new-game").click();
   await createCharacterThroughUi(page, "Workload Test");
   await completeTusThroughUi(page, "duzenli");
-  await expect(page.getByTestId("tus-result-count")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-testid^="pick-program-"]').first()).toBeVisible({ timeout: 20_000 });
 
-  // Genel Cerrahi is the hardest branch (workingHours=5.0) — pick any
-  // real program in it.
-  await page.getByTestId("filter-branch-genel_cerrahi").click();
+  // Any offered real program produces working-hours/on-call state —
+  // doesn't depend on which specific branch the curated offer includes.
   await page.locator('[data-testid^="pick-program-"]').first().click();
   await page.getByTestId("btn-confirm-program").click();
   await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 20_000 });

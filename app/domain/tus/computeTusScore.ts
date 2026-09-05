@@ -12,10 +12,26 @@ export interface TusScoreBreakdown {
 }
 
 // internalScore = prepBase + examDayModifiers + boundedRng, then clamped
-// into the arcade band and rounded to two decimals. Decisions (prep +
-// exam choices) dominate: prep ranges roughly -4..+8, up to four exam
-// choices roughly -2..+3 each, versus an RNG contribution bounded to
-// [-8, 8] — a run's outcome is driven by what the player picked.
+// into the arcade band and rounded to two decimals.
+//
+// TUS System Redesign — HARD REQUIREMENT: the real attainable range must
+// be EXACTLY [50, 85] (DEFAULT_TUS_SCORE_CONFIG), built by construction
+// rather than by clamping a wider mismatched range down. Worked arithmetic
+// (center=65, exam events' own scoreModifier values unchanged, see
+// tusExamEvents.ts):
+//   worst case: prepProfile.baseModifier(-4, "son_ay_panik") +
+//     examModifier(-5, worst choice on the 4 lowest-ceiling exam events) +
+//     rngModifier(-6, the int(-3,4)+int(-3,3) floor) + fractional(0)
+//     = 65 - 4 - 5 - 6 + 0 = 50 exactly.
+//   best case: prepProfile.baseModifier(+6, "duzenli") +
+//     examModifier(+6, best choice on the 4 highest-ceiling exam events) +
+//     rngModifier(+7, the int(-3,4)+int(-3,3) ceiling) + fractional(<1)
+//     = 65 + 6 + 6 + 7 + [0,1) = [84, 85) — the fractional dither only
+//     ever rounds the extreme top tail (fractional >= 0.995) up to a
+//     displayed 85.00; it can never push a run above it.
+// Decisions (prep + exam choices) still dominate: their combined swing
+// (prep 10 + exam 11 = 21) outweighs the rng swing (13) — a run's outcome
+// is still driven mainly by what the player picked, not the dice.
 export function computeTusScore(
   prepProfile: TusPrepProfileDefinition,
   examLog: readonly TusExamChoiceLogEntry[],
@@ -28,7 +44,7 @@ export function computeTusScore(
     return sum + (choice?.scoreModifier ?? 0);
   }, 0);
 
-  const rngModifier = rng.int(-3, 3) + rng.int(-3, 3) + rng.int(-2, 2);
+  const rngModifier = rng.int(-3, 4) + rng.int(-3, 3);
   const fractional = rng.next();
 
   const raw = config.center + prepProfile.baseModifier + examModifier + rngModifier + fractional;

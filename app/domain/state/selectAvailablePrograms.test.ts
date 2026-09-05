@@ -54,7 +54,7 @@ describe('selectAvailablePrograms', () => {
   });
 
   it('increasing score monotonically expands or holds steady the available set', () => {
-    const scores = [20, 35, 50, 65, 80, 95];
+    const scores = [50, 55, 60, 65, 70, 75, 80, 85];
     let previousIds: Set<string> = new Set();
     let previousCount = 0;
     for (const score of scores) {

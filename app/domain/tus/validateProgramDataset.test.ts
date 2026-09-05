@@ -45,11 +45,21 @@ describe('validateProgramDataset', () => {
     expect(issues.some((i) => i.severity === 'error' && i.message.includes('Invalid quota'))).toBe(true);
   });
 
-  it('catches an out-of-range TUS score', () => {
-    const base = RESIDENCY_PROGRAMS[0];
-    const bad: ResidencyProgram = { ...base, id: 'bad_score', minScore: 9999 };
+  it('catches an out-of-range gameplayEntryThreshold on a real program', () => {
+    const base = RESIDENCY_PROGRAMS.find((p) => p.sourceType === 'real')!;
+    const bad: ResidencyProgram = { ...base, id: 'bad_score', gameplayEntryThreshold: 9999 };
     const issues = validateProgramDataset([bad]);
     expect(issues.some((i) => i.severity === 'error' && i.message.includes('outside the valid TUS score range'))).toBe(true);
+  });
+
+  // TUS System Redesign — a legacy fictional program's minScore is a
+  // frozen Phase 3 balance number, intentionally exempt from the live
+  // [50, 85] score range (see validateProgramDataset.ts's own comment).
+  it('does not hold a legacy fictional minScore to the live TUS score range', () => {
+    const base = RESIDENCY_PROGRAMS.find((p) => p.sourceType === 'fictional')!;
+    const legacyStyle: ResidencyProgram = { ...base, id: 'legacy_style', minScore: 20, gameplayEntryThreshold: undefined };
+    const issues = validateProgramDataset([legacyStyle]);
+    expect(issues.some((i) => i.severity === 'error' && i.message.includes('outside the valid TUS score range'))).toBe(false);
   });
 
   it('catches a difficultyModifier out of the -0.5..+0.5 range', () => {

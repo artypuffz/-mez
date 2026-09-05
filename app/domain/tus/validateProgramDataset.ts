@@ -1,5 +1,4 @@
-import { RESIDENCY_PROGRAMS, PRODUCTION_PROGRAMS, LEGACY_PROGRAMS, type ResidencyProgram } from "../config/residencyPrograms";
-import { resolveEntryThreshold } from "./resolveEntryThreshold";
+import { RESIDENCY_PROGRAMS, type ResidencyProgram } from "../config/residencyPrograms";
 import { HOSPITAL_DEFINITIONS } from "../config/hospitals";
 import { BRANCH_DEFINITIONS } from "../config/branches";
 import { CITY_DEFINITIONS } from "../config/cities";
@@ -87,9 +86,17 @@ export function validateProgramDataset(
       }
     }
 
-    // invalid TUS score (either field — see resolveEntryThreshold)
-    const threshold = resolveEntryThreshold(program);
-    if (threshold !== undefined) {
+    // TUS System Redesign — the live [50, 85] score range (see
+    // tusScoreConfig.ts) only governs `gameplayEntryThreshold` (real
+    // production programs, gated by the CURRENT redesign). The 13 legacy
+    // fictional programs' `minScore` is a frozen Phase 3 balance number,
+    // kept only for old-save compatibility (see PRODUCTION_PROGRAMS/
+    // LEGACY_PROGRAMS in residencyPrograms.ts) — it predates, and is
+    // intentionally exempt from, this redesign's exact score-range
+    // requirement. Still sanity-checked for basic well-formedness
+    // (finite, non-negative), just not against the live config's bounds.
+    if (program.gameplayEntryThreshold !== undefined) {
+      const threshold = program.gameplayEntryThreshold;
       if (
         !Number.isFinite(threshold) ||
         threshold < DEFAULT_TUS_SCORE_CONFIG.minScore ||
@@ -98,9 +105,15 @@ export function validateProgramDataset(
         issues.push({
           severity: "error",
           programId: program.id,
-          message: `entry threshold ${threshold} outside the valid TUS score range [${DEFAULT_TUS_SCORE_CONFIG.minScore}, ${DEFAULT_TUS_SCORE_CONFIG.maxScore}]`,
+          message: `gameplayEntryThreshold ${threshold} outside the valid TUS score range [${DEFAULT_TUS_SCORE_CONFIG.minScore}, ${DEFAULT_TUS_SCORE_CONFIG.maxScore}]`,
         });
       }
+    } else if (program.minScore !== undefined && (!Number.isFinite(program.minScore) || program.minScore < 0)) {
+      issues.push({
+        severity: "error",
+        programId: program.id,
+        message: `minScore ${program.minScore} is not a valid non-negative number`,
+      });
     }
 
     // Android Device QA Hotfix 1, Issue 2 — a regression guard: every real

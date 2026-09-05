@@ -5,6 +5,7 @@ import { getCityDefinition } from "../config/cities";
 import { getHospitalDefinition } from "../config/hospitals";
 import { PRODUCTION_PROGRAMS } from "../config/residencyPrograms";
 import { filterAvailablePrograms } from "../tus/filterAvailablePrograms";
+import { generateCuratedTusOffer } from "../tus/generateCuratedTusOffer";
 
 export function selectCareerPhase(state: GameState): CareerPhase {
   return state.career.phase;
@@ -15,9 +16,28 @@ export function selectCareerPhase(state: GameState): CareerPhase {
 // stays reserved for by-id lookup of programs an existing save already
 // committed to (see getResidencyProgram in residencyPrograms.ts) — it must
 // never be the source for a fresh preference list.
+//
+// This is the AUTHORITATIVE full eligible pool — every program the player
+// could legitimately select. It is NOT what the TUS preference screen
+// shows (see selectCuratedTusOffer below, TUS System Redesign §13-23):
+// curation only ever SELECTS from this pool, it never expands or
+// re-checks eligibility, so this function staying correct is what keeps
+// the curated offer authoritative too.
 export function selectAvailablePrograms(state: GameState) {
   if (state.career.tusScore === undefined) return [];
   return filterAvailablePrograms(PRODUCTION_PROGRAMS, state.career.tusScore);
+}
+
+// TUS System Redesign §13-23 — the actual player-facing TUS preference
+// list: a curated, deterministic (same score + same save seed -> same
+// offer) subset of selectAvailablePrograms's full eligible pool, sized to
+// CURATED_OFFER_SIZE (7) unless fewer than that many programs are
+// eligible at all, in which case every eligible program is shown. Always
+// derived from selectAvailablePrograms — see the note above.
+export function selectCuratedTusOffer(state: GameState) {
+  const eligible = selectAvailablePrograms(state);
+  if (eligible.length === 0) return [];
+  return generateCuratedTusOffer(eligible, state.meta.rngSeed);
 }
 
 export interface ResidencySummary {
